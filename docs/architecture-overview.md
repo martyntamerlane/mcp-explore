@@ -42,7 +42,7 @@ src/
     connect.test.ts   Tests for connect module
     demo/
       demoServer.ts   Built-in in-page McpServer (demo-issue-tracker), test fixture
-      demoServer.test.ts Tests for demoServer
+      demoServer.test.ts  Tests for demoServer
 ```
 
 Tests are colocated (`*.test.ts[x]`), run by Vitest (jsdom, globals).

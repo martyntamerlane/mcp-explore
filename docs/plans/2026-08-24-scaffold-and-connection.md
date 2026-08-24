@@ -8,6 +8,8 @@
 
 **Tech Stack:** React 19, Vite 7, TypeScript (strict), `@modelcontextprotocol/sdk`, zod, Vitest + RTL + jsdom, CSS Modules.
 
+> **Post-execution note (2026-08-24):** unpinned installs resolved Vite 8.2.2 and TypeScript 7.0.2 (plan prose says "Vite 7"); engines verified compatible with Node 20.20.0 and the full suite + build are green. Do not downgrade to match the prose.
+
 ## Global Constraints
 
 - From `docs/specs/2026-08-24-initial-design.md`: no backend ever; no graph/physics libraries; server-derived data is untrusted (never `dangerouslySetInnerHTML`); tokens never in URLs; CSS colours only via custom properties.
