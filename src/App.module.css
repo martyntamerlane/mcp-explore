@@ -1,3 +1,8 @@
 .app {
   padding: 2rem;
+  max-width: 40rem;
+}
+
+.muted {
+  color: var(--fg-muted);
 }
