@@ -20,7 +20,12 @@ For feature behaviour see [`docs/functional-description.md`](docs/functional-des
 
 ## How to Run
 
-**TBD** — fill in as soon as the first runnable scaffold exists, in the same change (expected shape: `npm install && npm run dev`).
+```bash
+npm install
+npm run dev          # dev server
+npm test             # Tier 1 (Vitest, <5s)
+npm run build        # typecheck + production build
+```
 
 ## Implementation Guidelines
 
