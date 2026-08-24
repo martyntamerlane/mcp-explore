@@ -1,6 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
+import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js"
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
+import { ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js"
 import { createDemoServer, DEMO_SERVER_NAME } from "./demo/demoServer"
 import { ConnectFailure, connectDemo, connectUrl, type TransportFactories } from "./connect"
 
@@ -85,5 +87,30 @@ test("snapshot skips list calls for capabilities the server lacks", async () => 
   expect(conn.snapshot.tools).toEqual([])
   expect(conn.snapshot.resources).toEqual([])
   expect(conn.snapshot.prompts).toEqual([])
+  await conn.close()
+})
+
+function paginatedTransport(): Transport {
+  const server = new Server({ name: "paginated", version: "0.0.1" }, { capabilities: { tools: {} } })
+  server.setRequestHandler(ListToolsRequestSchema, async (req) => {
+    if (!req.params?.cursor) {
+      return { tools: [{ name: "page1_tool", inputSchema: { type: "object" as const } }], nextCursor: "page2" }
+    }
+    return { tools: [{ name: "page2_tool", inputSchema: { type: "object" as const } }] }
+  })
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+  void server.connect(serverTransport)
+  return clientTransport
+}
+
+test("snapshot follows nextCursor pagination and concatenates all pages", async () => {
+  const factories: TransportFactories = {
+    streamable: () => paginatedTransport(),
+    sse: () => {
+      throw new Error("unused")
+    },
+  }
+  const conn = await connectUrl("https://example.com/mcp", {}, factories)
+  expect(conn.snapshot.tools.map((t) => t.name)).toEqual(["page1_tool", "page2_tool"])
   await conn.close()
 })

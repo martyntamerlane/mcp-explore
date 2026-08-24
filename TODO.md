@@ -50,6 +50,23 @@ A switchable master-detail (sidebar + detail pane) view over the same data, for 
 
 For servers that don't send CORS headers. Requires serious SSRF hardening (private-IP blocking, DNS-rebinding defense), infrastructure, cost exposure, and a token-custody trust story — which is why v1 is browser-direct only with a CORS diagnostic panel instead. Revisit only if CORS-blocked servers turn out to be a major share of real usage.
 
+### TODO-8: Code-split the MCP SDK bundle
+
+**Complexity**: S
+
+`npm run build` warns the main chunk exceeds 500 kB because `@modelcontextprotocol/sdk` is bundled eagerly. Split it (dynamic import at the connect boundary or Vite `manualChunks`) when the real UI lands and load behaviour starts mattering. From final review of the 2026-08-24 scaffold branch.
+
+### TODO-9: Connection-layer hardening
+
+**Complexity**: S
+
+Deferred Minors from the 2026-08-24 scaffold branch final review, best done when their consumers appear (graph UI / CORS diagnostics plan):
+- Cap `listAll` pagination (`MAX_PAGES` + repeated-cursor detection) — a malicious server returning the same cursor forever hangs the tab (`src/mcp/connect.ts` cursor loop).
+- Tag `ConnectFailure.attempts` with a `phase: "connect" | "snapshot"` field so the diagnostics panel can distinguish transport failures from mid-listing application errors.
+- Allowlist `http:`/`https:` schemes in `connectUrl` before shareable `?server=` URLs and clickable recent-servers exist.
+- Wrap `connectDemo`'s `close()` in try/finally so a client-close failure can't leak the server side.
+- Assert `attempts[1].error` text in the both-transports-fail test.
+
 ---
 
 ## Completed
