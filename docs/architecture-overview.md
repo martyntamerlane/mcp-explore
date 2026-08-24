@@ -26,7 +26,26 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 
 ## Project structure
 
-**TBD** — write the directory map when the scaffold lands, in the same change.
+```
+index.html            Vite entry
+src/
+  main.tsx            React bootstrap
+  App.tsx             Placeholder proof harness (replaced by the graph UI plan)
+  App.module.css      CSS module for App component
+  App.test.tsx        Tests for App component
+  global.css          Dark-first CSS custom properties (placeholder palette)
+  test-setup.ts       Test environment configuration
+  vite-env.d.ts       Vite environment types
+  mcp/
+    types.ts          ServerSnapshot / Connection / TransportKind
+    connect.ts        snapshotClient, connectDemo, connectUrl (streamable→SSE fallback)
+    connect.test.ts   Tests for connect module
+    demo/
+      demoServer.ts   Built-in in-page McpServer (demo-issue-tracker), test fixture
+      demoServer.test.ts Tests for demoServer
+```
+
+Tests are colocated (`*.test.ts[x]`), run by Vitest (jsdom, globals).
 
 ## Deployment
 
