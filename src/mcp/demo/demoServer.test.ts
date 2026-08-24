@@ -36,8 +36,10 @@ test("lists and reads the demo resources", async () => {
   const { resources } = await client.listResources()
   expect(resources.map((r) => r.uri).sort()).toEqual(["demo://config", "demo://readme"])
   const config = await client.readResource({ uri: "demo://config" })
-  expect(config.contents[0].mimeType).toBe("application/json")
-  expect(JSON.parse(config.contents[0].text as string).project).toBe("mcp-explore demo")
+  const first = config.contents[0]
+  expect(first.mimeType).toBe("application/json")
+  if (!("text" in first) || typeof first.text !== "string") throw new Error("expected text resource contents")
+  expect(JSON.parse(first.text).project).toBe("mcp-explore demo")
 })
 
 test("lists the demo prompts", async () => {
