@@ -12,9 +12,8 @@ type Phase = { status: "idle" } | { status: "connected"; connection: Connection 
 export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: typeof realConnectUrl } = {}) {
   const [phase, setPhase] = useState<Phase>({ status: "idle" })
   const [selected, setSelected] = useState<GraphSelection | null>(null)
-  const initialServer = useMemo(
+  const [autoTarget, setAutoTarget] = useState<string | undefined>(
     () => new URLSearchParams(window.location.search).get("server") ?? undefined,
-    [],
   )
 
   const layout = useMemo(() => {
@@ -26,7 +25,10 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
   function handleConnected(connection: Connection, source: { url?: string }) {
     if (source.url) {
       window.history.replaceState(null, "", "?server=" + encodeURIComponent(source.url))
+    } else {
+      window.history.replaceState(null, "", window.location.pathname)
     }
+    setAutoTarget(undefined)
     setSelected(null)
     setPhase({ status: "connected", connection })
   }
@@ -44,8 +46,8 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
     return (
       <ConnectScreen
         onConnected={handleConnected}
-        initialUrl={initialServer}
-        autoConnect={initialServer !== undefined}
+        initialUrl={autoTarget}
+        autoConnect={autoTarget !== undefined}
         connectUrlFn={connectUrlFn}
       />
     )

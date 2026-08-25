@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import type { Connection } from "../mcp/types"
 import type { GraphSelection } from "./Graph"
 import { schemaRows } from "./schema"
@@ -54,6 +54,13 @@ function ToolView({ connection, id }: { connection: Connection; id: string }) {
         <p className={styles.missing}>No arguments</p>
       ) : (
         <table className={styles.table}>
+          <thead>
+            <tr>
+              <th scope="col">name</th>
+              <th scope="col">type</th>
+              <th scope="col">details</th>
+            </tr>
+          </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.name}>
@@ -88,7 +95,6 @@ function ToolView({ connection, id }: { connection: Connection; id: string }) {
 function ResourceView({ connection, id }: { connection: Connection; id: string }) {
   const resource = connection.snapshot.resources.find((r) => r.uri === id)
   const [contents, setContents] = useState<LoadedContents>({ state: "idle" })
-  useEffect(() => setContents({ state: "idle" }), [id])
   if (!resource) return <p className={styles.missing}>Resource no longer present.</p>
 
   async function load() {

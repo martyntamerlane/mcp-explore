@@ -47,8 +47,8 @@ src/
     ConnectScreen.tsx      Landing screen: URL input, headers disclosure, recents, demo button
     ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
     recents.ts             localStorage recent-servers list (opt-in header persistence)
-    Graph.tsx               SVG capability graph: polar layout, zoom/pan, search-dim, selection
-    layout.ts               computeLayout — deterministic polar layout math (no physics)
+    Graph.tsx              SVG capability graph: polar layout, zoom/pan, search-dim, selection
+    layout.ts              computeLayout — deterministic polar layout math (no physics)
     DetailPanel.tsx         Slide-in panel: schema table, resource contents, raw-JSON disclosure
     schema.ts               JSON Schema → argument table rows for DetailPanel
     *.module.css            CSS modules for each ui/ component

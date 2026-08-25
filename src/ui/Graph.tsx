@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import type { EntityKind, GraphLayout, LeafNode } from "./layout"
 import styles from "./Graph.module.css"
 
@@ -41,6 +41,7 @@ export default function Graph({ layout, serverName, selected, onSelect }: GraphP
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 })
   const drag = useRef<{ x: number; y: number } | null>(null)
   const movedRef = useRef(false)
+  const svgRef = useRef<SVGSVGElement | null>(null)
 
   const q = query.trim().toLowerCase()
   const dimmed = (n: LeafNode) => q !== "" && !n.label.toLowerCase().includes(q)
@@ -48,6 +49,20 @@ export default function Graph({ layout, serverName, selected, onSelect }: GraphP
 
   const zoom = (factor: number) =>
     setView((v) => ({ ...v, k: Math.min(3, Math.max(0.4, v.k * factor)) }))
+
+  // React's onWheel is a passive listener under the hood, so e.preventDefault() there
+  // is a no-op and the page still scrolls. Attach a native, non-passive listener instead.
+  useEffect(() => {
+    const el = svgRef.current
+    if (!el) return
+    const handler = (e: WheelEvent) => {
+      e.preventDefault()
+      zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15)
+    }
+    el.addEventListener("wheel", handler, { passive: false })
+    return () => el.removeEventListener("wheel", handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className={styles.wrap}>
@@ -67,12 +82,9 @@ export default function Graph({ layout, serverName, selected, onSelect }: GraphP
         </div>
       </div>
       <svg
+        ref={svgRef}
         className={styles.svg}
         viewBox={`${layout.viewBox.x} ${layout.viewBox.y} ${layout.viewBox.width} ${layout.viewBox.height}`}
-        onWheel={(e) => {
-          e.preventDefault()
-          zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15)
-        }}
         onPointerDown={(e) => {
           if (e.target === e.currentTarget) {
             drag.current = { x: e.clientX, y: e.clientY }

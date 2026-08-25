@@ -79,6 +79,12 @@ The initial design's testing intent names a Tier 3: Playwright smoke against the
 
 Decision on 2026-08-24: repo went public with **no license** (source-visible, all rights reserved) to keep options open while TODO-4's paid-feature idea is unresolved. Revisit deliberately: MIT if we want reuse/contributions, AGPL if we want to deter closed-source hosted clones. Easy to add later; effectively impossible to retract.
 
+### TODO-12: Graph & panel interaction hardening
+
+**Complexity**: S
+
+Deferred non-blocking items from the 2026-08-25 UI v1 final review: cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios); dedupe/suffix duplicate tool/prompt names and resource URIs in `computeLayout` (duplicate React keys otherwise); render non-string enum members via JSON.stringify and key chips by index; Escape closes the detail panel + focus moves into/restores from it; aria-live announcements; preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
+
 ---
 
 ## Completed

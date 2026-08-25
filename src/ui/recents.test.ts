@@ -26,3 +26,18 @@ test("stores headers only when provided and non-empty", () => {
   expect(byUrl["https://a.example"].headers).toBeUndefined()
   expect(byUrl["https://b.example"].headers).toEqual({ Authorization: "Bearer x" })
 })
+
+test("saveRecent tolerates storage write failures and still returns the computed list", () => {
+  const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("QuotaExceededError")
+  })
+  try {
+    let list: ReturnType<typeof saveRecent> = []
+    expect(() => {
+      list = saveRecent({ url: "https://locked.example" }, 1)
+    }).not.toThrow()
+    expect(list.some((r) => r.url === "https://locked.example")).toBe(true)
+  } finally {
+    setItemSpy.mockRestore()
+  }
+})
