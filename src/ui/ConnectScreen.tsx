@@ -34,12 +34,12 @@ export default function ConnectScreen({
   const headersOf = (r: HeaderRow[]) =>
     Object.fromEntries(r.filter((h) => h.name.trim() !== "").map((h) => [h.name.trim(), h.value]))
 
-  async function connectTo(target: string, headers: Record<string, string>) {
+  async function connectTo(target: string, headers: Record<string, string>, persist: Record<string, string> | undefined) {
     setBusy(true)
     setError(null)
     try {
       const conn = await connectUrlFn(target, headers)
-      setRecents(saveRecent({ url: target, headers: remember ? headers : undefined }))
+      setRecents(saveRecent({ url: target, headers: persist }))
       onConnected(conn, { url: target })
     } catch (err) {
       setError(err)
@@ -51,7 +51,7 @@ export default function ConnectScreen({
   useEffect(() => {
     if (autoConnect && initialUrl && !autoRan.current) {
       autoRan.current = true
-      void connectTo(initialUrl, {})
+      void connectTo(initialUrl, {}, undefined)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -78,7 +78,10 @@ export default function ConnectScreen({
         className={styles.form}
         onSubmit={(e) => {
           e.preventDefault()
-          if (url.trim()) void connectTo(url.trim(), headersOf(rows))
+          if (url.trim()) {
+            const h = headersOf(rows)
+            void connectTo(url.trim(), h, remember ? h : undefined)
+          }
         }}
       >
         <input
@@ -134,7 +137,13 @@ export default function ConnectScreen({
         <section className={styles.recents} aria-label="Recent servers">
           <p className={styles.microlabel}>RECENT</p>
           {recents.map((r) => (
-            <button key={r.url} type="button" className={styles.recent} onClick={() => void connectTo(r.url, r.headers ?? {})}>
+            <button
+              key={r.url}
+              type="button"
+              className={styles.recent}
+              disabled={busy}
+              onClick={() => void connectTo(r.url, r.headers ?? {}, r.headers)}
+            >
               {r.url}
             </button>
           ))}

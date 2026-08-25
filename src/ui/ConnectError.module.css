@@ -18,7 +18,7 @@
   font-size: 13px;
   padding: 12px;
   border-radius: var(--radius-s);
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--code-bg);
   overflow-x: auto;
 }
 .details summary { color: var(--ink-3); cursor: pointer; font-size: 13px; }

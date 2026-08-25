@@ -20,6 +20,8 @@
   --prompt-bright: #c4b5fd;
 
   --danger: #f87171;
+  --cta-gradient: linear-gradient(135deg, rgba(8, 145, 178, 0.35), rgba(139, 92, 246, 0.35));
+  --code-bg: rgba(0, 0, 0, 0.35);
   --radius-s: 8px;
   --radius-m: 12px;
   --radius-l: 16px;

@@ -82,3 +82,21 @@ test("autoConnect connects to initialUrl on mount", async () => {
   await vi.waitFor(() => expect(onConnected).toHaveBeenCalledOnce())
   expect(calls[0].url).toBe("https://auto.example/mcp")
 })
+
+test("recent buttons disable while a connect is in flight", async () => {
+  saveRecent({ url: "https://old.example/mcp" }, 1)
+  saveRecent({ url: "https://old2.example/mcp" }, 2)
+  const neverResolves = () => new Promise<Connection>(() => {})
+  render(<ConnectScreen onConnected={vi.fn()} connectUrlFn={neverResolves} />)
+  await userEvent.click(screen.getByRole("button", { name: /old\.example/i }))
+  expect(screen.getByRole("button", { name: /old\.example/i })).toBeDisabled()
+  expect(screen.getByRole("button", { name: /old2\.example/i })).toBeDisabled()
+})
+
+test("reconnecting via a recent preserves its stored headers", async () => {
+  saveRecent({ url: "https://old.example/mcp", headers: { "X-Key": "k" } }, 1)
+  const { fn } = demoBackedConnectUrl()
+  render(<ConnectScreen onConnected={vi.fn()} connectUrlFn={fn} />)
+  await userEvent.click(screen.getByRole("button", { name: /old\.example/i }))
+  await vi.waitFor(() => expect(loadRecents()[0].headers).toEqual({ "X-Key": "k" }))
+})

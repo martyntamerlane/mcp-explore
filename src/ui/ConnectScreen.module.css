@@ -34,7 +34,7 @@
   padding: 14px 28px;
   border-radius: var(--radius-m);
   border: 1px solid var(--panel-border);
-  background: linear-gradient(135deg, rgba(8, 145, 178, 0.35), rgba(139, 92, 246, 0.35));
+  background: var(--cta-gradient);
   cursor: pointer;
   transition: filter var(--ease-hover);
 }
