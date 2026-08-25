@@ -1,0 +1,43 @@
+import { createKonamiDetector, KONAMI_SEQUENCE } from "./konami"
+
+function press(handler: (key: string) => void, keys: string[]) {
+  keys.forEach((k) => handler(k))
+}
+
+test("the exact sequence triggers onMatch once", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  press(handler, [...KONAMI_SEQUENCE])
+  expect(onMatch).toHaveBeenCalledTimes(1)
+})
+
+test("case-insensitive on the letter keys", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "B", "A"])
+  expect(onMatch).toHaveBeenCalledTimes(1)
+})
+
+test("a wrong key resets progress to zero", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  press(handler, ["ArrowUp", "ArrowUp", "x"])
+  press(handler, ["ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  expect(onMatch).not.toHaveBeenCalled()
+})
+
+test("a wrong key that equals the first key restarts progress at one, not zero", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  // ArrowUp, ArrowUp, ArrowUp(wrong-but-equals-first) then the rest of a valid sequence
+  press(handler, ["ArrowUp", "ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  expect(onMatch).toHaveBeenCalledTimes(1)
+})
+
+test("typing the sequence twice in a row triggers onMatch twice", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  press(handler, [...KONAMI_SEQUENCE])
+  press(handler, [...KONAMI_SEQUENCE])
+  expect(onMatch).toHaveBeenCalledTimes(2)
+})
