@@ -1,12 +1,40 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { connectDemo } from "./mcp/connect"
+import type { Connection } from "./mcp/types"
 import App from "./App"
 
-test("Try the demo connects and shows the demo catalog", async () => {
+afterEach(() => window.history.replaceState(null, "", "/"))
+
+test("full flow: demo → graph → node → panel → disconnect", async () => {
   render(<App />)
   await userEvent.click(screen.getByRole("button", { name: /try the demo/i }))
-  expect(await screen.findByText(/demo-issue-tracker/)).toBeInTheDocument()
-  expect(screen.getByText("create_issue")).toBeInTheDocument()
-  expect(screen.getByText("demo://readme")).toBeInTheDocument()
-  expect(screen.getByText("weekly_summary")).toBeInTheDocument()
+  expect(await screen.findByText(/TOOLS · 4/)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  expect(await screen.findByText(/create a new issue/i)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: /close details/i }))
+  expect(screen.queryByText(/create a new issue/i)).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: /disconnect/i }))
+  expect(await screen.findByLabelText(/server url/i)).toBeInTheDocument()
+})
+
+test("?server= auto-connects via connectUrlFn and never carries headers", async () => {
+  window.history.replaceState(null, "", "/?server=" + encodeURIComponent("https://q.example/mcp"))
+  const calls: string[] = []
+  const fake = async (url: string): Promise<Connection> => {
+    calls.push(url)
+    return connectDemo()
+  }
+  render(<App connectUrlFn={fake} />)
+  expect(await screen.findByText(/TOOLS · 4/)).toBeInTheDocument()
+  expect(calls).toEqual(["https://q.example/mcp"])
+})
+
+test("connecting by URL writes ?server= to the address bar", async () => {
+  const fake = async (): Promise<Connection> => connectDemo()
+  render(<App connectUrlFn={fake} />)
+  await userEvent.type(screen.getByLabelText(/server url/i), "https://w.example/mcp")
+  await userEvent.click(screen.getByRole("button", { name: /^connect$/i }))
+  await screen.findByText(/TOOLS · 4/)
+  expect(window.location.search).toBe("?server=" + encodeURIComponent("https://w.example/mcp"))
 })

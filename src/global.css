@@ -34,9 +34,6 @@
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
   --ease-hover: 160ms ease-out;
   --ease-panel: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
-
-  /* compat: App.module.css still references this, deleted in Task 5 */
-  --fg-muted: var(--ink-2);
 }
 
 * {

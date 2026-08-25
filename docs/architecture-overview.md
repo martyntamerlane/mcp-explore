@@ -30,10 +30,10 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 index.html            Vite entry
 src/
   main.tsx            React bootstrap
-  App.tsx             Placeholder proof harness (replaced by the graph UI plan)
+  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync
   App.module.css      CSS module for App component
   App.test.tsx        Tests for App component
-  global.css          Dark-first CSS custom properties (placeholder palette)
+  global.css          Dark-first CSS custom properties (visual identity tokens)
   test-setup.ts       Test environment configuration
   vite-env.d.ts       Vite environment types
   mcp/
@@ -43,6 +43,16 @@ src/
     demo/
       demoServer.ts   Built-in in-page McpServer (demo-issue-tracker), test fixture
       demoServer.test.ts  Tests for demoServer
+  ui/
+    ConnectScreen.tsx      Landing screen: URL input, headers disclosure, recents, demo button
+    ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
+    recents.ts             localStorage recent-servers list (opt-in header persistence)
+    Graph.tsx               SVG capability graph: polar layout, zoom/pan, search-dim, selection
+    layout.ts               computeLayout — deterministic polar layout math (no physics)
+    DetailPanel.tsx         Slide-in panel: schema table, resource contents, raw-JSON disclosure
+    schema.ts               JSON Schema → argument table rows for DetailPanel
+    *.module.css            CSS modules for each ui/ component
+    *.test.ts[x]            Colocated tests for each ui/ module
 ```
 
 Tests are colocated (`*.test.ts[x]`), run by Vitest (jsdom, globals).

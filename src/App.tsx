@@ -1,72 +1,76 @@
-import { useState } from "react"
-import { connectDemo } from "./mcp/connect"
+import { useMemo, useState } from "react"
+import { connectUrl as realConnectUrl } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
+import ConnectScreen from "./ui/ConnectScreen"
+import DetailPanel from "./ui/DetailPanel"
+import Graph, { type GraphSelection } from "./ui/Graph"
+import { computeLayout } from "./ui/layout"
 import styles from "./App.module.css"
 
-type Phase =
-  | { status: "idle" }
-  | { status: "connecting" }
-  | { status: "connected"; connection: Connection }
-  | { status: "error"; message: string }
+type Phase = { status: "idle" } | { status: "connected"; connection: Connection }
 
-// Placeholder proof harness: exercises the connection layer end to end.
-// The real landing + graph UI (next plan) replaces this component entirely.
-export default function App() {
+export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: typeof realConnectUrl } = {}) {
   const [phase, setPhase] = useState<Phase>({ status: "idle" })
+  const [selected, setSelected] = useState<GraphSelection | null>(null)
+  const initialServer = useMemo(
+    () => new URLSearchParams(window.location.search).get("server") ?? undefined,
+    [],
+  )
 
-  async function handleDemo() {
-    setPhase({ status: "connecting" })
-    try {
-      setPhase({ status: "connected", connection: await connectDemo() })
-    } catch (err) {
-      setPhase({ status: "error", message: err instanceof Error ? err.message : String(err) })
+  const layout = useMemo(() => {
+    if (phase.status !== "connected") return null
+    const { tools, resources, prompts } = phase.connection.snapshot
+    return computeLayout({ tools, resources, prompts })
+  }, [phase])
+
+  function handleConnected(connection: Connection, source: { url?: string }) {
+    if (source.url) {
+      window.history.replaceState(null, "", "?server=" + encodeURIComponent(source.url))
     }
+    setSelected(null)
+    setPhase({ status: "connected", connection })
   }
 
-  return (
-    <main className={styles.app}>
-      <h1>mcp-explore</h1>
-      {phase.status !== "connected" && (
-        <button onClick={handleDemo} disabled={phase.status === "connecting"}>
-          Try the demo
-        </button>
-      )}
-      {phase.status === "connecting" && <p>Connecting…</p>}
-      {phase.status === "error" && <p role="alert">{phase.message}</p>}
-      {phase.status === "connected" && <Catalog connection={phase.connection} />}
-    </main>
-  )
-}
+  async function disconnect() {
+    if (phase.status === "connected") {
+      await phase.connection.close().catch(() => {})
+    }
+    window.history.replaceState(null, "", window.location.pathname)
+    setSelected(null)
+    setPhase({ status: "idle" })
+  }
 
-function Catalog({ connection }: { connection: Connection }) {
-  const { snapshot, transportKind } = connection
+  if (phase.status === "idle") {
+    return (
+      <ConnectScreen
+        onConnected={handleConnected}
+        initialUrl={initialServer}
+        autoConnect={initialServer !== undefined}
+        connectUrlFn={connectUrlFn}
+      />
+    )
+  }
+
+  const { snapshot, transportKind } = phase.connection
   return (
-    <section>
-      <h2>
-        {snapshot.serverInfo.name} <small>v{snapshot.serverInfo.version}</small>
-      </h2>
-      <p className={styles.muted}>
-        via {transportKind} · {snapshot.tools.length} tools · {snapshot.resources.length} resources ·{" "}
-        {snapshot.prompts.length} prompts
-      </p>
-      <h3>Tools</h3>
-      <ul>
-        {snapshot.tools.map((t) => (
-          <li key={t.name}>{t.name}</li>
-        ))}
-      </ul>
-      <h3>Resources</h3>
-      <ul>
-        {snapshot.resources.map((r) => (
-          <li key={r.uri}>{r.uri}</li>
-        ))}
-      </ul>
-      <h3>Prompts</h3>
-      <ul>
-        {snapshot.prompts.map((p) => (
-          <li key={p.name}>{p.name}</li>
-        ))}
-      </ul>
-    </section>
+    <div className={styles.app}>
+      <header className={styles.header}>
+        <span className={styles.serverName}>{snapshot.serverInfo.name}</span>
+        <span className={styles.chip}>v{snapshot.serverInfo.version}</span>
+        <span className={styles.chip}>{transportKind}</span>
+        <span className={styles.counts}>
+          {snapshot.tools.length} tools · {snapshot.resources.length} resources · {snapshot.prompts.length} prompts
+        </span>
+        <button type="button" className={styles.disconnect} onClick={() => void disconnect()}>
+          Disconnect
+        </button>
+      </header>
+      <main className={styles.main}>
+        {layout && (
+          <Graph layout={layout} serverName={snapshot.serverInfo.name} selected={selected} onSelect={setSelected} />
+        )}
+        <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
+      </main>
+    </div>
   )
 }

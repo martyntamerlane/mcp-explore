@@ -1,7 +1,7 @@
 # Initial Design — mcp-explore
 
 **Date**: 2026-08-24 (project renamed mcp-explore at repo creation, same day)
-**Status**: Agreed (grilling session, all branches resolved)
+**Status**: Agreed (grilling session, all branches resolved). v1 UI shipped 2026-08-25 per [`2026-08-25-visual-identity.md`](2026-08-25-visual-identity.md).
 **Participants**: Martyn + Claude
 
 A web app where a user inputs the URL of their MCP server and the app displays its tools, resources, prompts, and capabilities in a pleasing and simple manner.
