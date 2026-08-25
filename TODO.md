@@ -67,6 +67,12 @@ Deferred Minors from the 2026-08-24 scaffold branch final review, best done when
 - Wrap `connectDemo`'s `close()` in try/finally so a client-close failure can't leak the server side.
 - Assert `attempts[1].error` text in the both-transports-fail test.
 
+### TODO-10: Choose a license
+
+**Complexity**: S
+
+Decision on 2026-08-24: repo went public with **no license** (source-visible, all rights reserved) to keep options open while TODO-4's paid-feature idea is unresolved. Revisit deliberately: MIT if we want reuse/contributions, AGPL if we want to deter closed-source hosted clones. Easy to add later; effectively impossible to retract.
+
 ---
 
 ## Completed
