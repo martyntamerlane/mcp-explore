@@ -1,0 +1,22 @@
+/* Entity-accent triad validated 2026-08-24 (dataviz six-checks, dark mode, all PASS):
+   --tool: #8e5300 (spice-amber) · --resource: #b48c2b (sand) · --prompt: #006497 (deep Fremen-blue), vs --bg: #120c08 */
+:root[data-theme="dune"] {
+  --bg: #120c08;
+  --glow-a: rgba(154, 82, 18, 0.35);
+  --glow-b: rgba(92, 38, 12, 0.35);
+  --panel: rgba(255, 244, 224, 0.04);
+  --panel-border: rgba(255, 224, 178, 0.1);
+
+  --ink: #f3e6d0;
+  --ink-2: #c9b391;
+  --ink-3: #8a765a;
+
+  --tool: #8e5300;
+  --tool-bright: #f0a941;
+  --resource: #b48c2b;
+  --resource-bright: #e8d4a9;
+  --prompt: #006497;
+  --prompt-bright: #6fa8cc;
+
+  --danger: #b3432b;
+}

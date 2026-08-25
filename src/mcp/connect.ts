@@ -80,6 +80,9 @@ export async function connectUrl(
   factories: TransportFactories = defaultFactories,
 ): Promise<Connection> {
   const url = new URL(rawUrl) // invalid URLs throw here; callers surface the message
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error(`Unsupported scheme "${url.protocol}" — only http:// and https:// MCP servers can be reached from a browser`)
+  }
   const attempts: { kind: TransportKind; error: unknown }[] = []
   const order = [
     { kind: "streamable-http" as const, make: factories.streamable },

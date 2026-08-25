@@ -63,15 +63,27 @@ For servers that don't send CORS headers. Requires serious SSRF hardening (priva
 Deferred Minors from the 2026-08-24 scaffold branch final review, best done when their consumers appear (graph UI / CORS diagnostics plan):
 - Cap `listAll` pagination (`MAX_PAGES` + repeated-cursor detection) — a malicious server returning the same cursor forever hangs the tab (`src/mcp/connect.ts` cursor loop).
 - Tag `ConnectFailure.attempts` with a `phase: "connect" | "snapshot"` field so the diagnostics panel can distinguish transport failures from mid-listing application errors.
-- Allowlist `http:`/`https:` schemes in `connectUrl` before shareable `?server=` URLs and clickable recent-servers exist.
+- ~~Allowlist `http:`/`https:` schemes in `connectUrl` before shareable `?server=` URLs and clickable recent-servers exist.~~ done 2026-08-25
 - Wrap `connectDemo`'s `close()` in try/finally so a client-close failure can't leak the server side.
 - Assert `attempts[1].error` text in the both-transports-fail test.
+
+### TODO-11: Playwright E2E tier (Tier 3)
+
+**Complexity**: S
+
+The initial design's testing intent names a Tier 3: Playwright smoke against the built-in demo server (no external network), run before deploys. Not yet set up — Tier 1/2 (Vitest + RTL against the real in-page demo server) carry coverage today. Wire Playwright + a CI step when UI churn settles.
 
 ### TODO-10: Choose a license
 
 **Complexity**: S
 
 Decision on 2026-08-24: repo went public with **no license** (source-visible, all rights reserved) to keep options open while TODO-4's paid-feature idea is unresolved. Revisit deliberately: MIT if we want reuse/contributions, AGPL if we want to deter closed-source hosted clones. Easy to add later; effectively impossible to retract.
+
+### TODO-12: Graph & panel interaction hardening
+
+**Complexity**: S
+
+Deferred non-blocking items from the 2026-08-25 UI v1 final review: cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios); dedupe/suffix duplicate tool/prompt names and resource URIs in `computeLayout` (duplicate React keys otherwise); render non-string enum members via JSON.stringify and key chips by index; Escape closes the detail panel + focus moves into/restores from it; aria-live announcements; preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
 
 ---
 

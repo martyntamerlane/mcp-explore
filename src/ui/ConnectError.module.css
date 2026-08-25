@@ -1,0 +1,24 @@
+.box {
+  margin-top: 24px;
+  padding: 20px 24px;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-m);
+  background: var(--panel);
+  text-align: left;
+}
+.headline { margin: 0 0 12px; color: var(--ink); }
+.attempts { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 6px; }
+.kind { color: var(--ink-2); margin-right: 12px; }
+.msg { color: var(--ink-3); font-family: var(--mono); font-size: 13px; }
+.hint { color: var(--ink-2); font-size: 14px; }
+.small { color: var(--ink-3); font-size: 13px; }
+.code {
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 12px;
+  border-radius: var(--radius-s);
+  background: var(--code-bg);
+  overflow-x: auto;
+}
+.details summary { color: var(--ink-3); cursor: pointer; font-size: 13px; }
