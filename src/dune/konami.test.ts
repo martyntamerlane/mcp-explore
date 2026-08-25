@@ -41,3 +41,11 @@ test("typing the sequence twice in a row triggers onMatch twice", () => {
   press(handler, [...KONAMI_SEQUENCE])
   expect(onMatch).toHaveBeenCalledTimes(2)
 })
+
+test("no false positives when sequence is not a contiguous window", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  // This input has partial matches but no valid 10-key contiguous sequence
+  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  expect(onMatch).not.toHaveBeenCalled()
+})
