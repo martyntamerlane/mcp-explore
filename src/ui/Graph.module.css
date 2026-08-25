@@ -1,0 +1,55 @@
+.wrap { position: relative; flex: 1; min-height: 0; }
+.toolbar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 1;
+  pointer-events: none;
+}
+.toolbar > * { pointer-events: auto; }
+.search {
+  width: 220px;
+  padding: 8px 14px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  backdrop-filter: blur(20px);
+  font-family: var(--mono);
+  font-size: 13px;
+}
+.search:focus { outline: none; border-color: var(--ink-3); }
+.zoomers { display: flex; gap: 4px; }
+.zoomers button {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: border-color var(--ease-hover);
+}
+.zoomers button:hover { border-color: var(--ink-3); }
+.svg { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+.edge { stroke: rgba(255, 255, 255, 0.07); stroke-width: 1; }
+.serverDot { fill: rgba(255, 255, 255, 0.06); stroke: rgba(255, 255, 255, 0.25); stroke-width: 1.5; }
+.serverLabel { fill: var(--ink-2); font-family: var(--mono); font-size: 13px; }
+.hubLabel { fill: var(--ink-3); font-size: 11px; letter-spacing: 0.08em; }
+.leaf { cursor: pointer; transition: opacity var(--ease-hover); outline: none; }
+.halo { fill: transparent; }
+.dimmed { opacity: 0.15; }
+.leafLabel {
+  fill: var(--ink-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity var(--ease-hover);
+  pointer-events: none;
+}
+.leaf:hover .leafLabel,
+.leaf:focus .leafLabel,
+.selected .leafLabel { opacity: 1; }
+.leaf:focus-visible :first-child { stroke: var(--ink-2); }
