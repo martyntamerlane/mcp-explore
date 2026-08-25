@@ -64,7 +64,7 @@ export default function OrbitTile({ index, size = 64 }: OrbitTileProps) {
               cx={(i * 17 + index * 5) % 64}
               cy={(i * 29 + index * 11) % 64}
               r={i % 5 === 0 ? 1.6 : 0.8}
-              fill="#fff"
+              fill="var(--dune-star)"
               opacity={0.8}
             />
           ))}
@@ -78,7 +78,7 @@ export default function OrbitTile({ index, size = 64 }: OrbitTileProps) {
           />
         )}
       </g>
-      <circle cx={32} cy={32} r={30} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth={1} />
+      <circle cx={32} cy={32} r={30} fill="none" stroke="var(--dune-tile-rim)" strokeWidth={1} />
     </svg>
   )
 }

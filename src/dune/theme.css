@@ -19,4 +19,7 @@
   --prompt-bright: #6fa8cc;
 
   --danger: #b3432b;
+
+  --dune-star: #ffffff;
+  --dune-tile-rim: rgba(255, 255, 255, 0.15);
 }
