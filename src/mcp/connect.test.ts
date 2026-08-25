@@ -114,3 +114,15 @@ test("snapshot follows nextCursor pagination and concatenates all pages", async 
   expect(conn.snapshot.tools.map((t) => t.name)).toEqual(["page1_tool", "page2_tool"])
   await conn.close()
 })
+
+test("connectUrl rejects non-http(s) schemes before any transport attempt", async () => {
+  const factories: TransportFactories = {
+    streamable: () => {
+      throw new Error("factory must not be called")
+    },
+    sse: () => {
+      throw new Error("factory must not be called")
+    },
+  }
+  await expect(connectUrl("javascript:alert(1)", {}, factories)).rejects.toThrow(/http/)
+})
