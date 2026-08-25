@@ -1,0 +1,22 @@
+.tile {
+  display: block;
+  border-radius: 50%;
+}
+.drift {
+  transform-origin: 32px 32px;
+  animation: drift 7s ease-in-out infinite;
+}
+@keyframes drift {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.08) rotate(3deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drift {
+    animation: none;
+  }
+}
