@@ -24,8 +24,8 @@
   width: min(30vw, 280px);
   height: min(30vw, 280px);
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, var(--tool-bright), var(--tool) 55%, #1a0f06 100%);
-  box-shadow: 0 0 80px 20px rgba(200, 121, 28, 0.25);
+  background: radial-gradient(circle at 35% 35%, var(--tool-bright), var(--tool) 55%, var(--dune-entity-core) 100%);
+  box-shadow: 0 0 80px 20px var(--dune-entity-glow);
   animation: spin 90s linear infinite;
 }
 @keyframes spin {

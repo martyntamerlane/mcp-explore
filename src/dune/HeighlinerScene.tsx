@@ -23,12 +23,12 @@ export default function HeighlinerScene({ transitioning, shipSeed }: HeighlinerS
       >
         <path
           d="M 20 100 L 90 60 L 300 55 L 360 80 L 360 120 L 300 145 L 90 140 Z"
-          fill="rgba(20,14,8,0.9)"
+          fill="var(--dune-hull)"
           stroke="var(--ink-3)"
           strokeWidth={1.5}
         />
-        <rect x={110} y={72} width={160} height={10} fill="rgba(255,224,178,0.08)" />
-        <rect x={110} y={118} width={160} height={10} fill="rgba(255,224,178,0.08)" />
+        <rect x={110} y={72} width={160} height={10} fill="var(--dune-hull-window)" />
+        <rect x={110} y={118} width={160} height={10} fill="var(--dune-hull-window)" />
       </svg>
 
       <div className={styles.entity} role="img" aria-label="orbited galactic entity" />
