@@ -67,6 +67,12 @@ Deferred Minors from the 2026-08-24 scaffold branch final review, best done when
 - Wrap `connectDemo`'s `close()` in try/finally so a client-close failure can't leak the server side.
 - Assert `attempts[1].error` text in the both-transports-fail test.
 
+### TODO-11: Playwright E2E tier (Tier 3)
+
+**Complexity**: S
+
+The initial design's testing intent names a Tier 3: Playwright smoke against the built-in demo server (no external network), run before deploys. Not yet set up — Tier 1/2 (Vitest + RTL against the real in-page demo server) carry coverage today. Wire Playwright + a CI step when UI churn settles.
+
 ### TODO-10: Choose a license
 
 **Complexity**: S
