@@ -40,6 +40,7 @@ export default function Graph({ layout, serverName, selected, onSelect }: GraphP
   const [query, setQuery] = useState("")
   const [view, setView] = useState({ k: 1, tx: 0, ty: 0 })
   const drag = useRef<{ x: number; y: number } | null>(null)
+  const movedRef = useRef(false)
 
   const q = query.trim().toLowerCase()
   const dimmed = (n: LeafNode) => q !== "" && !n.label.toLowerCase().includes(q)
@@ -68,22 +69,31 @@ export default function Graph({ layout, serverName, selected, onSelect }: GraphP
       <svg
         className={styles.svg}
         viewBox={`${layout.viewBox.x} ${layout.viewBox.y} ${layout.viewBox.width} ${layout.viewBox.height}`}
-        onWheel={(e) => zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15)}
+        onWheel={(e) => {
+          e.preventDefault()
+          zoom(e.deltaY < 0 ? 1.15 : 1 / 1.15)
+        }}
         onPointerDown={(e) => {
-          if (e.target === e.currentTarget) drag.current = { x: e.clientX, y: e.clientY }
+          if (e.target === e.currentTarget) {
+            drag.current = { x: e.clientX, y: e.clientY }
+            movedRef.current = false
+          }
         }}
         onPointerMove={(e) => {
           if (drag.current) {
             const dx = e.clientX - drag.current.x
             const dy = e.clientY - drag.current.y
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) movedRef.current = true
             drag.current = { x: e.clientX, y: e.clientY }
-            setView((v) => ({ ...v, tx: v.tx + dx / v.k, ty: v.ty + dy / v.k }))
+            const rect = e.currentTarget.getBoundingClientRect()
+            const f = rect.width > 0 ? layout.viewBox.width / rect.width : 1
+            setView((v) => ({ ...v, tx: v.tx + dx * f, ty: v.ty + dy * f }))
           }
         }}
         onPointerUp={() => (drag.current = null)}
         onPointerLeave={() => (drag.current = null)}
         onClick={(e) => {
-          if (e.target === e.currentTarget) onSelect(null)
+          if (e.target === e.currentTarget && !movedRef.current) onSelect(null)
         }}
       >
         <defs>

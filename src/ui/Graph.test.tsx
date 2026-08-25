@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { computeLayout } from "./layout"
 import Graph from "./Graph"
@@ -40,4 +40,30 @@ test("search dims non-matching leaves only", async () => {
   const miss = screen.getByRole("button", { name: "prompt weekly_summary" })
   expect(match.getAttribute("class") ?? "").not.toMatch(/dimmed/)
   expect(miss.getAttribute("class") ?? "").toMatch(/dimmed/)
+})
+
+test("a completed background drag (pan) does not clear the current selection", () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <Graph layout={layout} serverName="s" selected={{ kind: "tool", id: "create_issue" }} onSelect={onSelect} />
+  )
+  const svg = container.querySelector("svg")
+  if (!svg) throw new Error("svg not found")
+  fireEvent.pointerDown(svg, { clientX: 0, clientY: 0 })
+  fireEvent.pointerMove(svg, { clientX: 20, clientY: 0 })
+  fireEvent.pointerMove(svg, { clientX: 40, clientY: 0 })
+  fireEvent.pointerUp(svg, { clientX: 40, clientY: 0 })
+  fireEvent.click(svg)
+  expect(onSelect).not.toHaveBeenCalledWith(null)
+})
+
+test("a plain click on the background (no movement) clears the current selection", () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <Graph layout={layout} serverName="s" selected={{ kind: "tool", id: "create_issue" }} onSelect={onSelect} />
+  )
+  const svg = container.querySelector("svg")
+  if (!svg) throw new Error("svg not found")
+  fireEvent.click(svg)
+  expect(onSelect).toHaveBeenCalledWith(null)
 })
