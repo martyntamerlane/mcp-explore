@@ -21,19 +21,19 @@ This spec covers dune mode only. The baseline (non-dune) page redesign for gener
 ## Architecture consequences
 
 - **Zero new dependencies, zero backend, zero third-party API.** All generation (art tiles, ship) is deterministic client-side code. Cost: negligible (confirmed per CLAUDE.md's cost-flagging rule).
-- **Existing components need no code changes for the reskin.** Because `ConnectScreen`/`Graph`/`DetailPanel` already consume all color via `var(--…)` custom properties (visual-identity spec's theme-ready rule), a second `:root[data-theme="dune"]` token block reskins the whole app. Only new dune-specific components (heighliner scene, ship) are new code.
-- **New code is isolated to `src/ui/dune/`** — nothing in `src/ui/` outside that directory is touched except `global.css` (new token block) and one mount point in `App.tsx` (the konami listener + conditional `HeighlinerScene`).
+- **Existing components need no code changes for the reskin.** Because `ConnectScreen`/`Graph`/`DetailPanel` already consume all color via `var(--…)` custom properties (visual-identity spec's theme-ready rule), a second `:root[data-theme="dune"]` token block reskins the whole app.
+- **Fully isolated codebase — no shared files edited.** Other work is concurrently in flight against `App.tsx`, `global.css`, `ConnectScreen.tsx`, and `Graph.tsx`. Dune mode is built as a self-mounting side-module in `src/dune/`, loaded via a second, independent `<script type="module">` entry in `index.html` (Vite bundles multiple entry scripts from one HTML file natively — no `vite.config` change needed). It has its own React root (a `<div>` it creates and appends to `document.body` itself), its own stylesheet (`src/dune/theme.css`, never appended to `global.css`), and reaches the rest of the page only through generic, read-only DOM observation (`document`-level `keydown`/`click` listeners, never `preventDefault`/`stopPropagation`) rather than importing or coupling to any component internals. The **only** shared file touched is `index.html`, by exactly one additive line.
 
 ## 1. Trigger & state
 
-- A global `keydown` listener (hook: `useKonamiCode(onActivate)`) watches for `↑ ↑ ↓ ↓ ← → ← → b a`. Matching the sequence toggles a `duneMode` boolean; entering it again while active toggles back off.
+- A global `keydown` listener, attached by the self-mounted `src/dune/` module directly to `document`, watches for `↑ ↑ ↓ ↓ ← → ← → b a`. Matching the sequence toggles a `duneMode` boolean; entering it again while active toggles back off.
 - State persists to `localStorage` under `mcp-explore:dune-mode` so a visitor who finds it keeps it on return, mirroring the existing recents-list persistence pattern.
 - Active state is applied as `document.documentElement.dataset.theme = "dune"` (removed entirely, not set to `"default"`, when inactive) — a single DOM attribute drives every visual change via CSS.
 - No visible UI affordance advertises the trigger — it's a true easter egg, discoverable only by trying the sequence.
 
 ## 2. Theme tokens
 
-A second block in `global.css`, `:root[data-theme="dune"] { … }`, redefining every token name from the default block with dune-direction values. Exact hex values are draft pending the dataviz re-validation below; direction:
+A standalone `src/dune/theme.css`, never appended to `global.css`, containing `:root[data-theme="dune"] { … }` and redefining every token name from the default block with dune-direction values. The attribute selector cascades correctly over plain `:root` regardless of stylesheet load order. Exact hex values are draft pending the dataviz re-validation below; direction:
 
 | Token role | Default | Dune direction |
 |---|---|---|
@@ -59,15 +59,15 @@ This is a deliberate, called-out divergence from the visual-identity spec's "fix
 
 ## 4. Submit transition
 
-Clicking Connect while `duneMode` is active plays a capped ~1.5–2s CSS transform/opacity sequence: the scene scales/pans toward the heighliner silhouette, crossfades to the seeded ship (section 5), which then animates off-frame before the app proceeds into the (still dune-skinned) graph view.
+Trigger, given the isolation constraint (no import/coupling into `ConnectScreen`'s internals): a capture-phase `click` listener on `document`, active only while `duneMode` is on, that fires on the first click on any `<button>` element anywhere on the page. This covers Connect, "Try the demo," and recent-server reconnect uniformly without depending on which one the user chose or on any component's markup — the only assumption is "the landing screen has buttons," which is safe for any web app. The listener never calls `preventDefault`/`stopPropagation`, so it cannot interfere with the real click handler.
 
-This is decorative chrome layered over the existing connect flow, not a replacement for it — `ConnectScreen`'s actual `connectUrlFn`/`connectDemoFn` calls and error handling are unchanged. The flourish is capped at its own duration regardless of how long the real connection takes: if the server responds before the flourish finishes, the flourish plays out to completion (never truncated mid-motion, avoiding a jarring cut); if the server is slow, the flourish holds on its final "ship departed" frame rather than looping.
+On trigger, a capped ~1.5–2s CSS transform/opacity sequence plays: the scene scales/pans toward the heighliner silhouette, crossfades to the seeded ship (section 5), which then animates off-frame. The whole dune overlay (background scene + ship) then auto-hides itself a fixed ~3s after the animation completes, regardless of real connection state — this is deliberately *not* synced to `ConnectScreen`'s actual connect/error outcome (no signal for that is available without coupling to its internals). If the connection is still in progress or has failed when the overlay hides, the (still dune-token-skinned, via section 2) landing screen beneath is simply revealed — a harmless, non-destructive outcome consistent with this being decorative chrome, not a replacement for the real connect flow.
 
 Under `prefers-reduced-motion`, the transition collapses to a ~150ms crossfade directly to the end state.
 
 ## 5. Seeded ship generator
 
-`src/ui/dune/shipGenerator.ts`:
+`src/dune/shipGenerator.ts`:
 
 ```ts
 export interface ShipDesign {
@@ -87,8 +87,8 @@ export function generateShip(seed: string): ShipDesign
 
 ## 6. Testing
 
-- **Tier 1** (`shipGenerator.test.ts`): determinism (same seed → identical output), distinct seeds diverge, all numeric fields finite and in-range — same shape as `layout.test.ts`.
-- **Tier 1** (`duneMode.test.ts`): the konami-sequence matcher tested as an isolated pure reducer (full sequence matches, wrong key resets progress, case handling for `b`/`a`).
+- **Tier 1** (`src/dune/shipGenerator.test.ts`): determinism (same seed → identical output), distinct seeds diverge, all numeric fields finite and in-range — same shape as `layout.test.ts`.
+- **Tier 1** (`src/dune/konami.test.ts`): the konami-sequence matcher tested as an isolated pure function (full sequence matches, wrong key resets progress, case handling for `b`/`a`), no DOM involved.
 - **Tier 2** (RTL): simulated keydown sequence flips `document.documentElement.dataset.theme` and the flag survives a remount via `localStorage`.
 - **Tier 3** (Playwright): explicitly skipped. This is a decorative easter egg; smoke-test coverage isn't warranted. Noting this rather than silently omitting it.
 
