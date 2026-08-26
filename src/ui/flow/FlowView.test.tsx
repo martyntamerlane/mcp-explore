@@ -83,6 +83,33 @@ test("filter recedes non-matching pills, keeps matches, and never hides anything
   expect(screen.getByRole("button", { name: "prompt triage" })).toHaveAttribute("data-receded", "true")
 })
 
+test("large clusters preview 14 pills with a show-all expander", async () => {
+  const user = userEvent.setup()
+  const many = Array.from({ length: 20 }, (_, i) => ({
+    name: `tool_${i}`,
+    inputSchema: { type: "object" as const },
+  }))
+  render(<FlowView snapshot={snap({ tools: many })} transportKind="sse" selection={null} onSelect={noop} />)
+  expect(screen.getByRole("button", { name: "tool tool_13" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "tool tool_14" })).not.toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Show all 20 Tools" }))
+  expect(screen.getByRole("button", { name: "tool tool_19" })).toBeInTheDocument()
+  await user.click(screen.getByRole("button", { name: "Show fewer Tools" }))
+  expect(screen.queryByRole("button", { name: "tool tool_19" })).not.toBeInTheDocument()
+})
+
+test("an active filter searches past the preview cap", async () => {
+  const user = userEvent.setup()
+  const many = Array.from({ length: 20 }, (_, i) => ({
+    name: `tool_${i}`,
+    inputSchema: { type: "object" as const },
+  }))
+  render(<FlowView snapshot={snap({ tools: many })} transportKind="sse" selection={null} onSelect={noop} />)
+  await user.type(screen.getByLabelText(/filter/i), "tool_19")
+  expect(screen.getByRole("button", { name: "tool tool_19" })).not.toHaveAttribute("data-receded")
+  expect(screen.getByRole("button", { name: "tool tool_0" })).toHaveAttribute("data-receded", "true")
+})
+
 test("cluster collapse hides its pills and flips the toggle label", async () => {
   const user = userEvent.setup()
   render(<FlowView snapshot={snap()} transportKind="sse" selection={null} onSelect={noop} />)

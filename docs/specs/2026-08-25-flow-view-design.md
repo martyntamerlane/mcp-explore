@@ -91,3 +91,12 @@ The childishness diagnosis: saturated colour at rest, OS-default typography, fla
 - **Organic capsules**: wide pills are `fit-content` (name + inline blurb), so lengths vary naturally under the cascade; blurbs no longer right-aligned into table rows.
 - **Ghost numerals** in the display face at 104px/300.
 - Atmosphere washes must complete their radial fade **inside** their box — a clipped ellipse leaves a hard edge.
+
+### Refinement pass (2026-08-26)
+
+User feedback: planet orb disliked; cascade indentation misread as nesting; large clusters (50+ resources) didn't scale; pulse sweep too slow.
+
+- **Core is a gate ring** (supersedes the planet orb): thin conic annulus, brightest through the arc where the three conduits exit (tool ≈55°, resource ≈100°, prompt ≈145°), dim ink elsewhere; blurred halo behind; breathing kept.
+- **Cascade removed**: wide pills share a flat left edge — indentation implied hierarchy that doesn't exist. Organic `fit-content` widths stay.
+- **Preview cap**: clusters over 14 items render the first 14 plus a "+ N more" expander ("− show fewer" once open). An active filter bypasses the cap and searches the whole cluster, so matches can never hide behind it.
+- **Pulse retimed**: 3 s cycle — ~0.7 s sweep, rest interval unchanged (~2.3 s).

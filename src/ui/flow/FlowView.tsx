@@ -10,6 +10,9 @@ const FILL: Record<EntityKind, string> = {
   prompt: "var(--prompt)",
 }
 
+/** Large clusters preview this many pills; the rest sit behind a "+ N more" expander. */
+export const PREVIEW_MAX = 14
+
 function Glyph({ kind }: { kind: EntityKind }) {
   const fill = FILL[kind]
   return (
@@ -24,7 +27,6 @@ function Glyph({ kind }: { kind: EntityKind }) {
 function Pill({
   item,
   wide,
-  row,
   receded,
   selected,
   onSelect,
@@ -32,7 +34,6 @@ function Pill({
 }: {
   item: FlowItem
   wide: boolean
-  row: number
   receded: boolean
   selected: boolean
   onSelect: () => void
@@ -45,7 +46,6 @@ function Pill({
       aria-pressed={selected}
       data-receded={receded || undefined}
       data-kind={item.kind}
-      style={wide ? ({ "--row": row } as CSSProperties) : undefined}
       className={[styles.pill, wide ? styles.wide : styles.compact, selected ? styles.selectedPill : ""]
         .join(" ")
         .trim()}
@@ -69,6 +69,9 @@ function Cluster({
   selection,
   collapsed,
   onToggle,
+  expanded,
+  onToggleExpand,
+  queryActive,
   onSelect,
   onHover,
   nodeRef,
@@ -79,10 +82,16 @@ function Cluster({
   selection: StageProps["selection"]
   collapsed: boolean
   onToggle: () => void
+  expanded: boolean
+  onToggleExpand: () => void
+  queryActive: boolean
   onSelect: StageProps["onSelect"]
   onHover: (item: FlowItem | null) => void
   nodeRef: (el: HTMLElement | null) => void
 }) {
+  // An active filter must search the whole cluster, so it bypasses the preview cap.
+  const capped = !expanded && !queryActive && group.items.length > PREVIEW_MAX
+  const visible = capped ? group.items.slice(0, PREVIEW_MAX) : group.items
   return (
     <section ref={nodeRef} className={styles.cluster} style={{ "--i": index } as CSSProperties} data-kind={group.kind}>
       <span className={styles.ghostCount} aria-hidden="true">
@@ -103,20 +112,31 @@ function Cluster({
       </header>
       <p className={styles.gloss}>{group.gloss}</p>
       {!collapsed && group.items.length > 0 && (
-        <div className={group.density === "wide" ? styles.wideList : styles.compactList}>
-          {group.items.map((item, row) => (
-            <Pill
-              key={`${item.kind}:${item.id}`}
-              item={item}
-              wide={group.density === "wide"}
-              row={row}
-              receded={!matches(item)}
-              selected={selection?.kind === item.kind && selection?.id === item.id}
-              onSelect={() => onSelect({ kind: item.kind, id: item.id })}
-              onHover={onHover}
-            />
-          ))}
-        </div>
+        <>
+          <div className={group.density === "wide" ? styles.wideList : styles.compactList}>
+            {visible.map((item) => (
+              <Pill
+                key={`${item.kind}:${item.id}`}
+                item={item}
+                wide={group.density === "wide"}
+                receded={!matches(item)}
+                selected={selection?.kind === item.kind && selection?.id === item.id}
+                onSelect={() => onSelect({ kind: item.kind, id: item.id })}
+                onHover={onHover}
+              />
+            ))}
+          </div>
+          {!queryActive && group.items.length > PREVIEW_MAX && (
+            <button
+              type="button"
+              className={styles.more}
+              aria-label={capped ? `Show all ${group.items.length} ${group.label}` : `Show fewer ${group.label}`}
+              onClick={onToggleExpand}
+            >
+              {capped ? `+ ${group.items.length - PREVIEW_MAX} more` : "− show fewer"}
+            </button>
+          )}
+        </>
       )}
       {group.items.length === 0 && <p className={styles.empty}>none</p>}
     </section>
@@ -128,6 +148,7 @@ export default function FlowView({ snapshot, transportKind, selection, onSelect 
   const [query, setQuery] = useState("")
   const [hovered, setHovered] = useState<FlowItem | null>(null)
   const [collapsed, setCollapsed] = useState<Partial<Record<EntityKind, boolean>>>({})
+  const [expanded, setExpanded] = useState<Partial<Record<EntityKind, boolean>>>({})
   const diagramRef = useRef<HTMLDivElement | null>(null)
   const serverRef = useRef<HTMLDivElement | null>(null)
   const clusterRefs = useRef<Partial<Record<EntityKind, HTMLElement | null>>>({})
@@ -158,7 +179,7 @@ export default function FlowView({ snapshot, transportKind, selection, onSelect 
           />
           <div className={styles.serverCol}>
             <div className={styles.serverNode}>
-              <div className={styles.orb} aria-hidden="true" ref={serverRef} />
+              <div className={styles.core} aria-hidden="true" ref={serverRef} />
               <span className={styles.serverName}>{snapshot.serverInfo.name}</span>
               <span className={styles.serverMeta}>v{snapshot.serverInfo.version}</span>
               <span className={styles.serverMeta}>{transportKind}</span>
@@ -174,6 +195,9 @@ export default function FlowView({ snapshot, transportKind, selection, onSelect 
                 selection={selection}
                 collapsed={collapsed[g.kind] ?? false}
                 onToggle={() => setCollapsed((c) => ({ ...c, [g.kind]: !c[g.kind] }))}
+                expanded={expanded[g.kind] ?? false}
+                onToggleExpand={() => setExpanded((e) => ({ ...e, [g.kind]: !e[g.kind] }))}
+                queryActive={q !== ""}
                 onSelect={onSelect}
                 onHover={setHovered}
                 nodeRef={(el) => (clusterRefs.current[g.kind] = el)}
