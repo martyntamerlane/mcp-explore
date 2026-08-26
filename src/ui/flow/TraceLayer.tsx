@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type RefObject } from "react"
+import { useEffect, useState, type RefObject } from "react"
 import type { EntityKind } from "../stage"
 import styles from "./FlowView.module.css"
 
@@ -21,7 +21,10 @@ export default function TraceLayer({
 }) {
   const [traces, setTraces] = useState<Trace[]>([])
 
-  useLayoutEffect(() => {
+  // A passive effect, deliberately not useLayoutEffect: this component renders
+  // before its sibling/parent refs are attached (ref attachment and layout
+  // effects share tree order), so a layout effect would see null refs and bail.
+  useEffect(() => {
     const container = containerRef.current
     const server = serverRef.current
     if (!container || !server) return
