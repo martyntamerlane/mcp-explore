@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
@@ -11,9 +11,11 @@ test("full flow: demo → graph → node → panel → disconnect", async () => 
   await userEvent.click(screen.getByRole("button", { name: /try the demo/i }))
   expect(await screen.findByText(/TOOLS · 4/)).toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
-  expect(await screen.findByText(/create a new issue/i)).toBeInTheDocument()
+  // The pill blurb also shows the description at rest, so scope panel assertions to the <aside>.
+  const panel = await screen.findByRole("complementary")
+  expect(within(panel).getByText(/create a new issue/i)).toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: /close details/i }))
-  expect(screen.queryByText(/create a new issue/i)).not.toBeInTheDocument()
+  expect(screen.queryByRole("complementary")).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: /disconnect/i }))
   expect(await screen.findByLabelText(/server url/i)).toBeInTheDocument()
 })

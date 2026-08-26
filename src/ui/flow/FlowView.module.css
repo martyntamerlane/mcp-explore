@@ -52,8 +52,8 @@
   min-width: 0;
   padding: 10px 14px;
   border-radius: var(--radius-m);
-  border: 1px solid var(--pill-border);
-  background: var(--pill-bg);
+  border: 1px solid var(--panel-border);
+  background: var(--panel);
   color: var(--ink);
   cursor: pointer;
   text-align: left;

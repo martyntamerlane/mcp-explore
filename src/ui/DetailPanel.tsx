@@ -1,12 +1,12 @@
 import { useState } from "react"
 import type { Connection } from "../mcp/types"
-import type { GraphSelection } from "./Graph"
+import type { EntitySelection } from "./stage"
 import { schemaRows } from "./schema"
 import styles from "./DetailPanel.module.css"
 
 export interface DetailPanelProps {
   connection: Connection
-  selected: GraphSelection | null
+  selected: EntitySelection | null
   onClose: () => void
 }
 

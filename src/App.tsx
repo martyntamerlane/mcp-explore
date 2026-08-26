@@ -1,26 +1,20 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { connectUrl as realConnectUrl } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
 import ConnectScreen from "./ui/ConnectScreen"
 import DetailPanel from "./ui/DetailPanel"
-import Graph, { type GraphSelection } from "./ui/Graph"
-import { computeLayout } from "./ui/layout"
+import FlowView from "./ui/flow/FlowView"
+import type { EntitySelection } from "./ui/stage"
 import styles from "./App.module.css"
 
 type Phase = { status: "idle" } | { status: "connected"; connection: Connection }
 
 export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: typeof realConnectUrl } = {}) {
   const [phase, setPhase] = useState<Phase>({ status: "idle" })
-  const [selected, setSelected] = useState<GraphSelection | null>(null)
+  const [selected, setSelected] = useState<EntitySelection | null>(null)
   const [autoTarget, setAutoTarget] = useState<string | undefined>(
     () => new URLSearchParams(window.location.search).get("server") ?? undefined,
   )
-
-  const layout = useMemo(() => {
-    if (phase.status !== "connected") return null
-    const { tools, resources, prompts } = phase.connection.snapshot
-    return computeLayout({ tools, resources, prompts })
-  }, [phase])
 
   function handleConnected(connection: Connection, source: { url?: string }) {
     if (source.url) {
@@ -68,9 +62,7 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
         </button>
       </header>
       <main className={styles.main}>
-        {layout && (
-          <Graph layout={layout} serverName={snapshot.serverInfo.name} selected={selected} onSelect={setSelected} />
-        )}
+        <FlowView snapshot={snapshot} transportKind={transportKind} selection={selected} onSelect={setSelected} />
         <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
       </main>
     </div>
