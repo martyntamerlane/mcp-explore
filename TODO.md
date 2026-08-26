@@ -85,6 +85,24 @@ Decision on 2026-08-24: repo went public with **no license** (source-visible, al
 
 Deferred non-blocking items from the 2026-08-25 UI v1 final review: cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios); dedupe/suffix duplicate tool/prompt names and resource URIs in `computeLayout` (duplicate React keys otherwise); render non-string enum members via JSON.stringify and key chips by index; Escape closes the detail panel + focus moves into/restores from it; aria-live announcements; preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
 
+### TODO-13: Force separate Vite chunks for dune mode's entry
+
+**Complexity**: S
+
+Production builds currently merge `src/main.tsx` and `src/dune/main.tsx` into one flat module-evaluation scope rather than two physically separate script chunks (a Vite/Rolldown default; the dune-mode plan's own constraints forbade a `vite.config.ts` change). Practical effect: a synchronous top-level exception in the main app's entry could in principle also abort dune's mount statement, which wouldn't happen with two genuinely separate `<script type="module">` graphs. Parked as negligible risk during the 2026-08-24 dune-mode final review (if the main app's top-level module evaluation throws, the user already has a broken page regardless of dune mode). Revisit via `manualChunks`/`rolldownOptions.output.codeSplitting` only if this ever proves to matter in practice.
+
+### TODO-14: Dune mode's post-connect polish
+
+**Complexity**: S
+
+From the 2026-08-24 dune-mode final review: the departure-transition auto-hide is a fixed timer (not synced to the real connect outcome, by design — see the spec), and a manual browser smoke check (Konami sequence, transition, `localStorage` persistence across reload, toggle-off) was never performed since no browser was available during implementation. Do this smoke check before considering dune mode fully verified.
+
+### TODO-15: Baseline (non-dune) landing-page redesign
+
+**Complexity**: M
+
+A general visual/UX redesign of the landing screen for usefulness and "stickiness," aiming for a more futuristic/minimalist/artistic feel — the piece of the 2026-08-24 dune-mode brainstorming session that was deliberately decomposed out as a separate, not-yet-brainstormed sub-project (dune mode itself is a skin/extension of this baseline, not a replacement for it).
+
 ---
 
 ## Completed

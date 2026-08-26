@@ -15,6 +15,14 @@ A public, shareable web page. A user inputs the URL of their MCP server; the pag
 - **Overview header** — server name (monospace), a `v{version}` chip, a transport chip (`streamable-http` / `sse` / `in-memory`), and a tools/resources/prompts count line; a Disconnect button tears the connection down and returns to the landing screen.
 - **Shareable URLs** — connecting via a typed/recent URL writes `?server=<encoded url>` to the address bar with `history.replaceState`; loading that URL auto-connects. Auth headers are never persisted to the URL — only the server URL is encoded. Disconnecting clears the query string back to the bare path.
 
+## Dune mode (easter egg)
+
+A hidden alternate theme, documented in [`docs/specs/2026-08-24-dune-mode-design.md`](specs/2026-08-24-dune-mode-design.md). Entering the classic Konami code (`↑↑↓↓←→←→ba`) anywhere on the page toggles a full-session dune-palette reskin (persisted in `localStorage`, `mcp-explore:dune-mode`) — the landing screen, graph, and detail panel all pick up dune-direction CSS tokens with no component code changes, since every color already flowed through `var(--…)` custom properties. While active, the landing screen's background becomes a procedural "heighliner scene": a heighliner silhouette, a rotating central "galactic entity," and a ring of ten generative-art tiles (five algorithmic motifs, no AI-generated or external images). Clicking any button plays a capped departure animation into a ship whose hull shape, colors, and details are deterministically derived from the connect-target URL (seeded hash + PRNG — the same URL always produces the same ship). Entering the sequence again toggles it off.
+
+Built as a fully isolated, self-mounting module (`src/dune/`) loaded via its own Vite entry script — see Architecture Overview for the module map and isolation rationale.
+
 ## Explicitly out of v1 scope
 
 Tool calling (TODO-1), OAuth (TODO-2), stdio servers (TODO-3), grouping (TODO-4), light theme (TODO-5).
+
+Baseline (non-dune) landing-page redesign for general usefulness/stickiness — deferred as a separate, not-yet-brainstormed piece of work (see TODO-15).
