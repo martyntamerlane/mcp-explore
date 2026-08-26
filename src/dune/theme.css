@@ -1,5 +1,10 @@
 /* Entity-accent triad validated 2026-08-24 (dataviz six-checks, dark mode, all PASS):
-   --tool: #8e5300 (spice-amber) · --resource: #b48c2b (sand) · --prompt: #006497 (deep Fremen-blue), vs --bg: #120c08 */
+   --tool: #8e5300 (spice-amber) · --resource: #b48c2b (sand) · --prompt: #006497 (deep Fremen-blue), vs --bg: #120c08
+   Re-confirmed 2026-08-25 (final-review fix wave, WCAG contrast only): --tool 3.13:1, --prompt 3.02:1 —
+   both still clear the 3:1 non-text floor, unchanged.
+   --danger revalidated 2026-08-25 (WCAG contrast vs --bg: #120c08): #b3432b was 3.47:1, failing the 4.5:1 AA
+   text floor for its two text usages (DetailPanel .req / .error). Replaced with #d9705a — 5.93:1, hue ~10°
+   (matches the original ~11° rust-red direction). */
 :root[data-theme="dune"] {
   --bg: #120c08;
   --glow-a: rgba(154, 82, 18, 0.35);
@@ -18,7 +23,17 @@
   --prompt: #006497;
   --prompt-bright: #6fa8cc;
 
-  --danger: #b3432b;
+  --danger: #d9705a;
+  /* Default --cta-gradient hardcodes the default --tool/--prompt as its two stops (135deg,
+     0.35 alpha each). --prompt here is a cool Fremen-blue, which would break the "warm"
+     direction the CTA gradient calls for — so this reuses --tool (amber) as stop 1, and
+     the already-established rust hue from --glow-b (see spec: "deep rust") as stop 2,
+     instead of --prompt, keeping the same 135deg/0.35-alpha structure as the default. */
+  --cta-gradient: linear-gradient(135deg, rgba(142, 83, 0, 0.35), rgba(92, 38, 12, 0.35));
+  /* --panel-solid / --header-bg: same rgba structure as default (slightly lighter than --bg,
+     same alpha), hue shifted warm to sit with --bg: #120c08. */
+  --panel-solid: rgba(26, 18, 12, 0.75);
+  --header-bg: rgba(26, 18, 12, 0.5);
 
   --dune-star: #ffffff;
   --dune-tile-rim: rgba(255, 255, 255, 0.15);

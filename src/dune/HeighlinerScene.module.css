@@ -71,7 +71,8 @@
   .heighliner,
   .entity,
   .ring,
-  .shipLayer {
+  .shipLayer,
+  .shipLayer.departing {
     animation: none;
     transition-duration: 0.15s;
     transition-delay: 0s;

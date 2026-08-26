@@ -49,3 +49,25 @@ test("no false positives when sequence is not a contiguous window", () => {
   press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
   expect(onMatch).not.toHaveBeenCalled()
 })
+
+test("a Shift keydown between real sequence keys — as a real keyboard sends before an uppercase letter — does not break the match", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight"])
+  // A real keyboard fires a Shift keydown before the browser reports an uppercase "B".
+  handler("Shift")
+  press(handler, ["B", "A"])
+  expect(onMatch).toHaveBeenCalledTimes(1)
+})
+
+test("Control, Alt, Meta, and CapsLock keydowns are likewise ignored, not treated as wrong keys", () => {
+  const onMatch = vi.fn()
+  const handler = createKonamiDetector(onMatch)
+  press(handler, ["ArrowUp", "ArrowUp"])
+  handler("Control")
+  handler("Alt")
+  handler("Meta")
+  handler("CapsLock")
+  press(handler, ["ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  expect(onMatch).toHaveBeenCalledTimes(1)
+})

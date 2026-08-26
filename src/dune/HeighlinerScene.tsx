@@ -14,7 +14,7 @@ export default function HeighlinerScene({ transitioning, shipSeed }: HeighlinerS
   const ship = generateShip(shipSeed)
 
   return (
-    <div className={styles.scene} aria-hidden={false}>
+    <div className={styles.scene} aria-hidden="true">
       <svg
         className={[styles.heighliner, transitioning ? styles.zoomed : ""].join(" ").trim()}
         viewBox="0 0 400 200"

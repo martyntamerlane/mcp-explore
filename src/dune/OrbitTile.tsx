@@ -3,6 +3,12 @@ import styles from "./OrbitTile.module.css"
 const MOTIFS = ["storm", "dunes", "moons", "starfield", "wormsign"] as const
 type Motif = (typeof MOTIFS)[number]
 
+// Dune-safe hue family (spice-amber, sand, Fremen-blue, bone, rust — same
+// neighborhood as shipGenerator.ts's HUE_POOL), not a full 360° sweep. Ten tiles
+// share these five hues two at a time; the +/-6 offset keeps each pair of tiles
+// that land on the same pool entry visually distinct from each other.
+const HUE_POOL = [32, 38, 210, 45, 14]
+
 export interface OrbitTileProps {
   index: number
   size?: number
@@ -10,7 +16,7 @@ export interface OrbitTileProps {
 
 export default function OrbitTile({ index, size = 64 }: OrbitTileProps) {
   const motif: Motif = MOTIFS[index % MOTIFS.length]
-  const hue = (index * 36) % 360
+  const hue = HUE_POOL[index % HUE_POOL.length] + (index >= HUE_POOL.length ? 6 : -6)
   const id = `orbit-tile-${index}`
 
   return (
