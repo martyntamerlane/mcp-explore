@@ -62,17 +62,15 @@ src/
     *.test.ts[x]            Colocated tests for each ui/ module
   dune/
     main.tsx               Independent bootstrap: mounts DuneOverlay into its own React root
-    DuneOverlay.tsx         Konami trigger, localStorage persistence, click-to-transition orchestration
+    DuneOverlay.tsx         Konami trigger, localStorage persistence, theme-attribute sync
     konami.ts               Deterministic rolling-buffer Konami-sequence detector
-    HeighlinerScene.tsx     Landing background: heighliner, rotating entity, orbit ring, ship departure
-    OrbitTile.tsx           One procedural generative-art tile (5 motifs, palette-rotated)
-    shipGenerator.ts        generateShip(seed) — deterministic hash+PRNG ship design from a URL
-    ShipSvg.tsx             Renders a ship design as SVG
-    theme.css               :root[data-theme="dune"] token overrides (see spec, 2026-08-24-dune-mode-design.md)
+    CinematicScene.tsx      Full-bleed animated backdrop: hero image, parallax layers, starfield, sun, haze, grain
+    assets/hero.webp        The AI-generated hero image (source PNG in docs/external-sources/)
+    theme.css               :root[data-theme="dune"] token overrides (see spec, 2026-08-26-dune-cinematic-redesign.md)
     *.module.css, *.test.ts[x]   CSS modules and colocated tests
 ```
 
-**Dune mode's isolation** (see [`docs/specs/2026-08-24-dune-mode-design.md`](specs/2026-08-24-dune-mode-design.md)): `src/dune/` shares no files, imports, or component coupling with the rest of `src/`. It is loaded via a second, independent `<script type="module" src="/src/dune/main.tsx">` entry in `index.html` — the only file outside `src/dune/` the feature touches, by exactly one added line. It reaches the rest of the page only through generic `document`-level DOM observation (`keydown`, capture-phase `click`), never `preventDefault`/`stopPropagation`, and reskins the whole app purely via a second CSS token block cascading over the same `var(--…)` custom properties every component already uses. This was a deliberate choice to allow it to be built concurrently with other work touching `App.tsx`/`global.css`/`ConnectScreen.tsx`/`Graph.tsx` without merge risk.
+**Dune mode's isolation** (see [`docs/specs/2026-08-24-dune-mode-design.md`](specs/2026-08-24-dune-mode-design.md), scene redesigned per [`docs/specs/2026-08-26-dune-cinematic-redesign.md`](specs/2026-08-26-dune-cinematic-redesign.md)): `src/dune/` shares no files, imports, or component coupling with the rest of `src/`. It is loaded via a second, independent `<script type="module" src="/src/dune/main.tsx">` entry in `index.html` — the only file outside `src/dune/` the feature touches, by exactly one added line. It reaches the rest of the page only through generic `document`-level DOM observation (`keydown` for the trigger; pointer position is read passively for parallax), never `preventDefault`/`stopPropagation`, and reskins the whole app purely via a second CSS token block cascading over the same `var(--…)` custom properties every component already uses. This was a deliberate choice to allow it to be built concurrently with other work touching `App.tsx`/`global.css`/`ConnectScreen.tsx`/`Graph.tsx` without merge risk.
 
 Tests are colocated (`*.test.ts[x]`), run by Vitest (jsdom, globals).
 
