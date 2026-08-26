@@ -16,7 +16,8 @@
   letter-spacing: -0.01em;
   margin: 0 0 16px;
 }
-.sub { color: var(--ink-2); margin: 0 0 48px; }
+.sub { color: var(--ink-2); margin: 0 0 12px; }
+.gloss { font-size: 13px; color: var(--ink-3); margin: 0 0 48px; }
 .form { display: flex; gap: 12px; }
 .url {
   flex: 1;

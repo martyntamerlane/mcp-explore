@@ -73,6 +73,9 @@ export default function ConnectScreen({
       <p className={styles.kicker}>MCP EXPLORE</p>
       <h1 className={styles.title}>See inside any MCP server.</h1>
       <p className={styles.sub}>Paste a server URL — get a living map of its tools, resources and prompts.</p>
+      <p className={styles.gloss}>
+        MCP is how apps hand tools and data to AI assistants — this shows you what a server offers.
+      </p>
 
       <form
         className={styles.form}

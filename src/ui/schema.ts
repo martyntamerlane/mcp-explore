@@ -16,6 +16,23 @@ function typeName(p: Record<string, unknown>): string {
   return typeof p.type === "string" ? p.type : "any"
 }
 
+/** Newcomer-friendly rendering of a schemaRows type; raw protocol names stay available beside it. */
+export function friendlyType(raw: string): string {
+  if (raw.endsWith("[]")) return `list of ${friendlyType(raw.slice(0, -2))}`
+  switch (raw) {
+    case "string":
+      return "text"
+    case "integer":
+      return "number"
+    case "boolean":
+      return "true / false"
+    case "enum":
+      return "one of"
+    default:
+      return raw
+  }
+}
+
 // Schemas come from an untrusted server: treat as unknown, narrow defensively.
 export function schemaRows(schema: unknown): SchemaRow[] {
   if (typeof schema !== "object" || schema === null) return []

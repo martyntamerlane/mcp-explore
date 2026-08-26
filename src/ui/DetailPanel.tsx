@@ -1,7 +1,7 @@
 import { useState } from "react"
 import type { Connection } from "../mcp/types"
 import type { EntitySelection } from "./stage"
-import { schemaRows } from "./schema"
+import { friendlyType, schemaRows } from "./schema"
 import styles from "./DetailPanel.module.css"
 
 export interface DetailPanelProps {
@@ -68,7 +68,10 @@ function ToolView({ connection, id }: { connection: Connection; id: string }) {
                   {r.name}
                   {r.required && <span className={styles.req}> ✱</span>}
                 </td>
-                <td className={styles.argType}>{r.type}</td>
+                <td className={styles.argType}>
+                  {friendlyType(r.type)}
+                  {friendlyType(r.type) !== r.type && <span className={styles.rawType}>{r.type}</span>}
+                </td>
                 <td className={styles.argDesc}>
                   {r.description}
                   {r.enumValues && (
