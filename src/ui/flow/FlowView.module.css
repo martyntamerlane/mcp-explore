@@ -33,11 +33,45 @@
   border: 1px solid var(--panel-border);
   background: var(--panel);
   backdrop-filter: blur(20px);
+  animation: materialize 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 .serverName { font-family: var(--mono); font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
 .serverMeta { font-size: 11px; letter-spacing: 0.05em; color: var(--ink-3); }
 .clusters { display: grid; gap: 40px; align-content: start; }
-.cluster { min-width: 0; }
+.cluster {
+  min-width: 0;
+  animation: materialize 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(200ms + var(--i) * 120ms);
+}
+.traces { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.traceBase {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 1;
+  animation: drawIn 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.tracePulse {
+  fill: none;
+  stroke: color-mix(in oklab, var(--ink) 30%, transparent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.12 0.88;
+  stroke-dashoffset: 1.12;
+  animation: heartbeat 4s linear 1.2s infinite;
+}
+@keyframes drawIn {
+  from { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  to { stroke-dasharray: 1; stroke-dashoffset: 0; }
+}
+@keyframes heartbeat {
+  0% { stroke-dashoffset: 1.12; }
+  45% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes materialize {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 .clusterHeader { display: flex; align-items: baseline; gap: 8px; }
 .clusterTitle { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); }
 .collapse { background: none; border: none; color: var(--ink-3); cursor: pointer; font-size: 11px; padding: 0 4px; }
@@ -94,4 +128,8 @@
 .readoutIdle { color: var(--ink-3); }
 @media (prefers-reduced-motion: reduce) {
   .pill { transition: none; }
+  .tracePulse { display: none; }
+  .traceBase,
+  .cluster,
+  .serverNode { animation: none; }
 }

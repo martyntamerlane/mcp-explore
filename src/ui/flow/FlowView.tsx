@@ -1,6 +1,7 @@
-import { useMemo, useState, type CSSProperties } from "react"
+import { useMemo, useRef, useState, type CSSProperties } from "react"
 import type { EntityKind, StageProps } from "../stage"
 import { buildFlowModel, type FlowGroup, type FlowItem } from "./flowModel"
+import TraceLayer from "./TraceLayer"
 import styles from "./FlowView.module.css"
 
 const FILL: Record<EntityKind, string> = {
@@ -67,6 +68,7 @@ function Cluster({
   onToggle,
   onSelect,
   onHover,
+  nodeRef,
 }: {
   group: FlowGroup
   index: number
@@ -76,9 +78,10 @@ function Cluster({
   onToggle: () => void
   onSelect: StageProps["onSelect"]
   onHover: (item: FlowItem | null) => void
+  nodeRef: (el: HTMLElement | null) => void
 }) {
   return (
-    <section className={styles.cluster} style={{ "--i": index } as CSSProperties} data-kind={group.kind}>
+    <section ref={nodeRef} className={styles.cluster} style={{ "--i": index } as CSSProperties} data-kind={group.kind}>
       <header className={styles.clusterHeader}>
         <span className={styles.clusterTitle}>{`${group.label.toUpperCase()} · ${group.items.length}`}</span>
         {group.items.length > 0 && (
@@ -118,6 +121,9 @@ export default function FlowView({ snapshot, transportKind, selection, onSelect 
   const [query, setQuery] = useState("")
   const [hovered, setHovered] = useState<FlowItem | null>(null)
   const [collapsed, setCollapsed] = useState<Partial<Record<EntityKind, boolean>>>({})
+  const diagramRef = useRef<HTMLDivElement | null>(null)
+  const serverRef = useRef<HTMLDivElement | null>(null)
+  const clusterRefs = useRef<Partial<Record<EntityKind, HTMLElement | null>>>({})
 
   const q = query.trim().toLowerCase()
   const matches = (i: FlowItem) => q === "" || i.label.toLowerCase().includes(q)
@@ -135,9 +141,15 @@ export default function FlowView({ snapshot, transportKind, selection, onSelect 
         />
       </div>
       <div className={styles.scroll}>
-        <div className={styles.diagram}>
+        <div className={styles.diagram} ref={diagramRef}>
+          <TraceLayer
+            key={`${collapsed.tool ?? false}:${collapsed.resource ?? false}:${collapsed.prompt ?? false}`}
+            containerRef={diagramRef}
+            serverRef={serverRef}
+            clusterRefs={clusterRefs}
+          />
           <div className={styles.serverCol}>
-            <div className={styles.serverNode}>
+            <div className={styles.serverNode} ref={serverRef}>
               <span className={styles.serverName}>{snapshot.serverInfo.name}</span>
               <span className={styles.serverMeta}>v{snapshot.serverInfo.version}</span>
               <span className={styles.serverMeta}>{transportKind}</span>
@@ -155,6 +167,7 @@ export default function FlowView({ snapshot, transportKind, selection, onSelect 
                 onToggle={() => setCollapsed((c) => ({ ...c, [g.kind]: !c[g.kind] }))}
                 onSelect={onSelect}
                 onHover={setHovered}
+                nodeRef={(el) => (clusterRefs.current[g.kind] = el)}
               />
             ))}
           </div>
