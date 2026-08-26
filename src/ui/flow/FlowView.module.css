@@ -32,6 +32,16 @@
   background: radial-gradient(closest-side, var(--glow-a), transparent 70%);
   pointer-events: none;
 }
+/* film grain — kills the flat-vector feel; monochrome noise, no colour values */
+.diagram::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
 .serverCol { display: flex; align-items: center; justify-content: center; }
 .serverNode {
   position: sticky;
@@ -42,29 +52,41 @@
   text-align: center;
   animation: materialize 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
-/* the core: one orb wearing all three capability colors */
+/* the core: a glass celestial body — dark heart, lit limb, specular, ringed */
 .orb {
-  width: 96px;
-  height: 96px;
+  position: relative;
+  width: 132px;
+  height: 132px;
   border-radius: 50%;
-  margin-bottom: 12px;
-  border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+  margin-bottom: 16px;
+  border: 1px solid color-mix(in oklab, var(--ink) 22%, transparent);
   background:
-    radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--ink) 20%, transparent), transparent 55%),
-    radial-gradient(circle at 70% 72%, color-mix(in oklab, var(--prompt) 30%, transparent), transparent 62%),
-    radial-gradient(circle at 25% 75%, color-mix(in oklab, var(--resource) 22%, transparent), transparent 60%),
-    radial-gradient(circle at 50% 45%, color-mix(in oklab, var(--tool) 32%, transparent), transparent 75%);
+    radial-gradient(circle at 31% 24%, color-mix(in oklab, var(--ink) 34%, transparent), transparent 38%),
+    radial-gradient(circle at 50% 48%, transparent 34%, color-mix(in oklab, var(--tool) 22%, transparent) 66%, color-mix(in oklab, var(--prompt) 26%, transparent) 86%, transparent 92%),
+    radial-gradient(circle at 24% 76%, color-mix(in oklab, var(--resource) 14%, transparent), transparent 52%);
   box-shadow:
-    0 0 28px 0 color-mix(in oklab, var(--tool) 28%, transparent),
-    0 0 80px 10px color-mix(in oklab, var(--prompt) 14%, transparent),
-    inset 0 0 22px 0 color-mix(in oklab, var(--ink) 12%, transparent);
+    inset 0 -26px 44px color-mix(in oklab, var(--prompt) 24%, transparent),
+    inset 0 14px 34px color-mix(in oklab, var(--tool) 14%, transparent),
+    inset 0 0 60px color-mix(in oklab, var(--bg) 65%, transparent),
+    0 0 44px 0 color-mix(in oklab, var(--tool) 18%, transparent),
+    0 0 130px 24px color-mix(in oklab, var(--prompt) 9%, transparent);
   animation: breathe 7s ease-in-out infinite alternate;
+}
+/* orbital ring — thin, tilted, precise */
+.orb::after {
+  content: "";
+  position: absolute;
+  inset: -16px -30px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in oklab, var(--ink) 20%, transparent);
+  border-top-color: transparent;
+  transform: rotate(-22deg) scaleY(0.38);
 }
 @keyframes breathe {
   from { transform: scale(1); }
   to { transform: scale(1.05); }
 }
-.serverName { font-family: var(--mono); font-size: 15px; color: var(--ink); overflow-wrap: anywhere; max-width: 240px; }
+.serverName { font-family: var(--mono); font-size: 17px; color: var(--ink); overflow-wrap: anywhere; max-width: 240px; }
 .serverMeta { font-size: 11px; letter-spacing: 0.05em; color: var(--ink-3); }
 .clusters { display: grid; gap: 56px; align-content: start; }
 .cluster {
@@ -74,25 +96,28 @@
   animation-delay: calc(200ms + var(--i) * 120ms);
 }
 /* per-kind atmosphere washing the cluster from where its conduit arrives */
+/* the wash must complete its fade inside the box — a clipped ellipse leaves a
+   hard edge that reads as a rectangle */
 .cluster::before {
   content: "";
   position: absolute;
-  inset: -28px -24px -28px -56px;
+  inset: -60px -40px -60px -280px;
   pointer-events: none;
 }
-.cluster[data-kind="tool"]::before { background: radial-gradient(460px 240px at 10% 15%, color-mix(in oklab, var(--tool) 7%, transparent), transparent 70%); }
-.cluster[data-kind="resource"]::before { background: radial-gradient(460px 240px at 10% 15%, color-mix(in oklab, var(--resource) 7%, transparent), transparent 70%); }
-.cluster[data-kind="prompt"]::before { background: radial-gradient(460px 240px at 10% 15%, color-mix(in oklab, var(--prompt) 7%, transparent), transparent 70%); }
+.cluster[data-kind="tool"]::before { background: radial-gradient(230px 150px at 290px 35%, color-mix(in oklab, var(--tool) 6%, transparent), transparent); }
+.cluster[data-kind="resource"]::before { background: radial-gradient(230px 150px at 290px 35%, color-mix(in oklab, var(--resource) 6%, transparent), transparent); }
+.cluster[data-kind="prompt"]::before { background: radial-gradient(230px 150px at 290px 35%, color-mix(in oklab, var(--prompt) 6%, transparent), transparent); }
 /* the count, monumental and almost not there */
 .ghostCount {
   position: absolute;
-  top: -20px;
+  top: -26px;
   right: 0;
-  font-family: var(--mono);
-  font-size: 76px;
-  font-weight: 100;
+  font-family: var(--display);
+  font-size: 104px;
+  font-weight: 300;
+  letter-spacing: -0.04em;
   line-height: 1;
-  color: color-mix(in oklab, var(--ink) 8%, transparent);
+  color: color-mix(in oklab, var(--ink) 7%, transparent);
   pointer-events: none;
   user-select: none;
 }
@@ -101,11 +126,11 @@
 .cluster[data-kind="tool"] .clusterHeader::after { background: linear-gradient(90deg, color-mix(in oklab, var(--tool) 40%, transparent), transparent 80%); }
 .cluster[data-kind="resource"] .clusterHeader::after { background: linear-gradient(90deg, color-mix(in oklab, var(--resource) 40%, transparent), transparent 80%); }
 .cluster[data-kind="prompt"] .clusterHeader::after { background: linear-gradient(90deg, color-mix(in oklab, var(--prompt) 40%, transparent), transparent 80%); }
-.clusterTitle { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); }
+.clusterTitle { font-family: var(--display); font-size: 12px; letter-spacing: 0.18em; color: var(--ink-2); }
 .collapse { background: none; border: none; color: var(--ink-3); cursor: pointer; font-size: 11px; padding: 0 4px; }
 .gloss { margin: 2px 0 14px; font-size: 11px; color: var(--ink-3); font-style: italic; }
 .empty { font-size: 12px; color: var(--ink-3); margin: 0; }
-.wideList { display: grid; gap: 10px; max-width: 640px; }
+.wideList { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .compactList { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
 .pill {
   display: flex;
@@ -122,20 +147,24 @@
   transition: transform var(--ease-hover), border-color var(--ease-hover), box-shadow var(--ease-hover),
     opacity var(--ease-hover), filter var(--ease-hover);
 }
-/* the diagonal cascade: each wide row steps right, echoing the conduit's arrival */
-.wide { margin-left: calc(var(--row) * 16px); }
+/* the diagonal cascade: each wide row steps right, echoing the conduit's arrival.
+   Capsules hug their content — organic varied lengths, not table rows. */
+.wide { margin-left: calc(var(--row) * 16px); width: fit-content; max-width: min(640px, 100%); }
+/* rest state stays near-monochrome — colour is spent on interaction, not wallpaper */
 .pill[data-kind="tool"] {
-  background: linear-gradient(100deg, color-mix(in oklab, var(--tool) 15%, transparent), transparent 45%), var(--panel);
-  border-color: color-mix(in oklab, var(--tool) 24%, var(--panel-border));
+  background: linear-gradient(100deg, color-mix(in oklab, var(--tool) 6%, transparent), transparent 50%), var(--panel);
+  border-color: color-mix(in oklab, var(--tool) 13%, var(--panel-border));
 }
 .pill[data-kind="resource"] {
-  background: linear-gradient(100deg, color-mix(in oklab, var(--resource) 15%, transparent), transparent 45%), var(--panel);
-  border-color: color-mix(in oklab, var(--resource) 24%, var(--panel-border));
+  background: linear-gradient(100deg, color-mix(in oklab, var(--resource) 6%, transparent), transparent 50%), var(--panel);
+  border-color: color-mix(in oklab, var(--resource) 13%, var(--panel-border));
 }
 .pill[data-kind="prompt"] {
-  background: linear-gradient(100deg, color-mix(in oklab, var(--prompt) 15%, transparent), transparent 45%), var(--panel);
-  border-color: color-mix(in oklab, var(--prompt) 24%, var(--panel-border));
+  background: linear-gradient(100deg, color-mix(in oklab, var(--prompt) 6%, transparent), transparent 50%), var(--panel);
+  border-color: color-mix(in oklab, var(--prompt) 13%, var(--panel-border));
 }
+/* crisp top-light edge — the detail that reads as machined, not drawn */
+.pill { box-shadow: inset 0 1px 0 color-mix(in oklab, var(--ink) 7%, transparent); }
 .pill:hover, .pill:focus-visible { transform: translateY(-1px); }
 .pill:focus-visible { outline: 1px solid var(--ink-2); outline-offset: 2px; }
 .pill[data-kind="tool"]:hover { box-shadow: 0 0 18px 0 color-mix(in oklab, var(--tool) 40%, transparent); border-color: color-mix(in oklab, var(--tool) 50%, var(--panel-border)); }
@@ -146,9 +175,9 @@
 .selectedPill[data-kind="prompt"] { border-color: var(--prompt-bright); box-shadow: 0 0 24px 0 color-mix(in oklab, var(--prompt) 50%, transparent); }
 .pill[data-receded="true"] { opacity: 0.22; filter: saturate(0.3); transform: scale(0.98); }
 .glyph { width: 16px; height: 16px; flex: none; }
-.pill[data-kind="tool"] .glyph { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--tool-bright) 65%, transparent)); }
-.pill[data-kind="resource"] .glyph { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--resource-bright) 65%, transparent)); }
-.pill[data-kind="prompt"] .glyph { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--prompt-bright) 65%, transparent)); }
+.pill[data-kind="tool"] .glyph { filter: drop-shadow(0 0 4px color-mix(in oklab, var(--tool-bright) 40%, transparent)); }
+.pill[data-kind="resource"] .glyph { filter: drop-shadow(0 0 4px color-mix(in oklab, var(--resource-bright) 40%, transparent)); }
+.pill[data-kind="prompt"] .glyph { filter: drop-shadow(0 0 4px color-mix(in oklab, var(--prompt-bright) 40%, transparent)); }
 /* The name is the identity: it never yields to the blurb. flex-shrink: 0 with a
    max-width cap so a pathological server name still can't push the blurb out. */
 .pillName {
@@ -162,13 +191,13 @@
 }
 .pillBlurb {
   font-size: 12px;
+  font-family: var(--display);
   color: var(--ink-2);
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-left: auto;
-  padding-left: 12px;
+  padding-left: 2px;
 }
 .readout {
   flex: none;

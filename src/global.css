@@ -37,6 +37,14 @@
   --ease-panel: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Structural (non-palette) tokens in a separate :root block: the dune theme-parity
+   test scans only the first block for colour tokens. --display belongs on its
+   allowlist next to --mono; fold it in there (src/dune/theme.test.ts) when that
+   file's owning session is done. */
+:root {
+  --display: "Space Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -50,7 +58,7 @@ body {
     radial-gradient(1000px 800px at 90% 110%, var(--glow-b), transparent 60%);
   background-attachment: fixed;
   color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--display);
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }

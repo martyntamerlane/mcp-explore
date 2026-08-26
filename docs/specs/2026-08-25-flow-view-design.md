@@ -79,3 +79,15 @@ User direction after seeing the first build: "plain, boring, like a windows desk
 - **Per-kind atmospheres**: faint radial color washes behind each cluster; entity-colored hairline rules after headers.
 
 Retained floors: text wears ink tokens only (decoration carries kind, text never does); names never truncate in favor of blurbs; layout stays deterministic; `prefers-reduced-motion` silences every loop and entrance.
+
+### Craft pass (same day, after "still childish and boring" feedback)
+
+The childishness diagnosis: saturated colour at rest, OS-default typography, flat untextured gradients, a toy orb. Corrections, all retained going forward:
+
+- **Typography**: `Space Grotesk Variable` (self-hosted via `@fontsource-variable/space-grotesk`, OFL, subsets to ~tens of KB) as the app display face (`--display` token; structural, no dune override needed — fold into the parity test's allowlist beside `--mono` when the dune session is done). Mono stays for identifiers.
+- **Colour discipline**: pill washes/borders desaturated to near-monochrome at rest (6%/13% mixes); colour is spent on hover, selection, glyphs, and conduits — never wallpaper.
+- **Orb**: glass celestial body — dark heart, entity-lit limb, specular highlight, tilted orbital ring (`::after`), layered corona; 132px.
+- **Texture**: monochrome SVG `feTurbulence` grain over the diagram (3.5% opacity, overlay blend) — kills the flat-vector feel.
+- **Organic capsules**: wide pills are `fit-content` (name + inline blurb), so lengths vary naturally under the cascade; blurbs no longer right-aligned into table rows.
+- **Ghost numerals** in the display face at 104px/300.
+- Atmosphere washes must complete their radial fade **inside** their box — a clipped ellipse leaves a hard edge.
