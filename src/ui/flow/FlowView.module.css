@@ -50,13 +50,17 @@
   stroke-width: 1;
   animation: drawIn 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
+/* Dash gap must exceed the normalized path length (period 2 > 1): a period equal
+   to the path length always leaves one segment somewhere on the path, so the
+   pulse would park at the server end during the hold instead of exiting. Both
+   keyframe endpoints put the segment fully off-path, so the loop is seamless. */
 .tracePulse {
   fill: none;
   stroke: color-mix(in oklab, var(--ink) 30%, transparent);
   stroke-width: 1.5;
   stroke-linecap: round;
-  stroke-dasharray: 0.12 0.88;
-  stroke-dashoffset: 1.12;
+  stroke-dasharray: 0.12 1.88;
+  stroke-dashoffset: 2.12;
   animation: heartbeat 4s linear 1.2s infinite;
 }
 @keyframes drawIn {
@@ -64,9 +68,9 @@
   to { stroke-dasharray: 1; stroke-dashoffset: 0; }
 }
 @keyframes heartbeat {
-  0% { stroke-dashoffset: 1.12; }
-  45% { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: 0; }
+  0% { stroke-dashoffset: 2.12; }
+  45% { stroke-dashoffset: 1; }
+  100% { stroke-dashoffset: 1; }
 }
 @keyframes materialize {
   from { opacity: 0; transform: translateX(12px); }
