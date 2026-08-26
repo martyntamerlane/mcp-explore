@@ -67,3 +67,15 @@ Tier 1: flow layout math (column wrapping, density threshold, determinism) repla
 - Semantic grouping within one server (TODO-4).
 - Adapting the Dune scene to the stage contract (`src/dune` is owned by a parallel session; do not touch).
 - Docs-style list view (TODO-6) — likely obsolete: the flow view *is* readable; revisit only if real usage shows scanning still suffers.
+
+## Amendment — majesty pass (2026-08-25)
+
+User direction after seeing the first build: "plain, boring, like a windows desktop folder… break rules in a stylistic manner that emphasises the majesty of the MCP server components." The restraint dial of §Aesthetic is deliberately turned up; these are the sanctioned rule-breaks:
+
+- **Server core orb** replaces the glass card: a sphere wearing all three entity colors with a layered glow, inside a gravity-well radial wash; it **breathes** (7 s scale loop) — the second sanctioned looping animation after the heartbeat.
+- **Conduits, not hairlines**: traces carry an ink→entity-color gradient with a blurred glow underlay; the heartbeat pulse is entity-bright per kind; the selected kind's conduit brightens.
+- **Kind-radiant pills**: capsule-shaped, kind-tinted gradient washes and borders, glowing glyphs; wide pills cascade diagonally (16 px per row) echoing the conduit's arrival — deliberately breaking the straight left edge.
+- **Ghost numerals**: each cluster's count rendered monumental (76 px, weight 100, ~8% ink) in the right negative space, `aria-hidden`.
+- **Per-kind atmospheres**: faint radial color washes behind each cluster; entity-colored hairline rules after headers.
+
+Retained floors: text wears ink tokens only (decoration carries kind, text never does); names never truncate in favor of blurbs; layout stays deterministic; `prefers-reduced-motion` silences every loop and entrance.

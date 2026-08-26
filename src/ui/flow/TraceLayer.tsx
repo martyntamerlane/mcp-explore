@@ -5,19 +5,25 @@ import styles from "./FlowView.module.css"
 interface Trace {
   kind: EntityKind
   d: string
+  x1: number
+  y1: number
+  x2: number
+  y2: number
 }
 
-// Draws the server→cluster traces by measuring the rendered DOM. Purely
+// Draws the server→cluster conduits by measuring the rendered DOM. Purely
 // decorative (aria-hidden); renders nothing in environments without layout
 // (jsdom returns zero-size rects), so tests never assert on it.
 export default function TraceLayer({
   containerRef,
   serverRef,
   clusterRefs,
+  emphasized,
 }: {
   containerRef: RefObject<HTMLDivElement | null>
   serverRef: RefObject<HTMLDivElement | null>
   clusterRefs: RefObject<Partial<Record<EntityKind, HTMLElement | null>>>
+  emphasized: EntityKind | null
 }) {
   const [traces, setTraces] = useState<Trace[]>([])
 
@@ -42,7 +48,14 @@ export default function TraceLayer({
         const x2 = r.left - c.left - 12
         const y2 = r.top - c.top + 14
         const mx = x1 + (x2 - x1) / 2
-        next.push({ kind: kind as EntityKind, d: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}` })
+        next.push({
+          kind: kind as EntityKind,
+          d: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`,
+          x1,
+          y1,
+          x2,
+          y2,
+        })
       }
       setTraces(next)
     }
@@ -57,10 +70,36 @@ export default function TraceLayer({
   if (traces.length === 0) return null
   return (
     <svg className={styles.traces} data-testid="traces" aria-hidden="true">
+      <defs>
+        <filter id="traceGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="4" />
+        </filter>
+        {traces.map((t) => (
+          <linearGradient
+            key={t.kind}
+            id={`trace-grad-${t.kind}`}
+            gradientUnits="userSpaceOnUse"
+            x1={t.x1}
+            y1={t.y1}
+            x2={t.x2}
+            y2={t.y2}
+          >
+            <stop offset="0" style={{ stopColor: "var(--ink)", stopOpacity: 0.06 }} />
+            <stop offset="1" style={{ stopColor: `var(--${t.kind})`, stopOpacity: 0.65 }} />
+          </linearGradient>
+        ))}
+      </defs>
       {traces.map((t) => (
-        <g key={t.kind}>
-          <path className={styles.traceBase} d={t.d} pathLength={1} />
-          <path className={styles.tracePulse} d={t.d} pathLength={1} />
+        <g key={t.kind} data-emphasized={emphasized === t.kind || undefined}>
+          <path
+            className={styles.traceGlow}
+            d={t.d}
+            stroke={`var(--${t.kind})`}
+            filter="url(#traceGlow)"
+            pathLength={1}
+          />
+          <path className={styles.traceBase} d={t.d} stroke={`url(#trace-grad-${t.kind})`} pathLength={1} />
+          <path className={styles.tracePulse} data-kind={t.kind} d={t.d} pathLength={1} />
         </g>
       ))}
     </svg>

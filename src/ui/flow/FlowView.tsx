@@ -24,6 +24,7 @@ function Glyph({ kind }: { kind: EntityKind }) {
 function Pill({
   item,
   wide,
+  row,
   receded,
   selected,
   onSelect,
@@ -31,6 +32,7 @@ function Pill({
 }: {
   item: FlowItem
   wide: boolean
+  row: number
   receded: boolean
   selected: boolean
   onSelect: () => void
@@ -43,6 +45,7 @@ function Pill({
       aria-pressed={selected}
       data-receded={receded || undefined}
       data-kind={item.kind}
+      style={wide ? ({ "--row": row } as CSSProperties) : undefined}
       className={[styles.pill, wide ? styles.wide : styles.compact, selected ? styles.selectedPill : ""]
         .join(" ")
         .trim()}
@@ -82,6 +85,9 @@ function Cluster({
 }) {
   return (
     <section ref={nodeRef} className={styles.cluster} style={{ "--i": index } as CSSProperties} data-kind={group.kind}>
+      <span className={styles.ghostCount} aria-hidden="true">
+        {group.items.length}
+      </span>
       <header className={styles.clusterHeader}>
         <span className={styles.clusterTitle}>{`${group.label.toUpperCase()} · ${group.items.length}`}</span>
         {group.items.length > 0 && (
@@ -98,11 +104,12 @@ function Cluster({
       <p className={styles.gloss}>{group.gloss}</p>
       {!collapsed && group.items.length > 0 && (
         <div className={group.density === "wide" ? styles.wideList : styles.compactList}>
-          {group.items.map((item) => (
+          {group.items.map((item, row) => (
             <Pill
               key={`${item.kind}:${item.id}`}
               item={item}
               wide={group.density === "wide"}
+              row={row}
               receded={!matches(item)}
               selected={selection?.kind === item.kind && selection?.id === item.id}
               onSelect={() => onSelect({ kind: item.kind, id: item.id })}
@@ -147,9 +154,11 @@ export default function FlowView({ snapshot, transportKind, selection, onSelect 
             containerRef={diagramRef}
             serverRef={serverRef}
             clusterRefs={clusterRefs}
+            emphasized={selection?.kind ?? null}
           />
           <div className={styles.serverCol}>
-            <div className={styles.serverNode} ref={serverRef}>
+            <div className={styles.serverNode}>
+              <div className={styles.orb} aria-hidden="true" ref={serverRef} />
               <span className={styles.serverName}>{snapshot.serverInfo.name}</span>
               <span className={styles.serverMeta}>v{snapshot.serverInfo.version}</span>
               <span className={styles.serverMeta}>{transportKind}</span>

@@ -15,81 +15,105 @@
 .diagram {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(180px, 240px) 1fr;
-  gap: 64px;
+  grid-template-columns: minmax(200px, 260px) 1fr;
+  gap: 72px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px 48px;
+  padding: 48px 32px 64px;
 }
-.serverCol { display: flex; align-items: center; }
+/* gravity well behind the server core */
+.diagram::before {
+  content: "";
+  position: absolute;
+  left: -60px;
+  top: 15%;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(closest-side, var(--glow-a), transparent 70%);
+  pointer-events: none;
+}
+.serverCol { display: flex; align-items: center; justify-content: center; }
 .serverNode {
   position: sticky;
-  top: 32px;
+  top: 48px;
   display: grid;
   gap: 4px;
-  justify-items: start;
-  padding: 20px 24px;
-  border-radius: var(--radius-l);
-  border: 1px solid var(--panel-border);
-  background: var(--panel);
-  backdrop-filter: blur(20px);
+  justify-items: center;
+  text-align: center;
   animation: materialize 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
-.serverName { font-family: var(--mono); font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
+/* the core: one orb wearing all three capability colors */
+.orb {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  margin-bottom: 12px;
+  border: 1px solid color-mix(in oklab, var(--ink) 18%, transparent);
+  background:
+    radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--ink) 20%, transparent), transparent 55%),
+    radial-gradient(circle at 70% 72%, color-mix(in oklab, var(--prompt) 30%, transparent), transparent 62%),
+    radial-gradient(circle at 25% 75%, color-mix(in oklab, var(--resource) 22%, transparent), transparent 60%),
+    radial-gradient(circle at 50% 45%, color-mix(in oklab, var(--tool) 32%, transparent), transparent 75%);
+  box-shadow:
+    0 0 28px 0 color-mix(in oklab, var(--tool) 28%, transparent),
+    0 0 80px 10px color-mix(in oklab, var(--prompt) 14%, transparent),
+    inset 0 0 22px 0 color-mix(in oklab, var(--ink) 12%, transparent);
+  animation: breathe 7s ease-in-out infinite alternate;
+}
+@keyframes breathe {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+.serverName { font-family: var(--mono); font-size: 15px; color: var(--ink); overflow-wrap: anywhere; max-width: 240px; }
 .serverMeta { font-size: 11px; letter-spacing: 0.05em; color: var(--ink-3); }
-.clusters { display: grid; gap: 40px; align-content: start; }
+.clusters { display: grid; gap: 56px; align-content: start; }
 .cluster {
+  position: relative;
   min-width: 0;
   animation: materialize 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   animation-delay: calc(200ms + var(--i) * 120ms);
 }
-.traces { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
-.traceBase {
-  fill: none;
-  stroke: var(--edge);
-  stroke-width: 1;
-  animation: drawIn 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+/* per-kind atmosphere washing the cluster from where its conduit arrives */
+.cluster::before {
+  content: "";
+  position: absolute;
+  inset: -28px -24px -28px -56px;
+  pointer-events: none;
 }
-/* Dash gap must exceed the normalized path length (period 2 > 1): a period equal
-   to the path length always leaves one segment somewhere on the path, so the
-   pulse would park at the server end during the hold instead of exiting. Both
-   keyframe endpoints put the segment fully off-path, so the loop is seamless. */
-.tracePulse {
-  fill: none;
-  stroke: color-mix(in oklab, var(--ink) 30%, transparent);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-dasharray: 0.12 1.88;
-  stroke-dashoffset: 2.12;
-  animation: heartbeat 4s linear 1.2s infinite;
-}
-@keyframes drawIn {
-  from { stroke-dasharray: 1; stroke-dashoffset: 1; }
-  to { stroke-dasharray: 1; stroke-dashoffset: 0; }
-}
-@keyframes heartbeat {
-  0% { stroke-dashoffset: 2.12; }
-  45% { stroke-dashoffset: 1; }
-  100% { stroke-dashoffset: 1; }
-}
-@keyframes materialize {
-  from { opacity: 0; transform: translateX(12px); }
-  to { opacity: 1; transform: translateX(0); }
+.cluster[data-kind="tool"]::before { background: radial-gradient(460px 240px at 10% 15%, color-mix(in oklab, var(--tool) 7%, transparent), transparent 70%); }
+.cluster[data-kind="resource"]::before { background: radial-gradient(460px 240px at 10% 15%, color-mix(in oklab, var(--resource) 7%, transparent), transparent 70%); }
+.cluster[data-kind="prompt"]::before { background: radial-gradient(460px 240px at 10% 15%, color-mix(in oklab, var(--prompt) 7%, transparent), transparent 70%); }
+/* the count, monumental and almost not there */
+.ghostCount {
+  position: absolute;
+  top: -20px;
+  right: 0;
+  font-family: var(--mono);
+  font-size: 76px;
+  font-weight: 100;
+  line-height: 1;
+  color: color-mix(in oklab, var(--ink) 8%, transparent);
+  pointer-events: none;
+  user-select: none;
 }
 .clusterHeader { display: flex; align-items: baseline; gap: 8px; }
+.clusterHeader::after { content: ""; flex: 1; height: 1px; margin-left: 12px; align-self: center; }
+.cluster[data-kind="tool"] .clusterHeader::after { background: linear-gradient(90deg, color-mix(in oklab, var(--tool) 40%, transparent), transparent 80%); }
+.cluster[data-kind="resource"] .clusterHeader::after { background: linear-gradient(90deg, color-mix(in oklab, var(--resource) 40%, transparent), transparent 80%); }
+.cluster[data-kind="prompt"] .clusterHeader::after { background: linear-gradient(90deg, color-mix(in oklab, var(--prompt) 40%, transparent), transparent 80%); }
 .clusterTitle { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); }
 .collapse { background: none; border: none; color: var(--ink-3); cursor: pointer; font-size: 11px; padding: 0 4px; }
-.gloss { margin: 2px 0 12px; font-size: 11px; color: var(--ink-3); font-style: italic; }
+.gloss { margin: 2px 0 14px; font-size: 11px; color: var(--ink-3); font-style: italic; }
 .empty { font-size: 12px; color: var(--ink-3); margin: 0; }
-.wideList { display: grid; gap: 8px; max-width: 560px; }
+.wideList { display: grid; gap: 10px; max-width: 640px; }
 .compactList { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
 .pill {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  padding: 10px 14px;
-  border-radius: var(--radius-m);
+  padding: 11px 18px;
+  border-radius: 999px;
   border: 1px solid var(--panel-border);
   background: var(--panel);
   color: var(--ink);
@@ -98,16 +122,33 @@
   transition: transform var(--ease-hover), border-color var(--ease-hover), box-shadow var(--ease-hover),
     opacity var(--ease-hover), filter var(--ease-hover);
 }
-.pill:hover, .pill:focus-visible { transform: translateY(-1px); border-color: var(--ink-3); }
+/* the diagonal cascade: each wide row steps right, echoing the conduit's arrival */
+.wide { margin-left: calc(var(--row) * 16px); }
+.pill[data-kind="tool"] {
+  background: linear-gradient(100deg, color-mix(in oklab, var(--tool) 15%, transparent), transparent 45%), var(--panel);
+  border-color: color-mix(in oklab, var(--tool) 24%, var(--panel-border));
+}
+.pill[data-kind="resource"] {
+  background: linear-gradient(100deg, color-mix(in oklab, var(--resource) 15%, transparent), transparent 45%), var(--panel);
+  border-color: color-mix(in oklab, var(--resource) 24%, var(--panel-border));
+}
+.pill[data-kind="prompt"] {
+  background: linear-gradient(100deg, color-mix(in oklab, var(--prompt) 15%, transparent), transparent 45%), var(--panel);
+  border-color: color-mix(in oklab, var(--prompt) 24%, var(--panel-border));
+}
+.pill:hover, .pill:focus-visible { transform: translateY(-1px); }
 .pill:focus-visible { outline: 1px solid var(--ink-2); outline-offset: 2px; }
-.pill[data-kind="tool"]:hover { box-shadow: 0 0 14px 0 color-mix(in oklab, var(--tool) 35%, transparent); }
-.pill[data-kind="resource"]:hover { box-shadow: 0 0 14px 0 color-mix(in oklab, var(--resource) 35%, transparent); }
-.pill[data-kind="prompt"]:hover { box-shadow: 0 0 14px 0 color-mix(in oklab, var(--prompt) 35%, transparent); }
-.selectedPill[data-kind="tool"] { border-color: var(--tool-bright); box-shadow: 0 0 18px 0 color-mix(in oklab, var(--tool) 45%, transparent); }
-.selectedPill[data-kind="resource"] { border-color: var(--resource-bright); box-shadow: 0 0 18px 0 color-mix(in oklab, var(--resource) 45%, transparent); }
-.selectedPill[data-kind="prompt"] { border-color: var(--prompt-bright); box-shadow: 0 0 18px 0 color-mix(in oklab, var(--prompt) 45%, transparent); }
+.pill[data-kind="tool"]:hover { box-shadow: 0 0 18px 0 color-mix(in oklab, var(--tool) 40%, transparent); border-color: color-mix(in oklab, var(--tool) 50%, var(--panel-border)); }
+.pill[data-kind="resource"]:hover { box-shadow: 0 0 18px 0 color-mix(in oklab, var(--resource) 40%, transparent); border-color: color-mix(in oklab, var(--resource) 50%, var(--panel-border)); }
+.pill[data-kind="prompt"]:hover { box-shadow: 0 0 18px 0 color-mix(in oklab, var(--prompt) 40%, transparent); border-color: color-mix(in oklab, var(--prompt) 50%, var(--panel-border)); }
+.selectedPill[data-kind="tool"] { border-color: var(--tool-bright); box-shadow: 0 0 24px 0 color-mix(in oklab, var(--tool) 50%, transparent); }
+.selectedPill[data-kind="resource"] { border-color: var(--resource-bright); box-shadow: 0 0 24px 0 color-mix(in oklab, var(--resource) 50%, transparent); }
+.selectedPill[data-kind="prompt"] { border-color: var(--prompt-bright); box-shadow: 0 0 24px 0 color-mix(in oklab, var(--prompt) 50%, transparent); }
 .pill[data-receded="true"] { opacity: 0.22; filter: saturate(0.3); transform: scale(0.98); }
-.glyph { width: 14px; height: 14px; flex: none; }
+.glyph { width: 16px; height: 16px; flex: none; }
+.pill[data-kind="tool"] .glyph { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--tool-bright) 65%, transparent)); }
+.pill[data-kind="resource"] .glyph { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--resource-bright) 65%, transparent)); }
+.pill[data-kind="prompt"] .glyph { filter: drop-shadow(0 0 5px color-mix(in oklab, var(--prompt-bright) 65%, transparent)); }
 /* The name is the identity: it never yields to the blurb. flex-shrink: 0 with a
    max-width cap so a pathological server name still can't push the blurb out. */
 .pillName {
@@ -140,10 +181,54 @@
 .readoutName { color: var(--ink); }
 .readoutBlurb { color: var(--ink-2); }
 .readoutIdle { color: var(--ink-3); }
+.traces { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.traceGlow {
+  fill: none;
+  stroke-width: 5;
+  opacity: 0.3;
+  animation: drawIn 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.traceBase {
+  fill: none;
+  stroke-width: 1.5;
+  animation: drawIn 700ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+g[data-emphasized] .traceGlow { opacity: 0.65; }
+g[data-emphasized] .traceBase { stroke-width: 2; }
+/* Dash gap must exceed the normalized path length (period 2 > 1): a period equal
+   to the path length always leaves one segment somewhere on the path, so the
+   pulse would park at the server end during the hold instead of exiting. Both
+   keyframe endpoints put the segment fully off-path, so the loop is seamless. */
+.tracePulse {
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.12 1.88;
+  stroke-dashoffset: 2.12;
+  animation: heartbeat 4s linear 1.2s infinite;
+}
+.tracePulse[data-kind="tool"] { stroke: color-mix(in oklab, var(--tool-bright) 60%, transparent); }
+.tracePulse[data-kind="resource"] { stroke: color-mix(in oklab, var(--resource-bright) 60%, transparent); }
+.tracePulse[data-kind="prompt"] { stroke: color-mix(in oklab, var(--prompt-bright) 60%, transparent); }
+@keyframes drawIn {
+  from { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  to { stroke-dasharray: 1; stroke-dashoffset: 0; }
+}
+@keyframes heartbeat {
+  0% { stroke-dashoffset: 2.12; }
+  45% { stroke-dashoffset: 1; }
+  100% { stroke-dashoffset: 1; }
+}
+@keyframes materialize {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 @media (prefers-reduced-motion: reduce) {
   .pill { transition: none; }
   .tracePulse { display: none; }
+  .traceGlow,
   .traceBase,
   .cluster,
-  .serverNode { animation: none; }
+  .serverNode,
+  .orb { animation: none; }
 }
