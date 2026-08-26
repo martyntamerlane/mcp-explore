@@ -94,9 +94,6 @@ function Cluster({
   const visible = capped ? group.items.slice(0, PREVIEW_MAX) : group.items
   return (
     <section ref={nodeRef} className={styles.cluster} style={{ "--i": index } as CSSProperties} data-kind={group.kind}>
-      <span className={styles.ghostCount} aria-hidden="true">
-        {group.items.length}
-      </span>
       <header className={styles.clusterHeader}>
         <span className={styles.clusterTitle}>{`${group.label.toUpperCase()} · ${group.items.length}`}</span>
         {group.items.length > 0 && (

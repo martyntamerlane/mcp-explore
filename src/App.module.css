@@ -17,8 +17,8 @@
   border: 1px solid var(--panel-border);
   color: var(--ink-2);
 }
-.counts { margin-left: auto; font-size: 12px; color: var(--ink-3); }
 .disconnect {
+  margin-left: auto;
   padding: 8px 16px;
   border-radius: var(--radius-s);
   border: 1px solid var(--panel-border);

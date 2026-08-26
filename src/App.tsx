@@ -54,9 +54,6 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
         <span className={styles.serverName}>{snapshot.serverInfo.name}</span>
         <span className={styles.chip}>v{snapshot.serverInfo.version}</span>
         <span className={styles.chip}>{transportKind}</span>
-        <span className={styles.counts}>
-          {snapshot.tools.length} tools · {snapshot.resources.length} resources · {snapshot.prompts.length} prompts
-        </span>
         <button type="button" className={styles.disconnect} onClick={() => void disconnect()}>
           Disconnect
         </button>

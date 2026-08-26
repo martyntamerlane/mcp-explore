@@ -100,3 +100,4 @@ User feedback: planet orb disliked; cascade indentation misread as nesting; larg
 - **Cascade removed**: wide pills share a flat left edge — indentation implied hierarchy that doesn't exist. Organic `fit-content` widths stay.
 - **Preview cap**: clusters over 14 items render the first 14 plus a "+ N more" expander ("− show fewer" once open). An active filter bypasses the cap and searches the whole cluster, so matches can never hide behind it.
 - **Pulse retimed**: 3 s cycle — ~0.7 s sweep, rest interval unchanged (~2.3 s).
+- **(later that day)** Ghost numerals and the header's counts line removed — redundant with the counts in cluster headers, which remain the single home for totals.

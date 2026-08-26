@@ -124,20 +124,6 @@
 .cluster[data-kind="tool"]::before { background: radial-gradient(230px 150px at 290px 35%, color-mix(in oklab, var(--tool) 6%, transparent), transparent); }
 .cluster[data-kind="resource"]::before { background: radial-gradient(230px 150px at 290px 35%, color-mix(in oklab, var(--resource) 6%, transparent), transparent); }
 .cluster[data-kind="prompt"]::before { background: radial-gradient(230px 150px at 290px 35%, color-mix(in oklab, var(--prompt) 6%, transparent), transparent); }
-/* the count, monumental and almost not there */
-.ghostCount {
-  position: absolute;
-  top: -26px;
-  right: 0;
-  font-family: var(--display);
-  font-size: 104px;
-  font-weight: 300;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: color-mix(in oklab, var(--ink) 7%, transparent);
-  pointer-events: none;
-  user-select: none;
-}
 .clusterHeader { display: flex; align-items: baseline; gap: 8px; }
 .clusterHeader::after { content: ""; flex: 1; height: 1px; margin-left: 12px; align-self: center; }
 .cluster[data-kind="tool"] .clusterHeader::after { background: linear-gradient(90deg, color-mix(in oklab, var(--tool) 40%, transparent), transparent 80%); }
