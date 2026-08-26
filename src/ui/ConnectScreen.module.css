@@ -80,7 +80,8 @@
 }
 .recent:hover { border-color: var(--ink-3); }
 .demo {
-  margin-top: 40px;
+  display: block;
+  margin: 40px auto 0;
   color: var(--ink-2);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-s);

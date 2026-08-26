@@ -104,7 +104,17 @@
 .selectedPill[data-kind="prompt"] { border-color: var(--prompt-bright); box-shadow: 0 0 18px 0 color-mix(in oklab, var(--prompt) 45%, transparent); }
 .pill[data-receded="true"] { opacity: 0.22; filter: saturate(0.3); transform: scale(0.98); }
 .glyph { width: 14px; height: 14px; flex: none; }
-.pillName { font-family: var(--mono); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The name is the identity: it never yields to the blurb. flex-shrink: 0 with a
+   max-width cap so a pathological server name still can't push the blurb out. */
+.pillName {
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 60%;
+}
 .pillBlurb {
   font-size: 12px;
   color: var(--ink-2);
