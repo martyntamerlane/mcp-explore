@@ -27,6 +27,8 @@ npm test             # Tier 1 (Vitest, <5s)
 npm run build        # typecheck + production build
 ```
 
+> **WSL gotcha**: Vite's file-watching is unreliable on `/mnt/c` (drvfs) — after source edits, restart `npm run dev` before judging results in a browser, or you may be served stale code.
+
 ## Implementation Guidelines
 
 ### Approach

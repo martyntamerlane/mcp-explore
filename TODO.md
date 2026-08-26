@@ -111,6 +111,12 @@ A general visual/UX redesign of the landing screen for usefulness and "stickines
 
 The differentiating idea (2026-08-25 flow-view grill session): connect to several MCP servers at once and semantically compare their tools. The flow view's geometry already accommodates it — N source nodes on the left edge, a shared capability field on the right, semantic clusters receiving provenance-marked traces, so overlap/gaps/unique capabilities become visible as convergence/absence/single-source clusters. `buildFlowModel`'s grouping seam (kind-grouping today, grouping-as-a-function by design) is the extension point; see also TODO-4's single-server semantic grouping. **Monetization note**: like TODO-4, if this becomes a paid feature it needs an entitlement mechanism, which reopens the zero-backend decision (initial design decision #9) — no entitlement machinery until that's a real goal.
 
+### TODO-18: WebGL/shader server core (volumetric gate)
+
+**Complexity**: M
+
+Offered during the 2026-08-26 visual passes and not yet approved: replace the CSS gate ring with a WebGL/GLSL rendering — volumetric light scattering, refraction, a particle field around the core. Requires a real dependency decision (three.js ~150 kB, or hand-rolled GLSL with more code), GPU cost, and `prefers-reduced-motion`/fallback handling; the CSS ring stays the fallback either way. Only pick this up with explicit user approval of the dependency (CLAUDE.md dependency rule).
+
 ### TODO-17: Adapt the Dune scene to the stage contract
 
 **Complexity**: S
