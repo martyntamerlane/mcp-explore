@@ -6,7 +6,7 @@ import DuneOverlay, { STORAGE_KEY } from "./DuneOverlay"
 // Apply the persisted theme synchronously, before the first paint — DuneOverlay's
 // own useEffect that sets this attribute only runs after React's first render, so
 // without this a returning dune-mode visitor would see one default-palette frame
-// (with HeighlinerScene's dune-only custom properties resolving to nothing) before
+// (with CinematicScene's dune-only custom properties resolving to nothing) before
 // the effect catches up.
 try {
   if (localStorage.getItem(STORAGE_KEY) === "true") {

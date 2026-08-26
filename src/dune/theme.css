@@ -1,45 +1,57 @@
-/* Entity-accent triad validated 2026-08-24 (dataviz six-checks, dark mode, all PASS):
-   --tool: #8e5300 (spice-amber) · --resource: #b48c2b (sand) · --prompt: #006497 (deep Fremen-blue), vs --bg: #120c08
-   Re-confirmed 2026-08-25 (final-review fix wave, WCAG contrast only): --tool 3.13:1, --prompt 3.02:1 —
-   both still clear the 3:1 non-text floor, unchanged.
-   --danger revalidated 2026-08-25 (WCAG contrast vs --bg: #120c08): #b3432b was 3.47:1, failing the 4.5:1 AA
-   text floor for its two text usages (DetailPanel .req / .error). Replaced with #d9705a — 5.93:1, hue ~10°
-   (matches the original ~11° rust-red direction). */
+/* Fluorescent space regrade 2026-08-26 (cinematic scene redesign — see
+   docs/specs/2026-08-26-dune-cinematic-redesign.md). Entity triad validated against
+   --bg: #030a0c: WCAG contrast --tool 5.51:1 · --resource 12.15:1 · --prompt 5.35:1
+   (3:1 non-text floor), --danger 7.25:1 (4.5:1 text floor); CVD (Machado severity-1
+   simulation) worst-pair linear-RGB distances protan 0.47 / deutan 0.38 / tritan 0.51
+   after tuning the tool–resource pair; L* band 52–83. */
 :root[data-theme="dune"] {
-  --bg: #120c08;
-  --glow-a: rgba(154, 82, 18, 0.35);
-  --glow-b: rgba(92, 38, 12, 0.35);
-  --panel: rgba(255, 244, 224, 0.04);
-  --panel-border: rgba(255, 224, 178, 0.1);
+  --bg: #030a0c;
+  --glow-a: rgba(16, 118, 140, 0.35);
+  --glow-b: rgba(10, 80, 96, 0.3);
+  --panel: rgba(220, 255, 248, 0.04);
+  --panel-border: rgba(160, 255, 230, 0.12);
 
-  --ink: #f3e6d0;
-  --ink-2: #c9b391;
-  --ink-3: #8a765a;
+  --ink: #e8fbf5;
+  --ink-2: #9dcabe;
+  --ink-3: #628a7e;
 
-  --tool: #8e5300;
-  --tool-bright: #f0a941;
-  --resource: #b48c2b;
-  --resource-bright: #e8d4a9;
-  --prompt: #006497;
-  --prompt-bright: #6fa8cc;
+  --tool: #0092b8;
+  --tool-bright: #4de3ff;
+  --resource: #4ee39b;
+  --resource-bright: #8ff0c0;
+  --prompt: #4f7df9;
+  --prompt-bright: #92b1ff;
 
-  --danger: #d9705a;
-  /* Default --cta-gradient hardcodes the default --tool/--prompt as its two stops (135deg,
-     0.35 alpha each). --prompt here is a cool Fremen-blue, which would break the "warm"
-     direction the CTA gradient calls for — so this reuses --tool (amber) as stop 1, and
-     the already-established rust hue from --glow-b (see spec: "deep rust") as stop 2,
-     instead of --prompt, keeping the same 135deg/0.35-alpha structure as the default. */
-  --cta-gradient: linear-gradient(135deg, rgba(142, 83, 0, 0.35), rgba(92, 38, 12, 0.35));
-  /* --panel-solid / --header-bg: same rgba structure as default (slightly lighter than --bg,
-     same alpha), hue shifted warm to sit with --bg: #120c08. */
-  --panel-solid: rgba(26, 18, 12, 0.75);
-  --header-bg: rgba(26, 18, 12, 0.5);
+  --danger: #ff6b7a;
+  /* Same 135deg/0.35-alpha structure as the default --cta-gradient (tool + prompt
+     stops) — both stops are cool here, so the default pairing carries over directly. */
+  --cta-gradient: linear-gradient(135deg, rgba(0, 146, 184, 0.35), rgba(79, 125, 249, 0.35));
+  /* --panel-solid / --header-bg: same rgba structure as default (slightly lighter
+     than --bg, same alpha), hue shifted cool to sit with --bg: #030a0c. */
+  --panel-solid: rgba(6, 20, 24, 0.75);
+  --header-bg: rgba(6, 20, 24, 0.5);
 
-  --dune-star: #ffffff;
-  --dune-tile-rim: rgba(255, 255, 255, 0.15);
-
-  --dune-entity-core: #1a0f06;
-  --dune-entity-glow: rgba(200, 121, 28, 0.25);
-  --dune-hull: rgba(20, 14, 8, 0.9);
-  --dune-hull-window: rgba(255, 224, 178, 0.08);
+  /* CinematicScene layers */
+  --dune-star: #eafffb;
+  --dune-star-glow: rgba(180, 255, 240, 0.8);
+  --dune-shooter: #dffff6;
+  --dune-nebula-a: rgba(20, 110, 140, 0.18);
+  --dune-nebula-b: rgba(30, 140, 90, 0.1);
+  --dune-nebula-c: rgba(40, 180, 200, 0.08);
+  --dune-haze-a: rgba(60, 200, 190, 0.1);
+  --dune-haze-b: rgba(120, 255, 210, 0.06);
+  --dune-sun-core: #f8fffd;
+  --dune-sun-mid: #d5fff2;
+  --dune-sun-glow-a: rgba(220, 255, 245, 0.9);
+  --dune-sun-glow-b: rgba(120, 240, 210, 0.5);
+  --dune-bloom-a: rgba(180, 255, 235, 0.32);
+  --dune-bloom-b: rgba(110, 230, 200, 0.1);
+  --dune-streak-edge: rgba(140, 220, 255, 0.5);
+  --dune-streak-core: rgba(240, 255, 250, 0.85);
+  --dune-shade: rgba(1, 4, 6, 0.55);
+  --dune-shade-strong: rgba(1, 4, 6, 0.65);
+  --dune-vignette: rgba(0, 2, 4, 0.6);
+  /* legibility scrim behind the centered connect form — the hero image's baked-in
+     sun sits exactly there at 16:9, hot enough to wash out UI text without this */
+  --dune-scrim: rgba(1, 6, 8, 0.5);
 }

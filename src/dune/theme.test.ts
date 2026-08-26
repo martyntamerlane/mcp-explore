@@ -26,6 +26,7 @@ const ALLOWLIST = new Set([
   "--radius-m",
   "--radius-l",
   "--mono",
+  "--display",
   "--ease-hover",
   "--ease-panel",
   "--edge",
