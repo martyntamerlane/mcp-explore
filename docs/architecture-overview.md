@@ -1,6 +1,6 @@
 # Architecture Overview — mcp-explore
 
-> **Status**: Designed, not yet built. Topology below is the agreed design (see [`docs/specs/2026-08-24-initial-design.md`](specs/2026-08-24-initial-design.md)). Once code exists, this file must document reality — project structure, module map, state shape — updated in the same change as the code.
+> **Status**: Built (v1 UI 2026-08-25; flow view same day, see [`docs/specs/2026-08-25-flow-view-design.md`](specs/2026-08-25-flow-view-design.md)). This file documents reality — project structure, module map, state shape — updated in the same change as the code.
 
 ## Topology
 
@@ -16,7 +16,11 @@ GitHub Pages (Vite build, deployed by GitHub Actions on push to main)
 
 ## Stack
 
-React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), hand-rolled SVG graph (computed polar layout, no graph/physics libraries), Vitest + RTL + Playwright.
+React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), hand-rolled flow diagram (HTML pills + DOM-measured SVG traces, deterministic, no graph/physics libraries), Vitest + RTL + Playwright.
+
+## Stages (display variants)
+
+`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, and shared chrome (header, detail panel); stages are interchangeable. `FlowView` is the default stage; themed scenes (Dune today via its own overlay mechanism, wilder ideas later) become alternate stages behind the same contract (TODO-17). Shared derivation helpers (grouping, density) live beside the stage that spawned them and get extracted only when a third variant proves the abstraction (rule of three). The flow layout's input is shaped `sources[] → groups[] → items[]` so multi-server comparison (TODO-16) extends it without redesign.
 
 ## State & storage
 
@@ -47,10 +51,13 @@ src/
     ConnectScreen.tsx      Landing screen: URL input, headers disclosure, recents, demo button
     ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
     recents.ts             localStorage recent-servers list (opt-in header persistence)
-    Graph.tsx              SVG capability graph: polar layout, zoom/pan, search-dim, selection
-    layout.ts              computeLayout — deterministic polar layout math (no physics)
+    stage.ts               StageProps / EntitySelection — the display-variant contract
+    flow/
+      flowModel.ts         buildFlowModel — snapshot → groups/pills, adaptive density
+      FlowView.tsx         Default stage: server node, clusters, pills, readout, filter, collapse
+      TraceLayer.tsx       DOM-measured SVG traces (hairlines + heartbeat pulse)
     DetailPanel.tsx         Slide-in panel: schema table, resource contents, raw-JSON disclosure
-    schema.ts               JSON Schema → argument table rows for DetailPanel
+    schema.ts               JSON Schema → argument table rows + friendlyType for DetailPanel
     *.module.css            CSS modules for each ui/ component
     *.test.ts[x]            Colocated tests for each ui/ module
   dune/

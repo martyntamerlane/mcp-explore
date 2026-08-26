@@ -3,6 +3,7 @@
 **Date**: 2026-08-25
 **Status**: Agreed (user direction: "futuristic, moody gradients, very clear styling with more space than text, progressive disclosure to drill down")
 **Extends**: [`2026-08-24-initial-design.md`](2026-08-24-initial-design.md) decision #12 (dark-first)
+**Amended 2026-08-25**: the graph geometry and step 3 of the disclosure ladder are superseded by [`2026-08-25-flow-view-design.md`](2026-08-25-flow-view-design.md), which also sanctions the trace heartbeat pulse as the one permitted looping animation.
 
 ## Direction
 

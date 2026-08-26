@@ -44,6 +44,8 @@ v1 is dark-first. All colours are already CSS custom properties, so this is a va
 
 A switchable master-detail (sidebar + detail pane) view over the same data, for users who want scanning/searching over spatial browsing. Only worth it if the graph alone proves insufficient.
 
+2026-08-25: the flow view ([spec](docs/specs/2026-08-25-flow-view-design.md)) makes the diagram itself readable/scannable (always-visible labels, adaptive density, vertical scroll) — likely obsoletes this; revisit only if real usage still shows scanning pain.
+
 ### TODO-7: Opt-in CORS proxy
 
 **Complexity**: M
@@ -83,7 +85,7 @@ Decision on 2026-08-24: repo went public with **no license** (source-visible, al
 
 **Complexity**: S
 
-Deferred non-blocking items from the 2026-08-25 UI v1 final review: cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios); dedupe/suffix duplicate tool/prompt names and resource URIs in `computeLayout` (duplicate React keys otherwise); render non-string enum members via JSON.stringify and key chips by index; Escape closes the detail panel + focus moves into/restores from it; aria-live announcements; preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
+Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; dedupe/suffix duplicate tool/prompt names and resource URIs in ~~`computeLayout`~~ `buildFlowModel` (duplicate React keys otherwise); render non-string enum members via JSON.stringify and key chips by index; Escape closes the detail panel + focus moves into/restores from it; aria-live announcements (the flow view's readout strip is `aria-live`; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
 
 ### TODO-13: Force separate Vite chunks for dune mode's entry
 
@@ -102,6 +104,18 @@ From the 2026-08-24 dune-mode final review: the departure-transition auto-hide i
 **Complexity**: M
 
 A general visual/UX redesign of the landing screen for usefulness and "stickiness," aiming for a more futuristic/minimalist/artistic feel — the piece of the 2026-08-24 dune-mode brainstorming session that was deliberately decomposed out as a separate, not-yet-brainstormed sub-project (dune mode itself is a skin/extension of this baseline, not a replacement for it).
+
+### TODO-16: Multi-server connect + semantic tool comparison
+
+**Complexity**: L
+
+The differentiating idea (2026-08-25 flow-view grill session): connect to several MCP servers at once and semantically compare their tools. The flow view's geometry already accommodates it — N source nodes on the left edge, a shared capability field on the right, semantic clusters receiving provenance-marked traces, so overlap/gaps/unique capabilities become visible as convergence/absence/single-source clusters. `buildFlowModel`'s grouping seam (kind-grouping today, grouping-as-a-function by design) is the extension point; see also TODO-4's single-server semantic grouping. **Monetization note**: like TODO-4, if this becomes a paid feature it needs an entitlement mechanism, which reopens the zero-backend decision (initial design decision #9) — no entitlement machinery until that's a real goal.
+
+### TODO-17: Adapt the Dune scene to the stage contract
+
+**Complexity**: S
+
+The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant contract; the Dune scene predates it and runs via its own overlay/entry mechanism. Rendering it as a stage would unify variant switching. Coordinate with (or leave to) the session that owns `src/dune/` — see the isolation rationale in `docs/architecture-overview.md`.
 
 ---
 
