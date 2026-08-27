@@ -40,6 +40,12 @@
   --dune-nebula-c: rgba(40, 180, 200, 0.08);
   --dune-haze-a: rgba(60, 200, 190, 0.1);
   --dune-haze-b: rgba(120, 255, 210, 0.06);
+  /* muted city lights on the planet's night surface: sodium-lamp warm with a
+     few pale-cool clusters, plus a wide faint halo per cluster */
+  --dune-city-warm: rgba(255, 196, 130, 0.85);
+  --dune-city-cool: rgba(170, 235, 225, 0.7);
+  --dune-city-halo: rgba(255, 190, 120, 0.14);
+  --dune-city-shade: rgba(6, 22, 26, 0.5);
   --dune-sun-core: #f8fffd;
   --dune-sun-mid: #d5fff2;
   --dune-sun-glow-a: rgba(220, 255, 245, 0.9);

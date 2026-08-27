@@ -44,6 +44,43 @@
   opacity: 0.22;
 }
 
+/* ---------- city lights on the night surface ---------- */
+.cities {
+  position: absolute;
+  inset: 0;
+}
+.cities i {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  animation: cityShimmer var(--d, 10s) ease-in-out var(--dl, 0s) infinite alternate;
+}
+.cityShade {
+  background: radial-gradient(circle, var(--dune-city-shade), transparent 70%);
+  filter: blur(20px);
+  mix-blend-mode: multiply;
+  animation: none;
+}
+.cityHalo {
+  background: radial-gradient(circle, var(--dune-city-halo), transparent 70%);
+  filter: blur(14px);
+}
+.cityWarm {
+  background: radial-gradient(circle, var(--dune-city-warm) 0%, transparent 70%);
+  filter: blur(1.5px);
+  opacity: var(--o, 0.6);
+}
+.cityCool {
+  background: radial-gradient(circle, var(--dune-city-cool) 0%, transparent 70%);
+  filter: blur(1.5px);
+  opacity: var(--o, 0.6);
+}
+@keyframes cityShimmer {
+  from { opacity: var(--o, 0.6); }
+  to { opacity: calc(var(--o, 0.6) * 0.55); }
+}
+
 /* ---------- deep space accents ---------- */
 .nebula {
   position: absolute;
@@ -213,6 +250,7 @@
   .shooter,
   .haze1,
   .haze2,
+  .cities i,
   .core,
   .bloom,
   .streak,

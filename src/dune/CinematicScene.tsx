@@ -56,6 +56,76 @@ function generateStars(): { field: Star[]; bright: Star[] } {
 
 const STARS = generateStars()
 
+// The hero image's limb is an arc — quadratic fitted through three limb points
+// read off a 16:9 render: (6vw, 94vh), (31vw, 76.7vh), (50vw, 37.5vh — the
+// sun's crest). The planet surface is below it; city lights live only there.
+function limbY(x: number): number {
+  return -0.0312 * x * x + 0.461 * x + 92.4
+}
+
+interface CityLight {
+  left: number
+  top: number
+  size: number
+  kind: "warm" | "cool" | "halo" | "shade"
+  duration: number
+  delay: number
+  peak: number
+}
+
+// City lights only read against dark ground, and this hero image's surface is
+// almost entirely sunlit cloud — the one truly dark region is the shadowed
+// swirl band along the bottom-center. All clusters live there, each over its
+// own multiply-blended "night patch" that deepens the local dusk.
+const CITY_CLUSTERS = 11
+
+function generateCities(): CityLight[] {
+  const rand = mulberry32(0xc171)
+  const lights: CityLight[] = []
+  const centers: Array<[number, number]> = []
+  for (let c = 0; c < CITY_CLUSTERS; c++) {
+    centers.push([24 + rand() * 32, 89 + rand() * 8.5])
+  }
+  for (const [cx, cy] of centers) {
+    const haloSize = 50 + rand() * 50
+    lights.push({
+      left: cx,
+      top: cy,
+      size: haloSize * 2.2,
+      kind: "shade",
+      duration: 8 + rand() * 8,
+      delay: rand() * 8,
+      peak: 1,
+    })
+    lights.push({
+      left: cx,
+      top: cy,
+      size: haloSize,
+      kind: "halo",
+      duration: 8 + rand() * 8,
+      delay: rand() * 8,
+      peak: 1,
+    })
+    const dotCount = 4 + Math.floor(rand() * 5)
+    for (let d = 0; d < dotCount; d++) {
+      const dx = cx + (rand() * 5 - 2.5)
+      const dy = cy + (rand() * 3.6 - 1.8)
+      lights.push({
+        left: dx,
+        top: Math.min(98.5, Math.max(dy, limbY(dx) + 2)),
+        size: 2.5 + rand() * 4,
+        kind: rand() < 0.75 ? "warm" : "cool",
+        duration: 6 + rand() * 8,
+        delay: rand() * 8,
+        peak: 0.35 + rand() * 0.45,
+      })
+    }
+  }
+  return lights
+}
+
+const CITIES = generateCities()
+
 function starStyle(s: Star): React.CSSProperties {
   return {
     left: `${s.left}vw`,
@@ -109,12 +179,39 @@ export default function CinematicScene() {
         <div className={styles.lyr} data-px="4">
           <img className={styles.base} src={heroUrl} alt="" />
           <img className={styles.baseGlow} src={heroUrl} alt="" />
+          <div className={styles.cities} data-cities>
+            {CITIES.map((c, i) => (
+              <i
+                key={i}
+                className={
+                  c.kind === "shade"
+                    ? styles.cityShade
+                    : c.kind === "halo"
+                      ? styles.cityHalo
+                      : c.kind === "warm"
+                        ? styles.cityWarm
+                        : styles.cityCool
+                }
+                style={
+                  {
+                    left: `${c.left}vw`,
+                    top: `${c.top}vh`,
+                    width: c.size,
+                    height: c.size,
+                    "--d": `${c.duration}s`,
+                    "--dl": `${c.delay}s`,
+                    "--o": c.peak,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+          </div>
         </div>
         <div className={styles.lyr} data-px="10">
           <div className={styles.nebula} />
         </div>
         <div className={styles.lyr} data-px="14">
-          <div className={styles.stars}>
+          <div className={styles.stars} data-stars>
             {STARS.field.map((s, i) => (
               <i key={i} className={s.twinkles ? styles.tw : undefined} style={starStyle(s)} />
             ))}
