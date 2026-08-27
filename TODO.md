@@ -89,7 +89,7 @@ Decision on 2026-08-24: repo went public with **no license** (source-visible, al
 
 **Complexity**: S
 
-Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; dedupe/suffix duplicate tool/prompt names and resource URIs in ~~`computeLayout`~~ `buildFlowModel` (duplicate React keys otherwise); render non-string enum members via JSON.stringify and key chips by index; Escape closes the detail panel + focus moves into/restores from it; aria-live announcements (the flow view's readout strip is `aria-live`; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
+Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; ~~dedupe/suffix duplicate tool/prompt names and resource URIs~~ done 2026-08-26 in `buildDeckModel` (exact duplicates dropped, first wins); render non-string enum members via JSON.stringify and key chips by index; Escape closes the detail panel + focus moves into/restores from it (Esc currently disarms tool buttons only); aria-live announcements (run states are `aria-live`/`role=alert` since 2026-08-26; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
 
 ### TODO-13: Force separate Vite chunks for dune mode's entry
 
@@ -102,14 +102,6 @@ Production builds currently merge `src/main.tsx` and `src/dune/main.tsx` into on
 **Complexity**: S
 
 From the 2026-08-24 dune-mode final review: the departure-transition auto-hide is a fixed timer (not synced to the real connect outcome, by design — see the spec), and a manual browser smoke check (Konami sequence, transition, `localStorage` persistence across reload, toggle-off) was never performed since no browser was available during implementation. Do this smoke check before considering dune mode fully verified.
-
-### TODO-15: Baseline (non-dune) landing-page redesign
-
-**Complexity**: M
-
-A general visual/UX redesign of the landing screen for usefulness and "stickiness," aiming for a more futuristic/minimalist/artistic feel — the piece of the 2026-08-24 dune-mode brainstorming session that was deliberately decomposed out as a separate, not-yet-brainstormed sub-project (dune mode itself is a skin/extension of this baseline, not a replacement for it).
-
-2026-08-26: brainstormed (grill session) and specced as part of the whole-journey **luminous-deck redesign** — `docs/specs/2026-08-26-luminous-deck-redesign.md` (light identity, control-deck IA, run verb, two-door landing). Implementation pending; this entry is executed by that spec.
 
 ### TODO-16: Multi-server connect + semantic tool comparison
 
@@ -133,4 +125,10 @@ The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant
 
 ## Completed
 
-*(None yet.)*
+### TODO-15: Baseline (non-dune) landing-page redesign
+
+**Complexity**: M — **Completed 2026-08-26**
+
+A general visual/UX redesign of the landing screen for usefulness and "stickiness," aiming for a more futuristic/minimalist/artistic feel — the piece of the 2026-08-24 dune-mode brainstorming session that was deliberately decomposed out as a separate, not-yet-brainstormed sub-project (dune mode itself is a skin/extension of this baseline, not a replacement for it).
+
+2026-08-26: brainstormed (grill session), specced as part of the whole-journey **luminous-deck redesign** (`docs/specs/2026-08-26-luminous-deck-redesign.md` — light identity, control-deck IA, run verb, two-door landing) and executed on `feat/luminous-deck` per `docs/plans/2026-08-26-luminous-deck-implementation.md`.

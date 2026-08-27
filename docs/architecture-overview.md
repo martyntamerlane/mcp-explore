@@ -1,6 +1,6 @@
 # Architecture Overview — mcp-explore
 
-> **Status**: Built (v1 UI 2026-08-25; flow view same day, see [`docs/specs/2026-08-25-flow-view-design.md`](specs/2026-08-25-flow-view-design.md)). This file documents reality — project structure, module map, state shape — updated in the same change as the code.
+> **Status**: Built (luminous-deck redesign 2026-08-26, see [`docs/specs/2026-08-26-luminous-deck-redesign.md`](specs/2026-08-26-luminous-deck-redesign.md) — replaced the 2026-08-25 flow view). This file documents reality — project structure, module map, state shape — updated in the same change as the code.
 
 ## Topology
 
@@ -16,11 +16,11 @@ GitHub Pages (Vite build, deployed by GitHub Actions on push to main)
 
 ## Stack
 
-React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), hand-rolled flow diagram (HTML pills + DOM-measured SVG traces, deterministic, no graph/physics libraries), Vitest + RTL + Playwright.
+React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: power-on cascade, panel spring, AnimatePresence — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI), hand-rolled deterministic deck layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
 
 ## Stages (display variants)
 
-`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, and shared chrome (header, detail panel); stages are interchangeable. `FlowView` is the default stage; themed scenes (Dune today via its own overlay mechanism, wilder ideas later) become alternate stages behind the same contract (TODO-17). Shared derivation helpers (grouping, density) live beside the stage that spawned them and get extracted only when a third variant proves the abstraction (rule of three). The flow layout's input is shaped `sources[] → groups[] → items[]` so multi-server comparison (TODO-16) extends it without redesign.
+`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, run state (via `RunProvider`), and shared chrome (brand header, detail panel); stages are interchangeable. `DeckView` is the default stage; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17). Run state deliberately lives in a Context *beside* the stage rather than in `StageProps`, so the contract stays display-only and the panel sees the same per-tool state. The deck's server boundary is the multi-server seam (TODO-16): a second connection renders a second boundary tiled alongside.
 
 ## State & storage
 
@@ -33,11 +33,12 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 ```
 index.html            Vite entry
 src/
-  main.tsx            React bootstrap
-  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync
+  main.tsx            React bootstrap (fonts, MotionConfig reduced-motion floor)
+  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync, RunProvider
   App.module.css      CSS module for App component
   App.test.tsx        Tests for App component
-  global.css          Dark-first CSS custom properties (visual identity tokens)
+  global.css          Light-first CSS custom properties (validated luminous palette; first :root
+                      block is the dune token-parity contract — see src/dune/theme.test.ts)
   test-setup.ts       Test environment configuration
   vite-env.d.ts       Vite environment types
   mcp/
@@ -48,15 +49,22 @@ src/
       demoServer.ts   Built-in in-page McpServer (demo-issue-tracker), test fixture
       demoServer.test.ts  Tests for demoServer
   ui/
-    ConnectScreen.tsx      Landing screen: URL input, headers disclosure, recents, demo button
+    ConnectScreen.tsx      Two-door landing: connect door (URL/headers/recents), demo door
     ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
     recents.ts             localStorage recent-servers list (opt-in header persistence)
     stage.ts               StageProps / EntitySelection — the display-variant contract
-    flow/
-      flowModel.ts         buildFlowModel — snapshot → groups/pills, adaptive density
-      FlowView.tsx         Default stage: server node, clusters, pills, readout, filter, collapse
-      TraceLayer.tsx       DOM-measured SVG traces (hairlines + heartbeat pulse)
-    DetailPanel.tsx         Slide-in panel: schema table, resource contents, raw-JSON disclosure
+    deck/
+      deckModel.ts         buildDeckModel — snapshot → tools (run-classed) + rail groups, dedupe, emphasis
+      armState.ts          pressTool — pure arm-then-fire transition; ARM_TIMEOUT_MS
+      DeckView.tsx         Default stage: server boundary, tool grid, filter, power-on choreography
+      ToolButton.tsx       One tool: face + info sibling + anchored tooltip; armed/running/needs-input states
+      Rail.tsx             Flanking resources/prompts lists with preview caps
+      Glyph.tsx            Entity shape coding (circle/square/diamond)
+      Prism.tsx            The brand mark (hairline prism, 3 variants)
+    run/
+      runResult.ts         formatCallResult/formatRunError — untrusted result → sanitized RunDisplay, size cap
+      RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool
+    DetailPanel.tsx         Spring slide-in panel: RUN section, schema table, resource contents, raw-JSON disclosure
     schema.ts               JSON Schema → argument table rows + friendlyType for DetailPanel
     *.module.css            CSS modules for each ui/ component
     *.test.ts[x]            Colocated tests for each ui/ module
