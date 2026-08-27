@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { motion, useReducedMotion } from "motion/react"
+import { AnimatePresence, motion, useReducedMotion } from "motion/react"
 import type { StageProps } from "../stage"
 import { useRuns } from "../run/RunContext"
 import { ARM_TIMEOUT_MS, pressTool } from "./armState"
@@ -8,6 +8,7 @@ import { buildDeckModel, type RunClass } from "./deckModel"
 import Prism from "./Prism"
 import Rail from "./Rail"
 import ToolButton from "./ToolButton"
+import ToolDrawer from "./ToolDrawer"
 import styles from "./DeckView.module.css"
 
 /** Tools shown before the "+ N more" expander (an active filter bypasses the cap). */
@@ -76,6 +77,21 @@ export default function DeckView({
     press(tool.id, tool.runClass)
   }
 
+  // The drawer is the tools' deep-dive surface; rail selections no longer exist.
+  const drawerTool = selection?.kind === "tool" ? selection.id : null
+
+  // Esc precedence (spec §2): if a tool is armed, Esc disarms (useArm's own
+  // listener); only an unarmed Esc closes the drawer. Both handlers see the
+  // same pre-dispatch armedId, so one keypress never does both.
+  useEffect(() => {
+    if (drawerTool === null) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && armedId === null) onSelect(null)
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [drawerTool, armedId, onSelect])
+
   const q = query.trim().toLowerCase()
   const matches = (label: string) => q === "" || label.toLowerCase().includes(q)
 
@@ -111,14 +127,6 @@ export default function DeckView({
         />
       </header>
       <div className={styles.body}>
-        <Rail
-          groups={model.rail}
-          matches={matches}
-          queryActive={q !== ""}
-          expanded={railExpanded}
-          onToggleExpand={(kind) => setRailExpanded((e) => ({ ...e, [kind]: !e[kind] }))}
-          reduced={reduced ?? false}
-        />
         <div className={styles.gridSection} role="group" aria-label="Tools">
           <header className={styles.sectionHeader}>{`TOOLS · ${model.tools.length}`}</header>
           <p className={styles.gloss}>actions it can perform</p>
@@ -154,7 +162,34 @@ export default function DeckView({
             </button>
           )}
         </div>
+        <Rail
+          groups={model.rail}
+          matches={matches}
+          queryActive={q !== ""}
+          expanded={railExpanded}
+          onToggleExpand={(kind) => setRailExpanded((e) => ({ ...e, [kind]: !e[kind] }))}
+          reduced={reduced ?? false}
+        />
       </div>
+      <AnimatePresence initial={false}>
+        {drawerTool !== null && (
+          <motion.div
+            key="drawer"
+            className={styles.drawerFold}
+            initial={reduced ? false : { height: 0 }}
+            animate={{ height: "auto" }}
+            exit={reduced ? undefined : { height: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            <ToolDrawer
+              snapshot={snapshot}
+              transportKind={transportKind}
+              toolId={drawerTool}
+              onClose={() => onSelect(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.section>
   )
 }

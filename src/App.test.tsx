@@ -6,18 +6,18 @@ import App from "./App"
 
 afterEach(() => window.history.replaceState(null, "", "/"))
 
-test("full flow: demo → deck → details → panel → disconnect", async () => {
+test("full flow: demo → deck → details drawer → disconnect", async () => {
   render(<App />)
   await userEvent.click(screen.getByRole("button", { name: /explore the demo/i }))
   expect(await screen.findByText(/TOOLS · 6/)).toBeInTheDocument()
-  // create_issue is arm-class — its face arms; the info affordance opens details.
+  // create_issue is arm-class — its face arms; the info affordance opens the drawer.
   await userEvent.click(screen.getByRole("button", { name: "details create_issue" }))
-  // The button tooltip also carries the description at rest, so scope panel assertions to the <aside>.
-  const panel = await screen.findByRole("complementary")
-  expect(within(panel).getByText(/create a new issue/i)).toBeInTheDocument()
+  // The button tooltip also carries the description at rest, so scope assertions to the drawer region.
+  const drawer = await screen.findByRole("region", { name: "tool details create_issue" })
+  expect(within(drawer).getByText(/create a new issue/i)).toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: /close details/i }))
-  // AnimatePresence defers unmount until the exit spring settles
-  await waitFor(() => expect(screen.queryByRole("complementary")).not.toBeInTheDocument())
+  // AnimatePresence defers unmount until the fold settles
+  await waitFor(() => expect(screen.queryByRole("region", { name: /tool details/i })).not.toBeInTheDocument())
   await userEvent.click(screen.getByRole("button", { name: /disconnect/i }))
   expect(await screen.findByLabelText(/server url/i)).toBeInTheDocument()
 })

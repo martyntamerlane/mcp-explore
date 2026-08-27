@@ -154,7 +154,7 @@
   border-color: color-mix(in srgb, var(--ink) 25%, transparent);
 }
 
-/* ── the rail: a left-flank browser (rail-browser spec 2026-08-27) ── */
+/* ── the rail: a right-flank browser (rail-browser spec, amended 2026-08-27) ── */
 
 .rail {
   flex: 0 0 300px;
@@ -162,9 +162,16 @@
   flex-direction: column;
   gap: 22px;
   min-width: 0;
-  padding-right: 24px;
-  border-right: 1px solid var(--panel-border);
+  padding-left: 24px;
+  border-left: 1px solid var(--panel-border);
   align-self: stretch;
+}
+
+/* ── the console drawer fold (push-up, never overlay) ── */
+
+.drawerFold {
+  flex: none;
+  overflow: hidden;
 }
 
 .railGroup {

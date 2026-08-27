@@ -1,0 +1,198 @@
+/* Docked console drawer along the boundary's bottom edge — pushes the deck
+   body up, never overlays (spec 2026-08-27). Wide columns replace the old
+   narrow panel: identity | arguments | run. */
+
+.drawer {
+  position: relative;
+  height: clamp(240px, 34vh, 380px);
+  padding: 18px 24px 20px;
+  border-top: 1px solid var(--panel-border);
+  background: var(--panel-solid);
+  overflow-y: auto;
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--panel-border);
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: border-color var(--ease-hover), color var(--ease-hover);
+}
+
+.close:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.9fr) minmax(260px, 1.1fr) minmax(280px, 1.3fr);
+  gap: 32px;
+  padding-right: 40px;
+}
+
+@media (max-width: 980px) {
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+}
+
+.identity {
+  min-width: 0;
+}
+
+.argsCol,
+.runCol {
+  min-width: 0;
+}
+
+.name {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 17px;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+
+.desc {
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin: 0 0 12px;
+  font-size: 13.5px;
+}
+
+.microlabel {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  margin: 0 0 8px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  padding: 0 8px 8px 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  text-align: left;
+  font-weight: 400;
+}
+
+.table td {
+  padding: 8px 8px 8px 0;
+  border-top: 1px solid var(--panel-border);
+  vertical-align: top;
+}
+
+.argName {
+  font-family: var(--mono);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.req {
+  color: var(--danger);
+}
+
+.argType {
+  font-family: var(--mono);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.rawType {
+  display: block;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.argDesc {
+  color: var(--ink-2);
+}
+
+.chips {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-left: 6px;
+}
+
+.chip {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--panel-border);
+  color: var(--ink-2);
+}
+
+.default {
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.missing {
+  color: var(--ink-3);
+  font-size: 13px;
+  margin: 0;
+}
+
+.comingSoon {
+  font-size: 13px;
+  color: var(--ink-3);
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--radius-s);
+  padding: 10px 14px;
+  margin: 0;
+}
+
+.code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 12px;
+  border-radius: var(--radius-s);
+  background: var(--code-bg);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 0 0 8px;
+}
+
+.runError .code {
+  border-left: 2px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 4%, transparent);
+}
+
+.raw {
+  margin-top: 8px;
+}
+
+.raw summary {
+  color: var(--ink-3);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.copy {
+  margin: 8px 0;
+  padding: 4px 12px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--panel-border);
+  background: none;
+  color: var(--ink-2);
+  cursor: pointer;
+  font-size: 12px;
+}
