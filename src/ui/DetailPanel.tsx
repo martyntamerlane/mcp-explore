@@ -4,6 +4,7 @@ import type { Connection } from "../mcp/types"
 import type { EntitySelection } from "./stage"
 import { classifyTool } from "./deck/deckModel"
 import { useRuns, type RunState } from "./run/RunContext"
+import { MAX_RESULT_CHARS } from "./run/runResult"
 import { friendlyType, schemaRows } from "./schema"
 import styles from "./DetailPanel.module.css"
 
@@ -44,27 +45,26 @@ function RawJson({ value }: { value: unknown }) {
   )
 }
 
-// The result lands with a settle; errors land flat and honest — no success motion.
+// The result lands with a settle; errors land flat and honest — no success
+// motion. The aria-live container persists across states so screen readers
+// announce content changing inside it, not a region popping into existence.
 function RunSection({ state }: { state: RunState }) {
-  if (state.status === "idle") return null
   return (
-    <>
-      <p className={styles.microlabel}>RUN</p>
-      {state.status === "running" && (
-        <p className={styles.missing} aria-live="polite">
-          Running…
-        </p>
-      )}
+    <div aria-live="polite">
+      {state.status !== "idle" && <p className={styles.microlabel}>RUN</p>}
+      {state.status === "running" && <p className={styles.missing}>Running…</p>}
       {state.status === "done" &&
         (state.display.ok ? (
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} aria-live="polite">
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>
             {state.display.blocks.map((b, i) => (
               <div key={i}>
                 {b.label && <p className={styles.microlabel}>{b.label.toUpperCase()}</p>}
                 <pre className={styles.code}>{b.text}</pre>
               </div>
             ))}
-            {state.display.truncated && <p className={styles.missing}>output capped at 50,000 characters</p>}
+            {state.display.truncated && (
+              <p className={styles.missing}>output capped at {MAX_RESULT_CHARS.toLocaleString("en-US")} characters</p>
+            )}
           </motion.div>
         ) : (
           <div role="alert" className={styles.runError}>
@@ -75,7 +75,7 @@ function RunSection({ state }: { state: RunState }) {
             ))}
           </div>
         ))}
-    </>
+    </div>
   )
 }
 

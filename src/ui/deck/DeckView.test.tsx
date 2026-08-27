@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "../../mcp/connect"
 import type { Connection, ServerSnapshot, TransportKind } from "../../mcp/types"
@@ -178,6 +178,57 @@ test("expander reveals the full grid and collapses back", async () => {
   expect(screen.getByRole("button", { name: "tool bulk_25" })).toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: /show fewer tools/i }))
   expect(screen.queryByRole("button", { name: "tool bulk_25" })).not.toBeInTheDocument()
+})
+
+test("scrolling and clicking elsewhere both disarm", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  expect(screen.getByRole("button", { name: "Run create_issue" })).toBeInTheDocument()
+  fireEvent.scroll(window)
+  expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  fireEvent.pointerDown(document.body)
+  expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument()
+})
+
+test("tooltips are anchored, described-by wired, for tools and rail entries", () => {
+  renderDeck()
+  const face = screen.getByRole("button", { name: "tool create_issue" })
+  const tipId = face.getAttribute("aria-describedby")
+  expect(tipId).toBeTruthy()
+  const tip = document.getElementById(tipId!)
+  expect(tip).toHaveAttribute("role", "tooltip")
+  expect(tip).toHaveTextContent(/create a new issue in the tracker/i)
+  const railTipId = screen.getByRole("button", { name: "resource config" }).getAttribute("aria-describedby")
+  expect(document.getElementById(railTipId!)).toHaveTextContent(/tracker configuration/i)
+})
+
+test("reduced motion: the deck's content renders synchronously with no entrance", () => {
+  // useReducedMotion reads matchMedia, which jsdom doesn't provide — stub it
+  // so the reduce query matches.
+  vi.stubGlobal(
+    "matchMedia",
+    (query: string) =>
+      ({
+        matches: query.includes("prefers-reduced-motion"),
+        media: query,
+        onchange: null,
+        addEventListener: () => {},
+        removeEventListener: () => {},
+        addListener: () => {},
+        removeListener: () => {},
+        dispatchEvent: () => false,
+      }) as unknown as MediaQueryList,
+  )
+  try {
+    renderDeck()
+    // the entrance branch must not gate first paint: every section is present at once
+    expect(screen.getByRole("button", { name: "tool project_pulse" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "resource config" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "prompt triage_issue" })).toBeInTheDocument()
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })
 
 test("empty kinds render an honest none line", () => {

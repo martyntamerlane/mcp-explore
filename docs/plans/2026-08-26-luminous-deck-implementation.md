@@ -602,6 +602,8 @@ Changes (spec §7 — behaviour of connect/headers/remember/recents/diagnostics 
 
 ### Task 12: Visual iteration checkpoint (screenshots ⇒ user)
 
+> **Status 2026-08-26**: comparison sets captured and presented (session scratchpad: `shots-inter-a/`, `shots-geist/`, `shots-prism-b/`, `shots-prism-c/`, `shots-grain/`). The picks — UI face (Inter vs Geist), prism variant (A/B/C), grain keep/drop — are **deliberately pending the user's reveal review**, not dropped: `@fontsource-variable/geist` stays installed until the face is chosen (the loser is uninstalled then), and the favicon follows the prism choice. Working defaults meanwhile: Inter, prism A, no grain.
+
 The spec resolves these **only from rendered pixels**: UI face (Inter vs Geist), prism variant (draw 2–3), grain-on-light keep/drop, adaptive-emphasis behaviour, choreography timings, palette feel. Iterate autonomously to a presentable state, then present screenshot sets to the user in prose (never AskUserQuestion — user preference).
 
 - [ ] **Step 1**: Restart `npm run dev` (WSL staleness rule). Screenshot: landing, demo deck (power-on settled), armed button, running button, result in panel, filtered deck, cloudflare-shaped tool-light snapshot, HF-shaped 155-resource rail (fake snapshots acceptable for the shape shots via a dev-only `?server=` demo variant or Playwright-driven real servers).

@@ -24,7 +24,11 @@
 
   --danger: #b91c1c;
   --cta-gradient: linear-gradient(135deg, rgba(8, 145, 178, 0.1), rgba(109, 40, 217, 0.1));
-  --code-bg: rgba(23, 27, 38, 0.05);
+  /* --code-bg is on the dune parity-test ALLOWLIST as theme-neutral, so it must
+     stay legible on BOTH canvases: mid-grey alpha darkens light surfaces and
+     lightens dark ones. Don't swap it for a one-canvas value without moving it
+     off that allowlist (src/dune/theme.test.ts — coordinate with that session). */
+  --code-bg: rgba(102, 108, 130, 0.12);
   --panel-solid: rgba(252, 253, 255, 0.92);
   --header-bg: rgba(244, 246, 250, 0.72);
   --radius-s: 8px;

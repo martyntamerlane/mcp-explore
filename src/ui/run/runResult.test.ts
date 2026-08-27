@@ -1,4 +1,4 @@
-import { MAX_RESULT_CHARS, formatCallResult, formatRunError } from "./runResult"
+import { MAX_RESULT_BLOCKS, MAX_RESULT_CHARS, formatCallResult, formatRunError } from "./runResult"
 
 test("text content renders as blocks", () => {
   const d = formatCallResult({ content: [{ type: "text", text: "hello" }] })
@@ -50,6 +50,27 @@ test("cap applies across blocks", () => {
   })
   expect(d.truncated).toBe(true)
   expect(d.blocks[1].text.length).toBe(5)
+})
+
+test("oversized text is never parsed/pretty-printed — sliced raw", () => {
+  const giant = "[" + "1,".repeat(30_000) + "1]" // valid JSON, > MAX_RESULT_CHARS
+  const d = formatCallResult({ content: [{ type: "text", text: giant }] })
+  // pretty-printing would start "[\n  1," — raw slice proves we skipped the parse
+  expect(d.blocks[0].text).toBe(giant.slice(0, MAX_RESULT_CHARS))
+  expect(d.truncated).toBe(true)
+})
+
+test("block count is capped — a flood of items cannot DoS the panel", () => {
+  const d = formatCallResult({ content: Array(MAX_RESULT_BLOCKS + 50).fill({ type: "text", text: "" }) })
+  expect(d.blocks.length).toBe(MAX_RESULT_BLOCKS + 1)
+  expect(d.blocks[MAX_RESULT_BLOCKS].text).toMatch(/\+ 50 more content items/)
+  expect(d.truncated).toBe(true)
+})
+
+test("a structuredContent-only result (no content array) is accepted", () => {
+  const d = formatCallResult({ structuredContent: { a: 1 } })
+  expect(d.ok).toBe(true)
+  expect(d.blocks).toEqual([{ label: "structured", text: '{\n  "a": 1\n}' }])
 })
 
 test("formatRunError wraps thrown errors", () => {

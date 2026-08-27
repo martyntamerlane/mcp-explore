@@ -2,7 +2,7 @@ import { useId } from "react"
 import { motion } from "motion/react"
 import type { RailGroup, RailItem } from "./deckModel"
 import type { StageProps } from "../stage"
-import { igniteContainer, igniteItem } from "./DeckView"
+import { igniteContainer, igniteItem } from "./choreography"
 import Glyph from "./Glyph"
 import styles from "./DeckView.module.css"
 
