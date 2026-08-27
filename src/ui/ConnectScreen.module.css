@@ -1,9 +1,29 @@
 .hero {
-  max-width: 660px;
+  position: relative;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 15vh 24px 64px;
+  padding: 12vh 24px 64px;
   text-align: center;
 }
+
+/* the landing's one ambient motion: a slow drift of the canvas tints */
+.hero::before {
+  content: "";
+  position: fixed;
+  inset: -20%;
+  z-index: -1;
+  background:
+    radial-gradient(700px 560px at 25% 20%, var(--glow-a), transparent 60%),
+    radial-gradient(800px 640px at 75% 80%, var(--glow-b), transparent 60%);
+  animation: drift 26s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes drift {
+  from { transform: translate3d(-2%, -1%, 0); }
+  to { transform: translate3d(2%, 1.5%, 0); }
+}
+
 .kicker {
   font-size: 11px;
   letter-spacing: 0.32em;
@@ -19,77 +39,154 @@
 }
 .sub { color: var(--ink-2); margin: 0 0 12px; }
 .gloss { font-size: 13px; color: var(--ink-3); margin: 0 0 48px; }
-.form { display: flex; gap: 12px; }
+
+/* ── two equal doors ────────────────────────────────────────────── */
+
+.doors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  text-align: left;
+}
+
+@media (max-width: 719px) {
+  .doors { grid-template-columns: 1fr; }
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+  padding: 28px 26px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-l);
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.doorTitle {
+  font-family: var(--display);
+  font-size: 19px;
+  font-weight: 500;
+  margin: 0 0 18px;
+}
+
+/* the demo door is the more inviting of the two — lit hairline + tinted wash */
+.demoDoor {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background-image: var(--cta-gradient);
+  border-color: color-mix(in srgb, var(--tool) 30%, var(--panel-border));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--tool) 12%, transparent),
+    0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent);
+}
+
+.doorPrism {
+  width: 56px;
+  height: 37px;
+  margin-bottom: 14px;
+}
+
+.doorSub {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  margin: 0 0 22px;
+  max-width: 300px;
+}
+
+.form { display: flex; gap: 10px; }
 .url {
   flex: 1;
-  padding: 14px 18px;
+  min-width: 0;
+  padding: 13px 16px;
   border-radius: var(--radius-m);
   border: 1px solid var(--panel-border);
-  background: var(--panel);
-  backdrop-filter: blur(20px);
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
   font-family: var(--mono);
-  font-size: 14px;
-  transition: border-color var(--ease-hover);
+  font-size: 13.5px;
+  transition: border-color var(--ease-hover), box-shadow var(--ease-hover);
 }
-.url:focus { outline: none; border-color: var(--tool-bright); }
+.url:focus {
+  outline: none;
+  border-color: var(--tool);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool) 14%, transparent);
+}
 .connect {
-  padding: 14px 28px;
+  padding: 13px 24px;
   border-radius: var(--radius-m);
-  border: 1px solid var(--panel-border);
-  background: var(--cta-gradient);
+  border: 1px solid color-mix(in srgb, var(--tool) 35%, var(--panel-border));
+  background: color-mix(in srgb, var(--tool) 9%, transparent);
+  color: var(--ink);
+  font-weight: 500;
   cursor: pointer;
-  transition: filter var(--ease-hover);
+  transition: border-color var(--ease-hover), box-shadow var(--ease-hover);
 }
-.connect:hover:not(:disabled) { filter: brightness(1.25); }
-.connect:disabled { opacity: 0.4; cursor: default; }
+.connect:hover:not(:disabled) {
+  border-color: var(--tool);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tool) 30%, transparent);
+}
+.connect:disabled { opacity: 0.45; cursor: default; }
+
 .disclose {
-  margin-top: 20px;
+  margin-top: 18px;
+  align-self: flex-start;
   background: none;
   border: none;
   color: var(--ink-3);
   cursor: pointer;
   font-size: 13px;
+  padding: 0;
 }
-.headers { margin-top: 16px; display: grid; gap: 8px; }
+.headers { margin-top: 14px; display: grid; gap: 8px; }
 .headerRow { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; }
 .headerRow input {
   padding: 10px 14px;
   border-radius: var(--radius-s);
   border: 1px solid var(--panel-border);
-  background: var(--panel);
+  background: color-mix(in srgb, var(--bg) 60%, transparent);
   font-family: var(--mono);
   font-size: 13px;
 }
 .headerActions { display: flex; justify-content: space-between; align-items: center; color: var(--ink-3); font-size: 13px; }
 .headerActions button { background: none; border: none; color: var(--ink-2); cursor: pointer; }
 .remember { display: flex; align-items: center; gap: 8px; }
-.recents { margin-top: 56px; display: grid; gap: 8px; }
-.microlabel { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); }
+
+.recents { margin-top: 26px; display: grid; gap: 8px; }
+.microlabel { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); margin: 0; }
 .recent {
-  padding: 10px 16px;
+  padding: 10px 14px;
   border-radius: var(--radius-s);
   border: 1px solid var(--panel-border);
-  background: var(--panel);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
   color: var(--ink-2);
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 12.5px;
   cursor: pointer;
-  transition: border-color var(--ease-hover);
+  transition: border-color var(--ease-hover), color var(--ease-hover);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: left;
 }
-.recent:hover { border-color: var(--ink-3); }
+.recent:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ink) 30%, transparent); color: var(--ink); }
+
 .demo {
-  display: block;
-  margin: 40px auto 0;
-  color: var(--ink-2);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius-s);
-  padding: 10px 20px;
-  background: none;
+  color: var(--ink);
+  font-weight: 500;
+  border: 1px solid color-mix(in srgb, var(--tool) 45%, var(--panel-border));
+  border-radius: var(--radius-m);
+  padding: 13px 28px;
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
   cursor: pointer;
   font-size: 14px;
-  transition: border-color var(--ease-hover), color var(--ease-hover);
+  transition: border-color var(--ease-hover), box-shadow var(--ease-hover);
 }
-.demo:hover:not(:disabled) { border-color: var(--ink-3); color: var(--ink); }
+.demo:hover:not(:disabled) {
+  border-color: var(--tool);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--tool) 30%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--tool) 10%, transparent);
+}
+.demo:disabled { opacity: 0.45; cursor: default; }

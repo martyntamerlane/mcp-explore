@@ -8,7 +8,7 @@ afterEach(() => window.history.replaceState(null, "", "/"))
 
 test("full flow: demo → deck → details → panel → disconnect", async () => {
   render(<App />)
-  await userEvent.click(screen.getByRole("button", { name: /try the demo/i }))
+  await userEvent.click(screen.getByRole("button", { name: /explore the demo/i }))
   expect(await screen.findByText(/TOOLS · 6/)).toBeInTheDocument()
   // create_issue is arm-class — its face arms; the info affordance opens details.
   await userEvent.click(screen.getByRole("button", { name: "details create_issue" }))
@@ -64,7 +64,7 @@ test("connecting via the demo clears a stale ?server= from the address bar", asy
   }
   render(<App connectUrlFn={failing} />)
   await screen.findByRole("alert")
-  await userEvent.click(screen.getByRole("button", { name: /try the demo/i }))
+  await userEvent.click(screen.getByRole("button", { name: /explore the demo/i }))
   expect(await screen.findByText(/TOOLS · 6/)).toBeInTheDocument()
   expect(window.location.search).toBe("")
 })
