@@ -13,6 +13,8 @@ Root diagnosis: the rail treats resources and prompts as mini tool-buttons — s
 
 ## 2. Design
 
+> **Amendment 2026-08-27 (same day)**: the rail returns to the **right** flank per [`2026-08-27-console-drawer-dark-mode.md`](2026-08-27-console-drawer-dark-mode.md) — the left move existed to escape the right slide-in panel, which that spec deletes outright (tool info moves to a bottom drawer; no overlays remain). Everything else here stands.
+
 ### The rail becomes a self-contained browser (left flank)
 
 - The rail moves to the **left flank** of the deck body (file-browser convention: navigator on the left); the tool grid takes the centre/right. The detail panel now slides in over the grid's side and **never covers the rail**.
