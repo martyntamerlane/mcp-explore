@@ -13,7 +13,7 @@ export interface RunDisplay {
   truncated: boolean
 }
 
-function prettyIfJson(text: string): string {
+export function prettyIfJson(text: string): string {
   // Never parse/pretty-print past the display cap: parsing a multi-megabyte
   // payload (and pretty-printing, which multiplies its size) happens BEFORE the
   // cap slices, so oversized text ships raw and gets sliced by cap().
