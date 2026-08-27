@@ -4,6 +4,7 @@
 **Status**: Agreed (user direction: "futuristic, moody gradients, very clear styling with more space than text, progressive disclosure to drill down")
 **Extends**: [`2026-08-24-initial-design.md`](2026-08-24-initial-design.md) decision #12 (dark-first)
 **Amended 2026-08-25**: the graph geometry and step 3 of the disclosure ladder are superseded by [`2026-08-25-flow-view-design.md`](2026-08-25-flow-view-design.md), which also sanctions the trace heartbeat pulse as the one permitted looping animation.
+**Superseded 2026-08-26**: the dark identity (surfaces, palette values, type ramp) is replaced by [`2026-08-26-luminous-deck-redesign.md`](2026-08-26-luminous-deck-redesign.md) (light-first "luminous precision"). Still authoritative from this file: entity hue-family/shape semantics (values re-derived for light), colour-discipline and ink-only-text rules, progressive-disclosure principles.
 
 ## Direction
 

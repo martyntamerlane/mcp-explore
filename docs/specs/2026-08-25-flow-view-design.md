@@ -3,6 +3,7 @@
 **Date**: 2026-08-25
 **Status**: Agreed (grill session: paradigm, density, vocabulary, navigation, variants architecture, aesthetic, motion all resolved with user)
 **Supersedes**: the radial/polar graph geometry (initial design decision #8's flat ring and the graph portions of [`2026-08-25-visual-identity.md`](2026-08-25-visual-identity.md) §Progressive disclosure step 3). **Retains**: determinism (no physics, no draggable nodes — initial design decision #7), the validated entity palette, surfaces, ink tokens, and the progressive-disclosure ladder everywhere else.
+**Superseded 2026-08-26**: the flow geometry (server node → traces → clusters), readout strip, heartbeat pulse, and gate-ring core are replaced by the control-deck stage in [`2026-08-26-luminous-deck-redesign.md`](2026-08-26-luminous-deck-redesign.md). Still authoritative from this file: the stage architecture (§Architecture), `buildFlowModel`'s data shaping, preview-cap and filter behaviour, newcomer glosses, and schema humanization.
 
 ## Why the radial graph is replaced
 

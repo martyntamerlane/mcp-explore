@@ -14,6 +14,8 @@ Each entry has a stable ID (`TODO-N`) that is never reused. Completed items move
 
 The v2 flagship. Generate argument forms from each tool's JSON Schema, invoke the tool, render results inline in the detail panel. Deliberately excluded from v1 (design spec decision #5) because form generation from arbitrary JSON Schema is the single biggest feature in the app.
 
+2026-08-26: a scoped slice (running demo-server tools + zero-input tools on any server, no form generation) was pulled into the luminous-deck redesign — see `docs/specs/2026-08-26-luminous-deck-redesign.md` §5. This entry remains for parameterised tools; the eligibility check in that spec is the upgrade seam.
+
 ### TODO-2: OAuth 2.1 authentication flow
 
 **Complexity**: L
@@ -37,6 +39,8 @@ Group tools by shared prefix/namespace (`issues_create`, `issues_list` → `issu
 **Complexity**: S
 
 v1 is dark-first. All colours are already CSS custom properties, so this is a variable set + toggle honouring `prefers-color-scheme`, plus visual QA.
+
+2026-08-26: inverted by the luminous-deck redesign (`docs/specs/2026-08-26-luminous-deck-redesign.md`) — the baseline goes **light-first**; this entry now means adding a *dark* variant later.
 
 ### TODO-6: Docs-style list view as alternate to the graph
 
@@ -105,17 +109,19 @@ From the 2026-08-24 dune-mode final review: the departure-transition auto-hide i
 
 A general visual/UX redesign of the landing screen for usefulness and "stickiness," aiming for a more futuristic/minimalist/artistic feel — the piece of the 2026-08-24 dune-mode brainstorming session that was deliberately decomposed out as a separate, not-yet-brainstormed sub-project (dune mode itself is a skin/extension of this baseline, not a replacement for it).
 
+2026-08-26: brainstormed (grill session) and specced as part of the whole-journey **luminous-deck redesign** — `docs/specs/2026-08-26-luminous-deck-redesign.md` (light identity, control-deck IA, run verb, two-door landing). Implementation pending; this entry is executed by that spec.
+
 ### TODO-16: Multi-server connect + semantic tool comparison
 
 **Complexity**: L
 
-The differentiating idea (2026-08-25 flow-view grill session): connect to several MCP servers at once and semantically compare their tools. The flow view's geometry already accommodates it — N source nodes on the left edge, a shared capability field on the right, semantic clusters receiving provenance-marked traces, so overlap/gaps/unique capabilities become visible as convergence/absence/single-source clusters. `buildFlowModel`'s grouping seam (kind-grouping today, grouping-as-a-function by design) is the extension point; see also TODO-4's single-server semantic grouping. **Monetization note**: like TODO-4, if this becomes a paid feature it needs an entitlement mechanism, which reopens the zero-backend decision (initial design decision #9) — no entitlement machinery until that's a real goal.
+The differentiating idea (2026-08-25 flow-view grill session): connect to several MCP servers at once and semantically compare their tools. ~~The flow view's geometry already accommodates it — N source nodes on the left edge, a shared capability field on the right, semantic clusters receiving provenance-marked traces, so overlap/gaps/unique capabilities become visible as convergence/absence/single-source clusters.~~ 2026-08-26: the luminous-deck redesign replaces that geometry — the multi-server seam is now **tiled server boundaries** (one named deck per server; see `docs/specs/2026-08-26-luminous-deck-redesign.md` §3); the semantic-comparison presentation will need its own design when this is picked up. `buildFlowModel`'s grouping seam (kind-grouping today, grouping-as-a-function by design) is the extension point; see also TODO-4's single-server semantic grouping. **Monetization note**: like TODO-4, if this becomes a paid feature it needs an entitlement mechanism, which reopens the zero-backend decision (initial design decision #9) — no entitlement machinery until that's a real goal.
 
 ### TODO-18: WebGL/shader server core (volumetric gate)
 
 **Complexity**: M
 
-Offered during the 2026-08-26 visual passes and not yet approved: replace the CSS gate ring with a WebGL/GLSL rendering — volumetric light scattering, refraction, a particle field around the core. Requires a real dependency decision (three.js ~150 kB, or hand-rolled GLSL with more code), GPU cost, and `prefers-reduced-motion`/fallback handling; the CSS ring stays the fallback either way. Only pick this up with explicit user approval of the dependency (CLAUDE.md dependency rule).
+2026-08-26 (later): likely **moot** — the luminous-deck redesign (`docs/specs/2026-08-26-luminous-deck-redesign.md`) retires the gate-ring core along with the flow view. Keep only if a future stage wants a WebGL centrepiece. Original text: offered during the 2026-08-26 visual passes and not yet approved: replace the CSS gate ring with a WebGL/GLSL rendering — volumetric light scattering, refraction, a particle field around the core. Requires a real dependency decision (three.js ~150 kB, or hand-rolled GLSL with more code), GPU cost, and `prefers-reduced-motion`/fallback handling; the CSS ring stays the fallback either way. Only pick this up with explicit user approval of the dependency (CLAUDE.md dependency rule).
 
 ### TODO-17: Adapt the Dune scene to the stage contract
 
