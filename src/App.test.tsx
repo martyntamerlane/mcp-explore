@@ -6,12 +6,13 @@ import App from "./App"
 
 afterEach(() => window.history.replaceState(null, "", "/"))
 
-test("full flow: demo → graph → node → panel → disconnect", async () => {
+test("full flow: demo → deck → details → panel → disconnect", async () => {
   render(<App />)
   await userEvent.click(screen.getByRole("button", { name: /try the demo/i }))
   expect(await screen.findByText(/TOOLS · 6/)).toBeInTheDocument()
-  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
-  // The pill blurb also shows the description at rest, so scope panel assertions to the <aside>.
+  // create_issue is arm-class — its face arms; the info affordance opens details.
+  await userEvent.click(screen.getByRole("button", { name: "details create_issue" }))
+  // The button tooltip also carries the description at rest, so scope panel assertions to the <aside>.
   const panel = await screen.findByRole("complementary")
   expect(within(panel).getByText(/create a new issue/i)).toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: /close details/i }))

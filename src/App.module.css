@@ -2,19 +2,18 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 24px;
+  gap: 10px;
+  padding: 12px 24px;
   border-bottom: 1px solid var(--panel-border);
   background: var(--header-bg);
   backdrop-filter: blur(20px);
 }
-.serverName { font-family: var(--mono); font-size: 15px; }
-.chip {
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  padding: 3px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--panel-border);
+.brandMark { width: 26px; height: 17px; }
+.brand {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
   color: var(--ink-2);
 }
 .disconnect {
@@ -25,7 +24,7 @@
   background: none;
   color: var(--ink-2);
   cursor: pointer;
-  transition: border-color var(--ease-hover);
+  transition: border-color var(--ease-hover), color var(--ease-hover);
 }
 .disconnect:hover { border-color: var(--danger); color: var(--ink); }
 .main { position: relative; flex: 1; min-height: 0; display: flex; }

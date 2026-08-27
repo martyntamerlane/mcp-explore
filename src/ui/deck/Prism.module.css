@@ -1,0 +1,6 @@
+.prism {
+  width: 30px;
+  height: 20px;
+  flex: none;
+  stroke-linecap: round;
+}

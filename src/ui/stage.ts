@@ -7,9 +7,10 @@ export interface EntitySelection {
   id: string
 }
 
-// The stage contract (flow-view design spec §Architecture): every display
-// variant — the default flow view, themed scenes — is a component taking
-// exactly these props. App owns connection, selection, and shared chrome.
+// The stage contract (introduced by the flow-view spec, retained by the
+// luminous-deck redesign): every display variant — the default deck, themed
+// scenes — is a component taking exactly these props. App owns connection,
+// selection, and shared chrome.
 export interface StageProps {
   snapshot: ServerSnapshot
   transportKind: TransportKind

@@ -3,7 +3,9 @@ import { connectUrl as realConnectUrl } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
 import ConnectScreen from "./ui/ConnectScreen"
 import DetailPanel from "./ui/DetailPanel"
-import FlowView from "./ui/flow/FlowView"
+import DeckView from "./ui/deck/DeckView"
+import Prism from "./ui/deck/Prism"
+import { RunProvider } from "./ui/run/RunContext"
 import type { EntitySelection } from "./ui/stage"
 import styles from "./App.module.css"
 
@@ -47,20 +49,23 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
     )
   }
 
+  // Server identity lives in the deck boundary (the multi-server seam);
+  // app chrome carries only the brand and the session action.
   const { snapshot, transportKind } = phase.connection
   return (
     <div className={styles.app}>
       <header className={styles.header}>
-        <span className={styles.serverName}>{snapshot.serverInfo.name}</span>
-        <span className={styles.chip}>v{snapshot.serverInfo.version}</span>
-        <span className={styles.chip}>{transportKind}</span>
+        <Prism className={styles.brandMark} />
+        <span className={styles.brand}>MCP EXPLORE</span>
         <button type="button" className={styles.disconnect} onClick={() => void disconnect()}>
           Disconnect
         </button>
       </header>
       <main className={styles.main}>
-        <FlowView snapshot={snapshot} transportKind={transportKind} selection={selected} onSelect={setSelected} />
-        <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
+        <RunProvider connection={phase.connection}>
+          <DeckView snapshot={snapshot} transportKind={transportKind} selection={selected} onSelect={setSelected} />
+          <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
+        </RunProvider>
       </main>
     </div>
   )
