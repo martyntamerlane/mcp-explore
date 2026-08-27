@@ -154,14 +154,17 @@
   border-color: color-mix(in srgb, var(--ink) 25%, transparent);
 }
 
-/* ── the flanking rail ─────────────────────────────────────────── */
+/* ── the rail: a left-flank browser (rail-browser spec 2026-08-27) ── */
 
 .rail {
-  flex: 0 0 280px;
+  flex: 0 0 300px;
   display: flex;
   flex-direction: column;
   gap: 22px;
   min-width: 0;
+  padding-right: 24px;
+  border-right: 1px solid var(--panel-border);
+  align-self: stretch;
 }
 
 .railGroup {
@@ -211,12 +214,14 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
-.railGroup[data-kind="resource"] .railButton[aria-pressed="true"] {
+/* An unfolded leaf holds a sustained lit edge + tinted fill (same language as
+   an armed tool button). Folders are cheap disclosure and stay unlit. */
+.railGroup[data-kind="resource"] .railButton[data-leaf][aria-expanded="true"] {
   border-color: var(--resource);
   background: color-mix(in srgb, var(--resource) 7%, transparent);
 }
 
-.railGroup[data-kind="prompt"] .railButton[aria-pressed="true"] {
+.railGroup[data-kind="prompt"] .railButton[data-leaf][aria-expanded="true"] {
   border-color: var(--prompt);
   background: color-mix(in srgb, var(--prompt) 7%, transparent);
 }
@@ -228,30 +233,155 @@
   min-width: 0;
 }
 
-/* ── anchored tooltip (fixed to the entry, never cursor-chasing) ── */
+/* ── folder rows: quiet disclosure, no card chrome ── */
 
-.tip {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 6px);
-  z-index: 3;
-  max-width: 300px;
-  padding: 7px 11px;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--ink);
-  background: var(--panel-solid);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--radius-s);
-  box-shadow: 0 6px 24px color-mix(in srgb, var(--ink) 10%, transparent);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-2px);
-  transition: opacity 150ms ease-out, transform 150ms ease-out;
+.folderButton {
+  background: none;
+  border-color: transparent;
 }
 
-.railEntry:hover .tip,
-.railEntry:focus-within .tip {
-  opacity: 1;
-  transform: translateY(0);
+.folderButton:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.railGroup[data-kind="resource"] .folderButton:hover {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.folderCount {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+  flex: none;
+  font-size: 10px;
+  color: var(--ink-3);
+  transition: transform var(--ease-hover);
+}
+
+.railButton[data-leaf] .chevron {
+  margin-left: auto;
+}
+
+.chevron[data-open] {
+  transform: rotate(90deg);
+}
+
+.railChildren {
+  margin: 2px 0 4px 11px;
+  padding-left: 10px;
+  border-left: 1px solid var(--panel-border);
+}
+
+/* ── the unfolded row ── */
+
+.leafFold {
+  overflow: hidden;
+}
+
+.leafDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 6px;
+  padding: 10px 12px;
+  font-size: 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+
+.leafDesc {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+.leafMeta {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  word-break: break-all;
+}
+
+.leafMime {
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+.leafArgs {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.leafArgs code {
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.leafArgDesc {
+  color: var(--ink-2);
+}
+
+.req {
+  color: var(--danger);
+}
+
+.microlabel {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+
+.quietNote {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.readBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.leafCode {
+  margin: 0;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.55;
+  background: var(--code-bg);
+  border-radius: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.leafImg {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+.readError {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent);
+  border-radius: 6px;
 }

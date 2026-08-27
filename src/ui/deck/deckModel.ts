@@ -17,11 +17,21 @@ export interface DeckTool {
   runClass: RunClass
 }
 
+export interface PromptArgSpec {
+  name: string
+  required: boolean
+  description?: string
+}
+
+// Rail rows unfold in place (rail-browser spec): the item carries everything
+// the unfolded row shows without a trip to the detail panel.
 export interface RailItem {
   kind: "resource" | "prompt"
   id: string
   label: string
-  blurb?: string
+  description?: string
+  mimeType?: string
+  promptArgs?: PromptArgSpec[]
 }
 
 export interface RailGroup {
@@ -89,7 +99,8 @@ export function buildDeckModel(snapshot: ServerSnapshot, transportKind: Transpor
           kind: "resource" as const,
           id: r.uri,
           label: r.name,
-          blurb: firstLine(r.description) ?? r.uri,
+          description: r.description,
+          mimeType: typeof r.mimeType === "string" ? r.mimeType : undefined,
         })),
       ),
     },
@@ -102,7 +113,12 @@ export function buildDeckModel(snapshot: ServerSnapshot, transportKind: Transpor
           kind: "prompt" as const,
           id: p.name,
           label: p.name,
-          blurb: firstLine(p.description),
+          description: p.description,
+          promptArgs: (Array.isArray(p.arguments) ? p.arguments : []).map((a) => ({
+            name: a.name,
+            required: a.required === true,
+            description: a.description,
+          })),
         })),
       ),
     },

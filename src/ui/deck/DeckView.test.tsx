@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from "@testing-library/rea
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "../../mcp/connect"
 import type { Connection, ServerSnapshot, TransportKind } from "../../mcp/types"
+import { ReadProvider } from "../run/ReadContext"
 import { RunProvider } from "../run/RunContext"
 import type { EntitySelection } from "../stage"
 import DeckView, { TOOLS_PREVIEW_MAX } from "./DeckView"
@@ -23,13 +24,15 @@ function renderDeck({
   const onSelect = vi.fn()
   render(
     <RunProvider connection={conn}>
-      <DeckView
-        snapshot={snapshot}
-        transportKind={transportKind}
-        selection={selection}
-        onSelect={onSelect}
-        armTimeoutMs={armTimeoutMs}
-      />
+      <ReadProvider connection={conn}>
+        <DeckView
+          snapshot={snapshot}
+          transportKind={transportKind}
+          selection={selection}
+          onSelect={onSelect}
+          armTimeoutMs={armTimeoutMs}
+        />
+      </ReadProvider>
     </RunProvider>,
   )
   return { onSelect }
@@ -45,7 +48,7 @@ test("deck boundary carries server identity and canonical section headers", () =
   expect(within(boundary).getByText(/v1\.0\.0/)).toBeInTheDocument()
   expect(within(boundary).getByText("in-memory")).toBeInTheDocument()
   expect(within(boundary).getByText(/TOOLS · 6/)).toBeInTheDocument()
-  expect(within(boundary).getByText(/RESOURCES · 2/)).toBeInTheDocument()
+  expect(within(boundary).getByText(/RESOURCES · 7/)).toBeInTheDocument()
   expect(within(boundary).getByText(/PROMPTS · 2/)).toBeInTheDocument()
   expect(within(boundary).getByText("actions it can perform")).toBeInTheDocument()
   expect(within(boundary).getByText("data it exposes")).toBeInTheDocument()
@@ -140,12 +143,73 @@ test("keyboard: Enter arms, Enter fires", async () => {
   expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "create_issue", arguments: {} })
 })
 
-test("rail entries select resources and prompts", async () => {
+test("resource rows unfold in place and auto-load contents — the panel is never involved", async () => {
   const { onSelect } = renderDeck()
-  await userEvent.click(screen.getByRole("button", { name: "resource config" }))
-  expect(onSelect).toHaveBeenCalledWith({ kind: "resource", id: "demo://config" })
+  const row = screen.getByRole("button", { name: "resource config" })
+  expect(row).toHaveAttribute("aria-expanded", "false")
+  await userEvent.click(row)
+  expect(row).toHaveAttribute("aria-expanded", "true")
+  await waitFor(() => expect(screen.getByText(/defaultPriority/)).toBeInTheDocument())
+  expect(screen.getByText("demo://config")).toBeInTheDocument()
+  expect(screen.getByText("application/json")).toBeInTheDocument()
+  expect(onSelect).not.toHaveBeenCalled()
+  // clicking the open row folds it back
+  await userEvent.click(row)
+  expect(row).toHaveAttribute("aria-expanded", "false")
+})
+
+test("accordion: unfolding a second row folds the first", async () => {
+  renderDeck()
+  const config = screen.getByRole("button", { name: "resource config" })
+  const readme = screen.getByRole("button", { name: "resource readme" })
+  await userEvent.click(config)
+  await userEvent.click(readme)
+  expect(config).toHaveAttribute("aria-expanded", "false")
+  expect(readme).toHaveAttribute("aria-expanded", "true")
+})
+
+test("path-structured resources group into folders; a folder click reveals children", async () => {
+  renderDeck()
+  expect(screen.queryByRole("button", { name: "resource getting-started" })).not.toBeInTheDocument()
+  const docs = screen.getByRole("button", { name: "folder docs" })
+  expect(docs).toHaveAttribute("aria-expanded", "false")
+  await userEvent.click(docs)
+  expect(screen.getByRole("button", { name: "resource getting-started" })).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "resource writing-good-issues" })).toBeInTheDocument()
+  expect(within(screen.getByRole("button", { name: "folder issues" })).getByText("3")).toBeInTheDocument()
+})
+
+test("zero-arg prompts unfold to their actual message text; parameterised show args honestly", async () => {
+  const spy = vi.spyOn(conn.client, "getPrompt")
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "prompt weekly_summary" }))
+  await waitFor(() => expect(screen.getByText(/three bullet points/)).toBeInTheDocument())
+  expect(screen.getByText("USER")).toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: "prompt triage_issue" }))
-  expect(onSelect).toHaveBeenCalledWith({ kind: "prompt", id: "triage_issue" })
+  expect(screen.getByText("issue_id")).toBeInTheDocument()
+  expect(screen.getByText(/fill-in preview — coming with tool forms/)).toBeInTheDocument()
+  // parameterised prompts are never fetched
+  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "weekly_summary" })
+})
+
+test("an active filter forces folders open so nested matches are visible", async () => {
+  renderDeck()
+  await userEvent.type(screen.getByLabelText(/filter items/i), "getting")
+  const match = screen.getByRole("button", { name: "resource getting-started" })
+  expect(match.closest("[data-receded]")).toBeNull()
+  // the folder holding no matches recedes with its contents
+  expect(screen.getByRole("button", { name: "folder issues" }).closest("[data-receded]")).not.toBeNull()
+})
+
+test("rail preview cap counts top-level rows — a folder is one row", async () => {
+  const resources = Array.from({ length: 12 }, (_, i) => ({
+    uri: `flat://r${String(i).padStart(2, "0")}`,
+    name: `r${String(i).padStart(2, "0")}`,
+  }))
+  renderDeck({ snapshot: { ...conn.snapshot, resources } })
+  expect(screen.queryByRole("button", { name: "resource r11" })).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: /show all 12 resources/i }))
+  expect(screen.getByRole("button", { name: "resource r11" })).toBeInTheDocument()
 })
 
 test("filter recedes non-matches across all kinds and bypasses the preview cap", async () => {
@@ -191,7 +255,7 @@ test("scrolling and clicking elsewhere both disarm", async () => {
   expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument()
 })
 
-test("tooltips are anchored, described-by wired, for tools and rail entries", () => {
+test("tool tooltips are anchored and described-by wired; rail rows have none", () => {
   renderDeck()
   const face = screen.getByRole("button", { name: "tool create_issue" })
   const tipId = face.getAttribute("aria-describedby")
@@ -199,8 +263,8 @@ test("tooltips are anchored, described-by wired, for tools and rail entries", ()
   const tip = document.getElementById(tipId!)
   expect(tip).toHaveAttribute("role", "tooltip")
   expect(tip).toHaveTextContent(/create a new issue in the tracker/i)
-  const railTipId = screen.getByRole("button", { name: "resource config" }).getAttribute("aria-describedby")
-  expect(document.getElementById(railTipId!)).toHaveTextContent(/tracker configuration/i)
+  // rail rows retired their tooltip — the description lives in the unfolded row
+  expect(screen.getByRole("button", { name: "resource config" })).not.toHaveAttribute("aria-describedby")
 })
 
 test("reduced motion: the deck's content renders synchronously with no entrance", () => {

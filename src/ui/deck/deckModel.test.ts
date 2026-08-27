@@ -47,12 +47,27 @@ test("buildDeckModel groups rail with canonical glosses and dedupes duplicate id
   expect(m.rail[0].items.map((i) => i.id)).toEqual(["r://1"])
   expect(m.rail[0].gloss).toBe("data it exposes")
   expect(m.rail[1].gloss).toBe("ready-made instructions")
-  expect(m.rail[1].items[0].blurb).toBe("line1")
+  expect(m.rail[1].items[0].description).toBe("line1\nline2")
 })
 
-test("resource blurb falls back to its URI", () => {
-  const m = buildDeckModel({ ...base, resources: [{ uri: "r://bare", name: "bare" }] }, "in-memory")
-  expect(m.rail[0].items[0].blurb).toBe("r://bare")
+test("rail items carry what the unfolded row needs — mime, args with required flags", () => {
+  const m = buildDeckModel(
+    {
+      ...base,
+      resources: [{ uri: "r://cfg", name: "cfg", mimeType: "application/json" }],
+      prompts: [
+        { name: "p1", arguments: [{ name: "id", required: true, description: "which" }, { name: "tone" }] },
+        { name: "p2" },
+      ],
+    },
+    "in-memory",
+  )
+  expect(m.rail[0].items[0].mimeType).toBe("application/json")
+  expect(m.rail[1].items[0].promptArgs).toEqual([
+    { name: "id", required: true, description: "which" },
+    { name: "tone", required: false, description: undefined },
+  ])
+  expect(m.rail[1].items[1].promptArgs).toEqual([])
 })
 
 test("emphasis flips to tool-light at <= 4 tools", () => {

@@ -111,6 +111,14 @@ export default function DeckView({
         />
       </header>
       <div className={styles.body}>
+        <Rail
+          groups={model.rail}
+          matches={matches}
+          queryActive={q !== ""}
+          expanded={railExpanded}
+          onToggleExpand={(kind) => setRailExpanded((e) => ({ ...e, [kind]: !e[kind] }))}
+          reduced={reduced ?? false}
+        />
         <div className={styles.gridSection} role="group" aria-label="Tools">
           <header className={styles.sectionHeader}>{`TOOLS · ${model.tools.length}`}</header>
           <p className={styles.gloss}>actions it can perform</p>
@@ -146,16 +154,6 @@ export default function DeckView({
             </button>
           )}
         </div>
-        <Rail
-          groups={model.rail}
-          selection={selection}
-          onSelect={onSelect}
-          matches={matches}
-          queryActive={q !== ""}
-          expanded={railExpanded}
-          onToggleExpand={(kind) => setRailExpanded((e) => ({ ...e, [kind]: !e[kind] }))}
-          reduced={reduced ?? false}
-        />
       </div>
     </motion.section>
   )

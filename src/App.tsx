@@ -6,6 +6,7 @@ import ConnectScreen from "./ui/ConnectScreen"
 import DetailPanel from "./ui/DetailPanel"
 import DeckView from "./ui/deck/DeckView"
 import Prism from "./ui/deck/Prism"
+import { ReadProvider } from "./ui/run/ReadContext"
 import { RunProvider } from "./ui/run/RunContext"
 import type { EntitySelection } from "./ui/stage"
 import styles from "./App.module.css"
@@ -64,12 +65,14 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
       </header>
       <main className={styles.main}>
         <RunProvider connection={phase.connection}>
-          <DeckView snapshot={snapshot} transportKind={transportKind} selection={selected} onSelect={setSelected} />
-          <AnimatePresence>
-            {selected && (
-              <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
-            )}
-          </AnimatePresence>
+          <ReadProvider connection={phase.connection}>
+            <DeckView snapshot={snapshot} transportKind={transportKind} selection={selected} onSelect={setSelected} />
+            <AnimatePresence>
+              {selected && (
+                <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
+              )}
+            </AnimatePresence>
+          </ReadProvider>
         </RunProvider>
       </main>
     </div>
