@@ -195,8 +195,11 @@
   transition: opacity 150ms ease-out, transform 150ms ease-out;
 }
 
+/* Visible on hover and KEYBOARD focus only. :focus-within would pin the tip
+   after a mouse click (focus stays on the face until it moves elsewhere) —
+   that was ISSUE-2; :has(:focus-visible) keeps keyboard parity without it. */
 .card:hover .tip,
-.card:focus-within .tip {
+.card:has(:focus-visible) .tip {
   opacity: 1;
   transform: translateY(0);
 }
