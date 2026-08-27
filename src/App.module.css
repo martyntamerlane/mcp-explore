@@ -16,8 +16,13 @@
   letter-spacing: 0.22em;
   color: var(--ink-2);
 }
-.disconnect {
+.actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.disconnect {
   padding: 8px 16px;
   border-radius: var(--radius-s);
   border: 1px solid var(--panel-border);

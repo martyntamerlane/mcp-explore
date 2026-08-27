@@ -6,6 +6,7 @@ import ConnectScreen from "./ui/ConnectScreen"
 import DetailPanel from "./ui/DetailPanel"
 import DeckView from "./ui/deck/DeckView"
 import Prism from "./ui/deck/Prism"
+import ModeToggle from "./ui/ModeToggle"
 import { ReadProvider } from "./ui/run/ReadContext"
 import { RunProvider } from "./ui/run/RunContext"
 import type { EntitySelection } from "./ui/stage"
@@ -59,9 +60,12 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
       <header className={styles.header}>
         <Prism className={styles.brandMark} />
         <span className={styles.brand}>MCP EXPLORE</span>
-        <button type="button" className={styles.disconnect} onClick={() => void disconnect()}>
-          Disconnect
-        </button>
+        <div className={styles.actions}>
+          <ModeToggle />
+          <button type="button" className={styles.disconnect} onClick={() => void disconnect()}>
+            Disconnect
+          </button>
+        </div>
       </header>
       <main className={styles.main}>
         <RunProvider connection={phase.connection}>

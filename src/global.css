@@ -39,6 +39,38 @@
   --ease-panel: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
+/* Dark mode — luminous dark, validated 2026-08-27 (dataviz six checks, dark,
+   surface #0f141c, all-pairs: fills PASS — CVD worst 12.6 deutan / 10.2 tritan,
+   normal floor 21.1, contrast >= 3:1; inks 15.50/8.25/5.20:1, danger 6.68:1,
+   bright companions 10.22/8.60/6.79:1). Same hue families; the "-bright"
+   companions are genuinely brighter than their fills here (their original
+   meaning — on light they are deep). Re-values only, no new token names (dune
+   parity contract); the :not() guard makes Dune win whenever it is active.
+   --code-bg is deliberately absent: theme-neutral by allowlist (see above). */
+:root[data-mode="dark"]:not([data-theme="dune"]) {
+  --bg: #0f141c;
+  --glow-a: rgba(34, 211, 238, 0.06);
+  --glow-b: rgba(167, 139, 250, 0.05);
+  --panel: rgba(21, 27, 38, 0.55);
+  --panel-border: rgba(232, 235, 244, 0.12);
+
+  --ink: #e8ebf4;
+  --ink-2: #a6adc2;
+  --ink-3: #818899;
+
+  --tool: #0891b2;
+  --tool-bright: #22d3ee;
+  --resource: #d97706;
+  --resource-bright: #f59e0b;
+  --prompt: #8b5cf6;
+  --prompt-bright: #a78bfa;
+
+  --danger: #f87171;
+  --cta-gradient: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(167, 139, 250, 0.12));
+  --panel-solid: rgba(19, 24, 34, 0.94);
+  --header-bg: rgba(15, 20, 28, 0.72);
+}
+
 /* Structural (non-palette) tokens in a separate :root block: the dune theme-parity
    test scans only the first block for colour tokens. --display/--ui belong on its
    allowlist next to --mono; fold them in there (src/dune/theme.test.ts) when that

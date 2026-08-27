@@ -190,3 +190,10 @@
     0 0 0 3px color-mix(in srgb, var(--tool) 10%, transparent);
 }
 .demo:disabled { opacity: 0.45; cursor: default; }
+
+.modeCorner {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 2;
+}

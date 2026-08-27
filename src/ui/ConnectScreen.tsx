@@ -3,6 +3,7 @@ import { connectDemo as realConnectDemo, connectUrl as realConnectUrl } from "..
 import type { Connection } from "../mcp/types"
 import ConnectError from "./ConnectError"
 import Prism from "./deck/Prism"
+import ModeToggle from "./ModeToggle"
 import { loadRecents, saveRecent, type RecentServer } from "./recents"
 import styles from "./ConnectScreen.module.css"
 
@@ -71,6 +72,9 @@ export default function ConnectScreen({
 
   return (
     <main className={styles.hero}>
+      <div className={styles.modeCorner}>
+        <ModeToggle />
+      </div>
       <p className={styles.kicker}>MCP EXPLORE</p>
       <h1 className={styles.title}>See inside any MCP server.</h1>
       <p className={styles.sub}>Paste a server URL — get a living control deck of its tools, resources and prompts.</p>
