@@ -1,3 +1,6 @@
+// Shortened from the full 10-key Konami code (user call, 2026-08-26): the
+// arrows-only prefix is easier to remember and type, and no letter keys means
+// no collision risk with typing in the connect-URL input beyond the arrows.
 export const KONAMI_SEQUENCE = [
   "ArrowUp",
   "ArrowUp",
@@ -5,17 +8,12 @@ export const KONAMI_SEQUENCE = [
   "ArrowDown",
   "ArrowLeft",
   "ArrowRight",
-  "ArrowLeft",
-  "ArrowRight",
-  "b",
-  "a",
 ] as const
 
-// Modifier keydowns a real keyboard fires en route to a letter — e.g. Shift
-// before an uppercase "B" — must never enter the buffer, or the sequence's
-// case-insensitive letter matching becomes unreachable outside synthetic tests.
-// Matched case-sensitively against the literal KeyboardEvent.key values browsers
-// send for these keys.
+// Modifier keydowns a real keyboard can fire mid-sequence (e.g. a held Shift)
+// must never enter the buffer, or they would read as wrong keys and break an
+// otherwise-valid sequence. Matched case-sensitively against the literal
+// KeyboardEvent.key values browsers send for these keys.
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"])
 
 export function createKonamiDetector(onMatch: () => void): (key: string) => void {

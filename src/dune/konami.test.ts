@@ -11,26 +11,26 @@ test("the exact sequence triggers onMatch once", () => {
   expect(onMatch).toHaveBeenCalledTimes(1)
 })
 
-test("case-insensitive on the letter keys", () => {
+test("the user-visible sequence is exactly ↑ ↑ ↓ ↓ ← →", () => {
   const onMatch = vi.fn()
   const handler = createKonamiDetector(onMatch)
-  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "B", "A"])
+  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight"])
   expect(onMatch).toHaveBeenCalledTimes(1)
 })
 
-test("a wrong key resets progress to zero", () => {
+test("a wrong key mid-sequence prevents a match", () => {
   const onMatch = vi.fn()
   const handler = createKonamiDetector(onMatch)
   press(handler, ["ArrowUp", "ArrowUp", "x"])
-  press(handler, ["ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  press(handler, ["ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight"])
   expect(onMatch).not.toHaveBeenCalled()
 })
 
-test("a wrong key that equals the first key restarts progress at one, not zero", () => {
+test("an extra leading first-key press still matches — the window slides", () => {
   const onMatch = vi.fn()
   const handler = createKonamiDetector(onMatch)
-  // ArrowUp, ArrowUp, ArrowUp(wrong-but-equals-first) then the rest of a valid sequence
-  press(handler, ["ArrowUp", "ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  // ArrowUp, ArrowUp, ArrowUp(extra) then the rest — the trailing window is valid
+  press(handler, ["ArrowUp", "ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight"])
   expect(onMatch).toHaveBeenCalledTimes(1)
 })
 
@@ -42,32 +42,23 @@ test("typing the sequence twice in a row triggers onMatch twice", () => {
   expect(onMatch).toHaveBeenCalledTimes(2)
 })
 
-test("no false positives when sequence is not a contiguous window", () => {
+test("no false positives when the sequence is not a contiguous window", () => {
   const onMatch = vi.fn()
   const handler = createKonamiDetector(onMatch)
-  // This input has partial matches but no valid 10-key contiguous sequence
-  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  // Partial matches throughout, but no valid contiguous six-key window
+  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])
   expect(onMatch).not.toHaveBeenCalled()
 })
 
-test("a Shift keydown between real sequence keys — as a real keyboard sends before an uppercase letter — does not break the match", () => {
-  const onMatch = vi.fn()
-  const handler = createKonamiDetector(onMatch)
-  press(handler, ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight"])
-  // A real keyboard fires a Shift keydown before the browser reports an uppercase "B".
-  handler("Shift")
-  press(handler, ["B", "A"])
-  expect(onMatch).toHaveBeenCalledTimes(1)
-})
-
-test("Control, Alt, Meta, and CapsLock keydowns are likewise ignored, not treated as wrong keys", () => {
+test("modifier keydowns (Shift, Control, Alt, Meta, CapsLock) between real keys are ignored, not treated as wrong keys", () => {
   const onMatch = vi.fn()
   const handler = createKonamiDetector(onMatch)
   press(handler, ["ArrowUp", "ArrowUp"])
+  handler("Shift")
   handler("Control")
   handler("Alt")
   handler("Meta")
   handler("CapsLock")
-  press(handler, ["ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"])
+  press(handler, ["ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight"])
   expect(onMatch).toHaveBeenCalledTimes(1)
 })
