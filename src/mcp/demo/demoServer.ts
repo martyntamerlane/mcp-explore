@@ -199,6 +199,42 @@ export function createDemoServer(): McpServer {
     }),
   )
 
+  // Path-structured resources (rail-browser spec §2 demo curation): the demo
+  // must showcase the resource tree — docs/ and issues/ group as folders.
+  const docs: Record<string, { name: string; description: string; text: string }> = {
+    "demo://docs/getting-started": {
+      name: "getting-started",
+      description: "How to use the demo tracker",
+      text: "# Getting started\n\nRun `project_pulse` for a health snapshot, then browse the issue files under issues/.",
+    },
+    "demo://docs/writing-good-issues": {
+      name: "writing-good-issues",
+      description: "House style for issue reports",
+      text: "# Writing good issues\n\nOne problem per issue. Say what you saw, what you expected, and how to reproduce it.",
+    },
+  }
+  for (const [uri, doc] of Object.entries(docs)) {
+    server.registerResource(doc.name, uri, { description: doc.description, mimeType: "text/markdown" }, async (u) => ({
+      contents: [{ uri: u.href, mimeType: "text/markdown", text: doc.text }],
+    }))
+  }
+
+  const issueFiles: Record<string, { id: number; title: string; status: string; labels: string[] }> = {
+    "demo://issues/101": { id: 101, title: "Graph looks wrong at 80 nodes", status: "open", labels: ["design"] },
+    "demo://issues/102": { id: 102, title: "CORS diagnostic wording", status: "open", labels: ["docs"] },
+    "demo://issues/103": { id: 103, title: "Dark theme contrast", status: "closed", labels: ["bug"] },
+  }
+  for (const [uri, issue] of Object.entries(issueFiles)) {
+    server.registerResource(
+      `issue-${issue.id}`,
+      uri,
+      { description: issue.title, mimeType: "application/json" },
+      async (u) => ({
+        contents: [{ uri: u.href, mimeType: "application/json", text: JSON.stringify(issue, null, 2) }],
+      }),
+    )
+  }
+
   server.registerPrompt(
     "triage_issue",
     {

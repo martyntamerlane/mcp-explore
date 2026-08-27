@@ -72,10 +72,22 @@ test("create_issue and search_issues run with defaults when called argless", asy
   expect((found.content as { text: string }[])[0].text).toMatch(/\d+ issue/)
 })
 
-test("lists and reads the demo resources", async () => {
+test("lists and reads the demo resources, including path-structured ones for the rail tree", async () => {
   const client = await connectRaw()
   const { resources } = await client.listResources()
-  expect(resources.map((r) => r.uri).sort()).toEqual(["demo://config", "demo://readme"])
+  expect(resources.map((r) => r.uri).sort()).toEqual([
+    "demo://config",
+    "demo://docs/getting-started",
+    "demo://docs/writing-good-issues",
+    "demo://issues/101",
+    "demo://issues/102",
+    "demo://issues/103",
+    "demo://readme",
+  ])
+  const issue = await client.readResource({ uri: "demo://issues/101" })
+  const issueFirst = issue.contents[0]
+  if (!("text" in issueFirst) || typeof issueFirst.text !== "string") throw new Error("expected text resource contents")
+  expect(JSON.parse(issueFirst.text).id).toBe(101)
   const config = await client.readResource({ uri: "demo://config" })
   const first = config.contents[0]
   expect(first.mimeType).toBe("application/json")
