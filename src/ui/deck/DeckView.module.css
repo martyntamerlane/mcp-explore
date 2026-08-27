@@ -83,9 +83,13 @@
 }
 
 /* Tool-light servers: the grid must not stretch into a vast empty centre. */
+.boundary[data-emphasis="tool-light"] .body {
+  justify-content: center;
+}
+
 .boundary[data-emphasis="tool-light"] .gridSection {
   flex: 0 1 auto;
-  min-width: 300px;
+  min-width: 320px;
 }
 
 .boundary[data-emphasis="tool-light"] .rail {
@@ -101,7 +105,7 @@
 }
 
 .boundary[data-emphasis="tool-light"] .grid {
-  grid-template-columns: repeat(auto-fill, minmax(190px, 220px));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 280px));
 }
 
 .gridItem {
