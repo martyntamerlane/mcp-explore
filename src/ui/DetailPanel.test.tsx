@@ -18,9 +18,31 @@ test("renders nothing when no selection", () => {
 })
 
 test("tool: arguments table with required marker and enum chips", () => {
-  render(<DetailPanel connection={conn} selected={{ kind: "tool", id: "create_issue" }} onClose={vi.fn()} />)
-  expect(screen.getByText("create_issue")).toBeInTheDocument()
-  expect(screen.getByText(/create a new issue/i)).toBeInTheDocument()
+  // Demo tools are deliberately zero-required (redesign spec §5), so the
+  // required marker needs a synthetic snapshot.
+  const fixture: Connection = {
+    ...conn,
+    snapshot: {
+      ...conn.snapshot,
+      tools: [
+        {
+          name: "create_widget",
+          description: "Create a new widget.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              title: { type: "string", description: "Widget title" },
+              priority: { type: "string", enum: ["low", "medium", "high"] },
+            },
+            required: ["title"],
+          },
+        },
+      ],
+    },
+  }
+  render(<DetailPanel connection={fixture} selected={{ kind: "tool", id: "create_widget" }} onClose={vi.fn()} />)
+  expect(screen.getByText("create_widget")).toBeInTheDocument()
+  expect(screen.getByText(/create a new widget/i)).toBeInTheDocument()
   const titleRow = screen.getByText("title").closest("tr")!
   expect(titleRow.textContent).toMatch(/✱/)
   expect(screen.getByText("low")).toBeInTheDocument()
