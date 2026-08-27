@@ -1,6 +1,9 @@
 import { useState } from "react"
+import { motion } from "motion/react"
 import type { Connection } from "../mcp/types"
 import type { EntitySelection } from "./stage"
+import { classifyTool } from "./deck/deckModel"
+import { useRuns, type RunState } from "./run/RunContext"
 import { friendlyType, schemaRows } from "./schema"
 import styles from "./DetailPanel.module.css"
 
@@ -41,14 +44,56 @@ function RawJson({ value }: { value: unknown }) {
   )
 }
 
+// The result lands with a settle; errors land flat and honest — no success motion.
+function RunSection({ state }: { state: RunState }) {
+  if (state.status === "idle") return null
+  return (
+    <>
+      <p className={styles.microlabel}>RUN</p>
+      {state.status === "running" && (
+        <p className={styles.missing} aria-live="polite">
+          Running…
+        </p>
+      )}
+      {state.status === "done" &&
+        (state.display.ok ? (
+          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} aria-live="polite">
+            {state.display.blocks.map((b, i) => (
+              <div key={i}>
+                {b.label && <p className={styles.microlabel}>{b.label.toUpperCase()}</p>}
+                <pre className={styles.code}>{b.text}</pre>
+              </div>
+            ))}
+            {state.display.truncated && <p className={styles.missing}>output capped at 50,000 characters</p>}
+          </motion.div>
+        ) : (
+          <div role="alert" className={styles.runError}>
+            {state.display.blocks.map((b, i) => (
+              <pre key={i} className={styles.code}>
+                {b.text}
+              </pre>
+            ))}
+          </div>
+        ))}
+    </>
+  )
+}
+
 function ToolView({ connection, id }: { connection: Connection; id: string }) {
+  const { runs } = useRuns()
   const tool = connection.snapshot.tools.find((t) => t.name === id)
   if (!tool) return <p className={styles.missing}>Tool no longer present.</p>
   const rows = schemaRows(tool.inputSchema)
+  const runClass = classifyTool(tool, connection.transportKind)
   return (
     <>
       <h2 className={styles.name}>{tool.name}</h2>
       {tool.description && <p className={styles.desc}>{tool.description}</p>}
+      {runClass === "input-required" ? (
+        <p className={styles.comingSoon}>inputs required — running these is coming</p>
+      ) : (
+        <RunSection state={runs[tool.name] ?? { status: "idle" }} />
+      )}
       <p className={styles.microlabel}>ARGUMENTS</p>
       {rows.length === 0 ? (
         <p className={styles.missing}>No arguments</p>
@@ -190,13 +235,19 @@ function PromptView({ connection, id }: { connection: Connection; id: string }) 
 export default function DetailPanel({ connection, selected, onClose }: DetailPanelProps) {
   if (!selected) return null
   return (
-    <aside className={styles.panel}>
+    <motion.aside
+      className={styles.panel}
+      initial={{ x: "110%" }}
+      animate={{ x: 0 }}
+      exit={{ x: "110%" }}
+      transition={{ type: "spring", stiffness: 320, damping: 32 }}
+    >
       <button type="button" className={styles.close} aria-label="Close details" onClick={onClose}>
         ✕
       </button>
       {selected.kind === "tool" && <ToolView connection={connection} id={selected.id} />}
       {selected.kind === "resource" && <ResourceView connection={connection} id={selected.id} key={selected.id} />}
       {selected.kind === "prompt" && <PromptView connection={connection} id={selected.id} />}
-    </aside>
+    </motion.aside>
   )
 }

@@ -1,7 +1,9 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import type { ComponentProps } from "react"
 import { connectDemo } from "../mcp/connect"
 import type { Connection } from "../mcp/types"
+import { RunProvider, useRuns } from "./run/RunContext"
 import DetailPanel from "./DetailPanel"
 
 let conn: Connection
@@ -12,9 +14,76 @@ afterAll(async () => {
   await conn.close()
 })
 
+// The panel reads per-tool run state, so every render needs the provider.
+function renderPanel(props: Omit<ComponentProps<typeof DetailPanel>, "connection"> & { connection?: Connection }) {
+  const connection = props.connection ?? conn
+  return render(
+    <RunProvider connection={connection}>
+      <DetailPanel {...props} connection={connection} />
+    </RunProvider>,
+  )
+}
+
+function RunTrigger({ tool }: { tool: string }) {
+  const { run } = useRuns()
+  return (
+    <button type="button" onClick={() => run(tool)}>
+      trigger
+    </button>
+  )
+}
+
 test("renders nothing when no selection", () => {
-  const { container } = render(<DetailPanel connection={conn} selected={null} onClose={vi.fn()} />)
+  const { container } = render(
+    <RunProvider connection={conn}>
+      <DetailPanel connection={conn} selected={null} onClose={vi.fn()} />
+    </RunProvider>,
+  )
   expect(container).toBeEmptyDOMElement()
+})
+
+test("tool: a run's result lands in the panel", async () => {
+  render(
+    <RunProvider connection={conn}>
+      <RunTrigger tool="project_pulse" />
+      <DetailPanel connection={conn} selected={{ kind: "tool", id: "project_pulse" }} onClose={vi.fn()} />
+    </RunProvider>,
+  )
+  await userEvent.click(screen.getByRole("button", { name: "trigger" }))
+  // the sparkline exists only in the run output, never in the tool description
+  expect(await screen.findByText(/▂▄▃▆▅█▇/)).toBeInTheDocument()
+})
+
+test("tool: a failed run gets an honest error treatment", async () => {
+  vi.spyOn(conn.client, "callTool").mockRejectedValueOnce(new Error("server exploded"))
+  render(
+    <RunProvider connection={conn}>
+      <RunTrigger tool="project_pulse" />
+      <DetailPanel connection={conn} selected={{ kind: "tool", id: "project_pulse" }} onClose={vi.fn()} />
+    </RunProvider>,
+  )
+  await userEvent.click(screen.getByRole("button", { name: "trigger" }))
+  const alert = await screen.findByRole("alert")
+  expect(alert.textContent).toMatch(/server exploded/)
+  vi.restoreAllMocks()
+})
+
+test("tool: input-required tools state the run limitation honestly", () => {
+  const fixture: Connection = {
+    ...conn,
+    transportKind: "streamable-http",
+    snapshot: {
+      ...conn.snapshot,
+      tools: [
+        {
+          name: "needs_args",
+          inputSchema: { type: "object", properties: { q: { type: "string" } }, required: ["q"] },
+        },
+      ],
+    },
+  }
+  renderPanel({ connection: fixture, selected: { kind: "tool", id: "needs_args" }, onClose: vi.fn() })
+  expect(screen.getByText(/inputs required — running these is coming/i)).toBeInTheDocument()
 })
 
 test("tool: arguments table with required marker and enum chips", () => {
@@ -40,7 +109,7 @@ test("tool: arguments table with required marker and enum chips", () => {
       ],
     },
   }
-  render(<DetailPanel connection={fixture} selected={{ kind: "tool", id: "create_widget" }} onClose={vi.fn()} />)
+  renderPanel({ connection: fixture, selected: { kind: "tool", id: "create_widget" }, onClose: vi.fn() })
   expect(screen.getByText("create_widget")).toBeInTheDocument()
   expect(screen.getByText(/create a new widget/i)).toBeInTheDocument()
   const titleRow = screen.getByText("title").closest("tr")!
@@ -50,7 +119,7 @@ test("tool: arguments table with required marker and enum chips", () => {
 })
 
 test("resource: contents load on demand and render as text", async () => {
-  render(<DetailPanel connection={conn} selected={{ kind: "resource", id: "demo://readme" }} onClose={vi.fn()} />)
+  renderPanel({ selected: { kind: "resource", id: "demo://readme" }, onClose: vi.fn() })
   expect(screen.getByText("demo://readme")).toBeInTheDocument()
   expect(screen.queryByText(/entirely inside your browser/i)).not.toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: /load contents/i }))
@@ -58,7 +127,7 @@ test("resource: contents load on demand and render as text", async () => {
 })
 
 test("raw JSON is behind a disclosure", async () => {
-  render(<DetailPanel connection={conn} selected={{ kind: "prompt", id: "weekly_summary" }} onClose={vi.fn()} />)
+  renderPanel({ selected: { kind: "prompt", id: "weekly_summary" }, onClose: vi.fn() })
   const summary = screen.getByText(/raw json/i)
   expect(summary).toBeInTheDocument()
   await userEvent.click(summary)
@@ -67,7 +136,7 @@ test("raw JSON is behind a disclosure", async () => {
 
 test("close button fires onClose", async () => {
   const onClose = vi.fn()
-  render(<DetailPanel connection={conn} selected={{ kind: "tool", id: "close_issue" }} onClose={onClose} />)
+  renderPanel({ selected: { kind: "tool", id: "close_issue" }, onClose })
   await userEvent.click(screen.getByRole("button", { name: /close details/i }))
   expect(onClose).toHaveBeenCalledOnce()
 })

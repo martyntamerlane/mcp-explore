@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
@@ -16,7 +16,8 @@ test("full flow: demo → deck → details → panel → disconnect", async () =
   const panel = await screen.findByRole("complementary")
   expect(within(panel).getByText(/create a new issue/i)).toBeInTheDocument()
   await userEvent.click(screen.getByRole("button", { name: /close details/i }))
-  expect(screen.queryByRole("complementary")).not.toBeInTheDocument()
+  // AnimatePresence defers unmount until the exit spring settles
+  await waitFor(() => expect(screen.queryByRole("complementary")).not.toBeInTheDocument())
   await userEvent.click(screen.getByRole("button", { name: /disconnect/i }))
   expect(await screen.findByLabelText(/server url/i)).toBeInTheDocument()
 })

@@ -9,11 +9,7 @@
   background: var(--panel-solid);
   border-left: 1px solid var(--panel-border);
   backdrop-filter: blur(24px);
-  animation: slideIn var(--ease-panel);
-}
-@keyframes slideIn {
-  from { transform: translateX(40px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  box-shadow: -12px 0 40px color-mix(in srgb, var(--ink) 6%, transparent);
 }
 .close {
   position: absolute;
@@ -70,6 +66,18 @@
 .action:hover { border-color: var(--ink-3); }
 .error { color: var(--danger); font-size: 13px; }
 .missing { color: var(--ink-3); font-size: 13px; }
+.comingSoon {
+  font-size: 13px;
+  color: var(--ink-3);
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--radius-s);
+  padding: 10px 14px;
+  margin: 16px 0 0;
+}
+.runError .code {
+  border-left: 2px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 4%, transparent);
+}
 .img { max-width: 100%; border-radius: var(--radius-s); }
 .code {
   font-family: var(--mono);

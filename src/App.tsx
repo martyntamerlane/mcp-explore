@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { AnimatePresence } from "motion/react"
 import { connectUrl as realConnectUrl } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
 import ConnectScreen from "./ui/ConnectScreen"
@@ -64,7 +65,11 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
       <main className={styles.main}>
         <RunProvider connection={phase.connection}>
           <DeckView snapshot={snapshot} transportKind={transportKind} selection={selected} onSelect={setSelected} />
-          <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
+          <AnimatePresence>
+            {selected && (
+              <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
+            )}
+          </AnimatePresence>
         </RunProvider>
       </main>
     </div>
