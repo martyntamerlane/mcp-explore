@@ -1,34 +1,37 @@
 :root {
-  /* surfaces — visual identity spec 2026-08-25 */
-  --bg: #07070f;
-  --glow-a: rgba(30, 27, 75, 0.55);
-  --glow-b: rgba(46, 16, 101, 0.4);
-  --panel: rgba(255, 255, 255, 0.03);
-  --panel-border: rgba(255, 255, 255, 0.08);
+  /* surfaces — luminous-deck redesign 2026-08-26 (light-first "luminous precision") */
+  --bg: #f4f6fa;
+  --glow-a: rgba(8, 145, 178, 0.07);
+  --glow-b: rgba(109, 40, 217, 0.05);
+  --panel: rgba(255, 255, 255, 0.6);
+  --panel-border: rgba(23, 27, 38, 0.1);
 
   /* ink — text never wears entity colors */
-  --ink: #e7e9f4;
-  --ink-2: #9aa0b5;
-  --ink-3: #5d6378;
+  --ink: #171b26;
+  --ink-2: #4d5468;
+  --ink-3: #666c82;
 
-  /* entity accents — validated palette, do not change without re-running the dataviz validator */
+  /* entity accents — validated 2026-08-26 (dataviz six checks, light canvas, all-pairs;
+     record in docs/plans/2026-08-26-luminous-deck-implementation.md). "-bright" token
+     names kept for the dune theme contract — on light these are DEEP companions
+     (hover/edge tints darker than the fill, never lighter). */
   --tool: #0891b2;
-  --tool-bright: #22d3ee;
-  --resource: #d97706;
-  --resource-bright: #fbbf24;
-  --prompt: #8b5cf6;
-  --prompt-bright: #c4b5fd;
+  --tool-bright: #155e75;
+  --resource: #b45309;
+  --resource-bright: #92400e;
+  --prompt: #6d28d9;
+  --prompt-bright: #5b21b6;
 
-  /* graph marks — neutral (non-entity) SVG strokes/fills for edges and the server node */
-  --edge: rgba(255, 255, 255, 0.07);
-  --node-core: rgba(255, 255, 255, 0.06);
-  --node-ring: rgba(255, 255, 255, 0.25);
+  /* graph marks — retired with the flow view; interim dark-alpha stand-ins until Task 8 */
+  --edge: rgba(23, 27, 38, 0.07);
+  --node-core: rgba(23, 27, 38, 0.06);
+  --node-ring: rgba(23, 27, 38, 0.25);
 
-  --danger: #f87171;
-  --cta-gradient: linear-gradient(135deg, rgba(8, 145, 178, 0.35), rgba(139, 92, 246, 0.35));
-  --code-bg: rgba(0, 0, 0, 0.35);
-  --panel-solid: rgba(10, 10, 20, 0.75);
-  --header-bg: rgba(10, 10, 20, 0.5);
+  --danger: #b91c1c;
+  --cta-gradient: linear-gradient(135deg, rgba(8, 145, 178, 0.1), rgba(109, 40, 217, 0.1));
+  --code-bg: rgba(23, 27, 38, 0.05);
+  --panel-solid: rgba(252, 253, 255, 0.92);
+  --header-bg: rgba(244, 246, 250, 0.72);
   --radius-s: 8px;
   --radius-m: 12px;
   --radius-l: 16px;
@@ -38,11 +41,12 @@
 }
 
 /* Structural (non-palette) tokens in a separate :root block: the dune theme-parity
-   test scans only the first block for colour tokens. --display belongs on its
-   allowlist next to --mono; fold it in there (src/dune/theme.test.ts) when that
+   test scans only the first block for colour tokens. --display/--ui belong on its
+   allowlist next to --mono; fold them in there (src/dune/theme.test.ts) when that
    file's owning session is done. */
 :root {
   --display: "Space Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ui: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 * {
@@ -58,7 +62,7 @@ body {
     radial-gradient(1000px 800px at 90% 110%, var(--glow-b), transparent 60%);
   background-attachment: fixed;
   color: var(--ink);
-  font-family: var(--display);
+  font-family: var(--ui);
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
@@ -67,4 +71,14 @@ button,
 input {
   font: inherit;
   color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
