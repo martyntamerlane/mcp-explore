@@ -178,7 +178,7 @@
 .tip {
   position: absolute;
   left: 0;
-  bottom: calc(100% + 6px);
+  top: calc(100% + 6px);
   z-index: 3;
   max-width: 300px;
   padding: 7px 11px;
@@ -191,7 +191,7 @@
   box-shadow: 0 6px 24px color-mix(in srgb, var(--ink) 10%, transparent);
   opacity: 0;
   pointer-events: none;
-  transform: translateY(2px);
+  transform: translateY(-2px);
   transition: opacity 150ms ease-out, transform 150ms ease-out;
 }
 
