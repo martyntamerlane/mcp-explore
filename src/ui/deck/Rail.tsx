@@ -1,6 +1,8 @@
 import { useId } from "react"
+import { motion } from "motion/react"
 import type { RailGroup, RailItem } from "./deckModel"
 import type { StageProps } from "../stage"
+import { igniteContainer, igniteItem } from "./DeckView"
 import Glyph from "./Glyph"
 import styles from "./DeckView.module.css"
 
@@ -48,6 +50,7 @@ export default function Rail({
   queryActive,
   expanded,
   onToggleExpand,
+  reduced,
 }: {
   groups: RailGroup[]
   selection: StageProps["selection"]
@@ -56,25 +59,35 @@ export default function Rail({
   queryActive: boolean
   expanded: Partial<Record<"resource" | "prompt", boolean>>
   onToggleExpand: (kind: "resource" | "prompt") => void
+  reduced: boolean
 }) {
   return (
     <div className={styles.rail}>
-      {groups.map((group) => {
+      {groups.map((group, gi) => {
         const capped = !expanded[group.kind] && !queryActive && group.items.length > RAIL_PREVIEW_MAX
         const visible = capped ? group.items.slice(0, RAIL_PREVIEW_MAX) : group.items
         return (
-          <section key={group.kind} className={styles.railGroup} data-kind={group.kind}>
+          <motion.section
+            key={group.kind}
+            className={styles.railGroup}
+            data-kind={group.kind}
+            // the rail follows the grid in the power-on cascade
+            variants={igniteContainer(0.55 + gi * 0.15)}
+            initial={reduced ? false : "hidden"}
+            animate="show"
+          >
             <header className={styles.sectionHeader}>{`${group.label.toUpperCase()} · ${group.items.length}`}</header>
             <p className={styles.gloss}>{group.gloss}</p>
             {group.items.length === 0 && <p className={styles.empty}>none</p>}
             {visible.map((item) => (
-              <RailEntry
-                key={`${item.kind}:${item.id}`}
-                item={item}
-                selected={selection?.kind === item.kind && selection?.id === item.id}
-                receded={!matches(item.label)}
-                onSelect={() => onSelect({ kind: item.kind, id: item.id })}
-              />
+              <motion.div key={`${item.kind}:${item.id}`} variants={reduced ? undefined : igniteItem}>
+                <RailEntry
+                  item={item}
+                  selected={selection?.kind === item.kind && selection?.id === item.id}
+                  receded={!matches(item.label)}
+                  onSelect={() => onSelect({ kind: item.kind, id: item.id })}
+                />
+              </motion.div>
             ))}
             {!queryActive && group.items.length > RAIL_PREVIEW_MAX && (
               <button
@@ -86,7 +99,7 @@ export default function Rail({
                 {capped ? `+ ${group.items.length - RAIL_PREVIEW_MAX} more` : "− show fewer"}
               </button>
             )}
-          </section>
+          </motion.section>
         )
       })}
     </div>

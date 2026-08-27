@@ -23,14 +23,23 @@
   font-weight: 500;
   text-align: left;
   color: var(--ink);
-  background: color-mix(in srgb, var(--bg) 35%, transparent);
+  background-color: color-mix(in srgb, var(--bg) 35%, transparent);
+  /* the arm sweep: a luminous fill that sweeps across in ~150ms and holds;
+     disarm reverses the transition so the light drains back out */
+  background-image: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--tool) 14%, transparent),
+    color-mix(in srgb, var(--tool) 7%, transparent)
+  );
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-m);
   cursor: pointer;
   transition:
     border-color var(--ease-hover),
     box-shadow var(--ease-hover),
-    background var(--ease-hover),
+    background-size 150ms ease-out,
     transform 80ms ease-out;
 }
 
@@ -63,15 +72,10 @@
   transform: scale(0.98);
 }
 
-/* armed: sustained lit edge + tinted fill, held until fire/disarm */
+/* armed: the sweep completes and holds — sustained lit edge + tinted fill */
 .card[data-armed] .face {
   border-color: var(--tool-bright);
-  background:
-    linear-gradient(
-      100deg,
-      color-mix(in srgb, var(--tool) 14%, transparent),
-      color-mix(in srgb, var(--tool) 7%, transparent)
-    );
+  background-size: 100% 100%;
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--tool-bright) 45%, transparent),
     0 0 0 3px color-mix(in srgb, var(--tool) 12%, transparent);
@@ -123,7 +127,8 @@
 /* input-required: honest, no run affordance — flat, dashed hairline */
 .card[data-class="input-required"] .face {
   border-style: dashed;
-  background: transparent;
+  background-color: transparent;
+  background-image: none;
   font-weight: 400;
 }
 

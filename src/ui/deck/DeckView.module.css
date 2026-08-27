@@ -104,6 +104,15 @@
   grid-template-columns: repeat(auto-fill, minmax(190px, 220px));
 }
 
+.gridItem {
+  display: flex;
+}
+
+.gridItem > * {
+  flex: 1;
+  min-width: 0;
+}
+
 .sectionHeader {
   font-family: var(--display);
   font-size: 12px;

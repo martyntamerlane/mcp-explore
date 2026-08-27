@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
+import { motion, useReducedMotion } from "motion/react"
 import type { StageProps } from "../stage"
 import { useRuns } from "../run/RunContext"
 import { ARM_TIMEOUT_MS, pressTool } from "./armState"
@@ -10,6 +11,18 @@ import styles from "./DeckView.module.css"
 
 /** Tools shown before the "+ N more" expander (an active filter bypasses the cap). */
 export const TOOLS_PREVIEW_MAX = 24
+
+// Deck power-on (the choreography centrepiece): boundary draws itself, the grid
+// ignites in a staggered cascade, the rail follows; settles under ~1.5s and is
+// one-shot per connect. Reduced motion swaps everything to instant states.
+export const igniteContainer = (delay: number) => ({
+  hidden: {},
+  show: { transition: { staggerChildren: 0.02, delayChildren: delay } },
+})
+export const igniteItem = {
+  hidden: { opacity: 0, y: 6 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: "easeOut" as const } },
+}
 
 // Exactly one tool may be armed; Esc, pointerdown elsewhere, scroll, panel-open,
 // and a 4s timeout all disarm (redesign spec §4).
@@ -80,12 +93,19 @@ export default function DeckView({
   const capped = !toolsExpanded && q === "" && model.tools.length > TOOLS_PREVIEW_MAX
   const visibleTools = capped ? model.tools.slice(0, TOOLS_PREVIEW_MAX) : model.tools
 
+  // prefers-reduced-motion floor: no entrance at all — content is simply there.
+  const reduced = useReducedMotion()
+  const entrance = reduced ? false : undefined
+
   return (
-    <section
+    <motion.section
       className={styles.boundary}
       data-emphasis={model.emphasis}
       role="region"
       aria-label={`Server ${snapshot.serverInfo.name}`}
+      initial={entrance ?? { opacity: 0, scale: 0.988 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
       <header className={styles.deckHeader}>
         <Prism className={styles.emblem} />
@@ -106,20 +126,26 @@ export default function DeckView({
           <header className={styles.sectionHeader}>{`TOOLS · ${model.tools.length}`}</header>
           <p className={styles.gloss}>actions it can perform</p>
           {model.tools.length === 0 && <p className={styles.empty}>none</p>}
-          <div className={styles.grid}>
+          <motion.div
+            className={styles.grid}
+            variants={igniteContainer(0.25)}
+            initial={entrance ?? "hidden"}
+            animate="show"
+          >
             {visibleTools.map((tool) => (
-              <ToolButton
-                key={tool.id}
-                tool={tool}
-                armed={armedId === tool.id}
-                running={runs[tool.id]?.status === "running"}
-                selected={selection?.kind === "tool" && selection.id === tool.id}
-                receded={!matches(tool.label)}
-                onPress={() => handlePress(tool)}
-                onInfo={() => onSelect({ kind: "tool", id: tool.id })}
-              />
+              <motion.div key={tool.id} className={styles.gridItem} variants={reduced ? undefined : igniteItem}>
+                <ToolButton
+                  tool={tool}
+                  armed={armedId === tool.id}
+                  running={runs[tool.id]?.status === "running"}
+                  selected={selection?.kind === "tool" && selection.id === tool.id}
+                  receded={!matches(tool.label)}
+                  onPress={() => handlePress(tool)}
+                  onInfo={() => onSelect({ kind: "tool", id: tool.id })}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           {q === "" && model.tools.length > TOOLS_PREVIEW_MAX && (
             <button
               type="button"
@@ -139,8 +165,9 @@ export default function DeckView({
           queryActive={q !== ""}
           expanded={railExpanded}
           onToggleExpand={(kind) => setRailExpanded((e) => ({ ...e, [kind]: !e[kind] }))}
+          reduced={reduced ?? false}
         />
       </div>
-    </section>
+    </motion.section>
   )
 }
