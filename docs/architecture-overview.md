@@ -20,7 +20,7 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 
 ## Stages (display variants)
 
-`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, run state (via `RunProvider`), and shared chrome (brand header, detail panel); stages are interchangeable. `DeckView` is the default stage; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17). Run state deliberately lives in a Context *beside* the stage rather than in `StageProps`, so the contract stays display-only and the panel sees the same per-tool state. The deck's server boundary is the multi-server seam (TODO-16): a second connection renders a second boundary tiled alongside.
+`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, run state (via `RunProvider`), rail-load state (via `ReadProvider`), and shared chrome (brand header, detail panel); stages are interchangeable. `DeckView` is the default stage; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17). Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only and the panel sees the same per-tool state. Selection (and therefore the detail panel) is tools-only since the rail-browser redesign — rail rows unfold in place and never call `onSelect`. The deck's server boundary is the multi-server seam (TODO-16): a second connection renders a second boundary tiled alongside.
 
 ## State & storage
 
@@ -54,17 +54,20 @@ src/
     recents.ts             localStorage recent-servers list (opt-in header persistence)
     stage.ts               StageProps / EntitySelection — the display-variant contract
     deck/
-      deckModel.ts         buildDeckModel — snapshot → tools (run-classed) + rail groups, dedupe, emphasis
+      deckModel.ts         buildDeckModel — snapshot → tools (run-classed) + rail groups (with mime/prompt args), dedupe, emphasis
+      railTree.ts          buildRailTree — resource URIs → thresholded folder tree (chain-collapse, scheme handling)
       armState.ts          pressTool — pure arm-then-fire transition; ARM_TIMEOUT_MS
-      DeckView.tsx         Default stage: server boundary, tool grid, filter, power-on choreography
+      DeckView.tsx         Default stage: server boundary, rail (left) + tool grid, filter, power-on choreography
       ToolButton.tsx       One tool: face + info sibling + anchored tooltip; armed/running/needs-input states
-      Rail.tsx             Flanking resources/prompts lists with preview caps
+      Rail.tsx             Left-flank browser: folder tree, in-place accordion unfold, auto-load via useReads
       Glyph.tsx            Entity shape coding (circle/square/diamond)
       Prism.tsx            The brand mark (hairline prism, 3 variants)
     run/
       runResult.ts         formatCallResult/formatRunError — untrusted result → sanitized RunDisplay, size cap
+      readResult.ts        formatResourceContents/formatPromptMessages — untrusted reads → sanitized ReadDisplay
       RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool
-    DetailPanel.tsx         Spring slide-in panel: RUN section, schema table, resource contents, raw-JSON disclosure
+      ReadContext.tsx      ReadProvider/useReads — cached rail loads over readResource/getPrompt
+    DetailPanel.tsx         Spring slide-in panel (tools-only): RUN section, schema table, raw-JSON disclosure
     schema.ts               JSON Schema → argument table rows + friendlyType for DetailPanel
     *.module.css            CSS modules for each ui/ component
     *.test.ts[x]            Colocated tests for each ui/ module
