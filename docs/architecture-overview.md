@@ -16,11 +16,11 @@ GitHub Pages (Vite build, deployed by GitHub Actions on push to main)
 
 ## Stack
 
-React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: power-on cascade, panel spring, AnimatePresence — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI), hand-rolled deterministic deck layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
+React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: power-on cascade, drawer/unfold folds, AnimatePresence — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI), hand-rolled deterministic deck layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
 
 ## Stages (display variants)
 
-`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, run state (via `RunProvider`), rail-load state (via `ReadProvider`), and shared chrome (brand header, detail panel); stages are interchangeable. `DeckView` is the default stage; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17). Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only and the panel sees the same per-tool state. Selection (and therefore the detail panel) is tools-only since the rail-browser redesign — rail rows unfold in place and never call `onSelect`. The deck's server boundary is the multi-server seam (TODO-16): a second connection renders a second boundary tiled alongside.
+`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, run state (via `RunProvider`), rail-load state (via `ReadProvider`), and shared chrome (brand header with mode toggle); stages are interchangeable. `DeckView` is the default stage; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17). Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only and the drawer sees the same per-tool state. Selection is tools-only since the rail-browser redesign (rail rows unfold in place and never call `onSelect`); it drives the console drawer, which `DeckView` renders inside the server boundary — the app has no overlay surfaces. Light/dark mode is a root `data-mode` attribute re-valuing tokens (`src/ui/mode.ts`); Dune wins via a `:not()` guard, untouched. The deck's server boundary is the multi-server seam (TODO-16): a second connection renders a second boundary tiled alongside.
 
 ## State & storage
 
@@ -38,7 +38,8 @@ src/
   App.module.css      CSS module for App component
   App.test.tsx        Tests for App component
   global.css          Light-first CSS custom properties (validated luminous palette; first :root
-                      block is the dune token-parity contract — see src/dune/theme.test.ts)
+                      block is the dune token-parity contract — see src/dune/theme.test.ts) plus
+                      the validated luminous-dark re-values under [data-mode="dark"]
   test-setup.ts       Test environment configuration
   vite-env.d.ts       Vite environment types
   mcp/
@@ -57,9 +58,10 @@ src/
       deckModel.ts         buildDeckModel — snapshot → tools (run-classed) + rail groups (with mime/prompt args), dedupe, emphasis
       railTree.ts          buildRailTree — resource URIs → thresholded folder tree (chain-collapse, scheme handling)
       armState.ts          pressTool — pure arm-then-fire transition; ARM_TIMEOUT_MS
-      DeckView.tsx         Default stage: server boundary, rail (left) + tool grid, filter, power-on choreography
+      DeckView.tsx         Default stage: server boundary, tool grid + rail (right), console drawer, filter, power-on choreography
       ToolButton.tsx       One tool: face + info sibling + anchored tooltip; armed/running/needs-input states
-      Rail.tsx             Left-flank browser: folder tree, in-place accordion unfold, auto-load via useReads
+      ToolDrawer.tsx       Console drawer docked in the boundary's bottom edge: identity | args table | RUN
+      Rail.tsx             Right-flank browser: folder tree, in-place accordion unfold, auto-load via useReads
       Glyph.tsx            Entity shape coding (circle/square/diamond)
       Prism.tsx            The brand mark (hairline prism, 3 variants)
     run/
@@ -67,8 +69,9 @@ src/
       readResult.ts        formatResourceContents/formatPromptMessages — untrusted reads → sanitized ReadDisplay
       RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool
       ReadContext.tsx      ReadProvider/useReads — cached rail loads over readResource/getPrompt
-    DetailPanel.tsx         Spring slide-in panel (tools-only): RUN section, schema table, raw-JSON disclosure
-    schema.ts               JSON Schema → argument table rows + friendlyType for DetailPanel
+    schema.ts               JSON Schema → argument table rows + friendlyType for ToolDrawer
+    mode.ts                 Light/dark resolution: stored choice > system; data-mode stamping; live follow
+    ModeToggle.tsx          Sun/moon toggle (header + landing) persisting explicit choices
     *.module.css            CSS modules for each ui/ component
     *.test.ts[x]            Colocated tests for each ui/ module
   dune/

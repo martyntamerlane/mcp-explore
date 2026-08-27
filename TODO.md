@@ -34,12 +34,6 @@ A small npx-distributed companion that exposes a local stdio MCP server over loc
 
 Group tools by shared prefix/namespace (`issues_create`, `issues_list` → `issues`) or by semantic similarity, adding a collapsible intermediate ring so 80-tool servers show ~8 tidy groups. v1 ships a flat ring (design spec decision #8). **Monetization note**: if this becomes a paid feature it needs an entitlement mechanism — a license-key check or a small auth'd API — which reopens the zero-backend decision; see design spec decision #9. Keep the layout code's grouping seam clean but build no entitlement machinery until this is a real goal.
 
-### TODO-5: Light theme
-
-**Complexity**: S
-
-v1 is dark-first. All colours are already CSS custom properties, so this is a variable set + toggle honouring `prefers-color-scheme`, plus visual QA.
-
 2026-08-26: inverted by the luminous-deck redesign (`docs/specs/2026-08-26-luminous-deck-redesign.md`) — the baseline goes **light-first**; this entry now means adding a *dark* variant later.
 
 ### TODO-6: Docs-style list view as alternate to the graph
@@ -124,6 +118,12 @@ The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant
 ---
 
 ## Completed
+
+### TODO-5: Light theme (inverted: dark theme)
+
+**Complexity**: S — **Completed 2026-08-27**
+
+Originally "v1 is dark-first, add a light theme + `prefers-color-scheme` toggle." The 2026-08-26 luminous-deck redesign inverted the premise (light became the default identity), so this became "add dark mode" — executed 2026-08-27 per `docs/specs/2026-08-27-console-drawer-dark-mode.md`: validated luminous-dark token block under `data-mode="dark"` (Dune wins via `:not()` guard), system-follow with a persistent sun/moon toggle.
 
 ### TODO-15: Baseline (non-dune) landing-page redesign
 
