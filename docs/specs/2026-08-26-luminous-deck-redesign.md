@@ -57,6 +57,8 @@ The flow view's geometry (server node → traces → three equal clusters) is **
 - **Retired with the flow view**: `TraceLayer` and conduits, the heartbeat pulse, the gate-ring core, the bottom readout strip. `buildFlowModel`'s data-shaping (`sources[] → groups[] → items[]`, density, dedupe) survives as input to the deck. The deck becomes the **default stage** behind the same `StageProps` contract; Dune remains an alternate.
 - **Hover description**: a calm anchored tooltip on the button/entry (fixed position relative to the element, never cursor-chasing) shows the one-line description. This deliberately reverses the flow-view's "readout strip, never tooltips" decision — recorded here as a knowing reversal (grill 2026-08-26).
 
+> **Amendment 2026-08-27**: the rail half of this section is superseded by [`2026-08-27-rail-browser-redesign.md`](2026-08-27-rail-browser-redesign.md) — the rail moves to the left flank as a self-contained browser (resource tree, in-place unfold with auto-load, accordion), rail entries no longer open the detail panel (panel is tools-only), and rail tooltips are retired (descriptions render inside the unfolded row). Tool buttons keep their tooltips and the grid/panel behaviour here stands.
+
 ## 4. Interaction contract: tool buttons
 
 Click semantics (grill-resolved, Q13):
