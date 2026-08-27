@@ -14,12 +14,6 @@ export interface DetailPanelProps {
   onClose: () => void
 }
 
-type LoadedContents =
-  | { state: "idle" }
-  | { state: "loading" }
-  | { state: "error"; message: string }
-  | { state: "loaded"; items: { mimeType?: string; text?: string; blob?: string; uri: string }[] }
-
 function RawJson({ value }: { value: unknown }) {
   // Closed <details> still puts its children in the DOM (only CSS hides them), so
   // an always-rendered <pre> dump collides in text queries with fields also shown
@@ -140,100 +134,10 @@ function ToolView({ connection, id }: { connection: Connection; id: string }) {
   )
 }
 
-function ResourceView({ connection, id }: { connection: Connection; id: string }) {
-  const resource = connection.snapshot.resources.find((r) => r.uri === id)
-  const [contents, setContents] = useState<LoadedContents>({ state: "idle" })
-  if (!resource) return <p className={styles.missing}>Resource no longer present.</p>
-
-  async function load() {
-    setContents({ state: "loading" })
-    try {
-      const result = await connection.client.readResource({ uri: id })
-      setContents({
-        state: "loaded",
-        items: result.contents.map((c) => ({
-          uri: c.uri,
-          mimeType: typeof c.mimeType === "string" ? c.mimeType : undefined,
-          text: "text" in c && typeof c.text === "string" ? c.text : undefined,
-          blob: "blob" in c && typeof c.blob === "string" ? c.blob : undefined,
-        })),
-      })
-    } catch (err) {
-      setContents({ state: "error", message: err instanceof Error ? err.message : String(err) })
-    }
-  }
-
-  return (
-    <>
-      <h2 className={styles.name}>{resource.name ?? resource.uri}</h2>
-      <p className={styles.mono}>{resource.uri}</p>
-      {resource.mimeType && <p className={styles.microlabel}>{resource.mimeType}</p>}
-      {resource.description && <p className={styles.desc}>{resource.description}</p>}
-      {contents.state === "idle" && (
-        <button type="button" className={styles.action} onClick={() => void load()}>
-          Load contents
-        </button>
-      )}
-      {contents.state === "loading" && <p className={styles.missing}>Loading…</p>}
-      {contents.state === "error" && <p className={styles.error}>{contents.message}</p>}
-      {contents.state === "loaded" &&
-        contents.items.map((item, i) => (
-          <div key={i}>
-            {item.text !== undefined && <pre className={styles.code}>{prettify(item.text, item.mimeType)}</pre>}
-            {item.blob !== undefined && item.mimeType?.startsWith("image/") && (
-              <img className={styles.img} alt={item.uri} src={`data:${item.mimeType};base64,${item.blob}`} />
-            )}
-            {item.blob !== undefined && !item.mimeType?.startsWith("image/") && (
-              <p className={styles.missing}>Binary contents ({item.mimeType ?? "unknown type"})</p>
-            )}
-          </div>
-        ))}
-      <RawJson value={resource} />
-    </>
-  )
-}
-
-function prettify(text: string, mimeType?: string): string {
-  if (mimeType === "application/json") {
-    try {
-      return JSON.stringify(JSON.parse(text), null, 2)
-    } catch {
-      return text
-    }
-  }
-  return text
-}
-
-function PromptView({ connection, id }: { connection: Connection; id: string }) {
-  const prompt = connection.snapshot.prompts.find((p) => p.name === id)
-  if (!prompt) return <p className={styles.missing}>Prompt no longer present.</p>
-  return (
-    <>
-      <h2 className={styles.name}>{prompt.name}</h2>
-      {prompt.description && <p className={styles.desc}>{prompt.description}</p>}
-      <p className={styles.microlabel}>ARGUMENTS</p>
-      {!prompt.arguments || prompt.arguments.length === 0 ? (
-        <p className={styles.missing}>No arguments</p>
-      ) : (
-        <ul className={styles.promptArgs}>
-          {prompt.arguments.map((a) => (
-            <li key={a.name}>
-              <span className={styles.argName}>
-                {a.name}
-                {a.required && <span className={styles.req}> ✱</span>}
-              </span>
-              {a.description && <span className={styles.argDesc}> {a.description}</span>}
-            </li>
-          ))}
-        </ul>
-      )}
-      <RawJson value={prompt} />
-    </>
-  )
-}
-
+// Tools-only since the rail-browser redesign (2026-08-27): resources and
+// prompts unfold in place in the rail and never reach the panel.
 export default function DetailPanel({ connection, selected, onClose }: DetailPanelProps) {
-  if (!selected) return null
+  if (!selected || selected.kind !== "tool") return null
   return (
     <motion.aside
       className={styles.panel}
@@ -245,9 +149,7 @@ export default function DetailPanel({ connection, selected, onClose }: DetailPan
       <button type="button" className={styles.close} aria-label="Close details" onClick={onClose}>
         ✕
       </button>
-      {selected.kind === "tool" && <ToolView connection={connection} id={selected.id} />}
-      {selected.kind === "resource" && <ResourceView connection={connection} id={selected.id} key={selected.id} />}
-      {selected.kind === "prompt" && <PromptView connection={connection} id={selected.id} />}
+      <ToolView connection={connection} id={selected.id} />
     </motion.aside>
   )
 }

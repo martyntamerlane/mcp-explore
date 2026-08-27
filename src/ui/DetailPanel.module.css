@@ -24,7 +24,6 @@
   cursor: pointer;
 }
 .name { font-family: var(--mono); font-weight: 500; font-size: 18px; margin: 0 24px 8px 0; overflow-wrap: anywhere; }
-.mono { font-family: var(--mono); font-size: 13px; color: var(--ink-3); overflow-wrap: anywhere; }
 .desc { color: var(--ink-2); line-height: 1.5; }
 .microlabel { font-size: 11px; letter-spacing: 0.08em; color: var(--ink-3); margin: 24px 0 8px; }
 .table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -52,19 +51,6 @@
   color: var(--ink-2);
 }
 .default { color: var(--ink-3); font-size: 12px; }
-.promptArgs { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; font-size: 13px; }
-.action {
-  margin-top: 8px;
-  padding: 10px 20px;
-  border-radius: var(--radius-s);
-  border: 1px solid var(--panel-border);
-  background: var(--panel);
-  color: var(--ink);
-  cursor: pointer;
-  transition: border-color var(--ease-hover);
-}
-.action:hover { border-color: var(--ink-3); }
-.error { color: var(--danger); font-size: 13px; }
 .missing { color: var(--ink-3); font-size: 13px; }
 .comingSoon {
   font-size: 13px;
@@ -78,7 +64,6 @@
   border-left: 2px solid var(--danger);
   background: color-mix(in srgb, var(--danger) 4%, transparent);
 }
-.img { max-width: 100%; border-radius: var(--radius-s); }
 .code {
   font-family: var(--mono);
   font-size: 12px;

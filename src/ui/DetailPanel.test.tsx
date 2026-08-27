@@ -118,20 +118,19 @@ test("tool: arguments table with required marker and enum chips", () => {
   expect(screen.getByText("high")).toBeInTheDocument()
 })
 
-test("resource: contents load on demand and render as text", async () => {
-  renderPanel({ selected: { kind: "resource", id: "demo://readme" }, onClose: vi.fn() })
-  expect(screen.getByText("demo://readme")).toBeInTheDocument()
-  expect(screen.queryByText(/entirely inside your browser/i)).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole("button", { name: /load contents/i }))
-  expect(await screen.findByText(/entirely inside your browser/i)).toBeInTheDocument()
+test("the panel is tools-only — resource and prompt selections render nothing", () => {
+  const { container } = renderPanel({ selected: { kind: "resource", id: "demo://readme" }, onClose: vi.fn() })
+  expect(container).toBeEmptyDOMElement()
+  const prompt = renderPanel({ selected: { kind: "prompt", id: "weekly_summary" }, onClose: vi.fn() })
+  expect(prompt.container).toBeEmptyDOMElement()
 })
 
 test("raw JSON is behind a disclosure", async () => {
-  renderPanel({ selected: { kind: "prompt", id: "weekly_summary" }, onClose: vi.fn() })
+  renderPanel({ selected: { kind: "tool", id: "close_issue" }, onClose: vi.fn() })
   const summary = screen.getByText(/raw json/i)
   expect(summary).toBeInTheDocument()
   await userEvent.click(summary)
-  expect(screen.getByText(/"name": "weekly_summary"/)).toBeInTheDocument()
+  expect(screen.getByText(/"name": "close_issue"/)).toBeInTheDocument()
 })
 
 test("close button fires onClose", async () => {
