@@ -10,13 +10,13 @@ export const readKey = (kind: ReadKind, id: string) => `${kind}:${id}`
 
 interface ReadContextValue {
   reads: Record<string, ReadState>
-  read: (kind: ReadKind, id: string) => void
+  read: (kind: ReadKind, id: string, args?: Record<string, string>) => void
 }
 
 const ReadContext = createContext<ReadContextValue | null>(null)
 
-// Rail unfolds trigger reads; results are cached for the session so re-opening
-// a row is instant (rail-browser spec §2). Lives beside RunProvider in App —
+// Selecting a resource or prompt triggers a read; results are cached for the
+// session so returning to a subject is instant. Lives beside RunProvider in App —
 // same pattern, same reason: state next to the connection, StageProps untouched.
 export function ReadProvider({ connection, children }: { connection: Connection; children: ReactNode }) {
   const [reads, setReads] = useState<Record<string, ReadState>>({})
@@ -25,10 +25,14 @@ export function ReadProvider({ connection, children }: { connection: Connection;
   const started = useRef(new Set<string>())
 
   const read = useCallback(
-    (kind: ReadKind, id: string) => {
+    (kind: ReadKind, id: string, args?: Record<string, string>) => {
       const key = readKey(kind, id)
-      if (started.current.has(key)) return
-      started.current.add(key)
+      // The state key is the subject; the guard key includes the arguments, so
+      // re-running a prompt with different values fetches again while a repeat
+      // of the same request still hits the cache.
+      const guard = args === undefined ? key : `${key}|${JSON.stringify(args)}`
+      if (started.current.has(guard)) return
+      started.current.add(guard)
       setReads((r) => ({ ...r, [key]: { status: "loading" } }))
       const settle = (display: ReadDisplay) => {
         setReads((r) => ({ ...r, [key]: { status: "done", display } }))
@@ -36,10 +40,10 @@ export function ReadProvider({ connection, children }: { connection: Connection;
       const call =
         kind === "resource"
           ? connection.client.readResource({ uri: id }).then(formatResourceContents)
-          : connection.client.getPrompt({ name: id }).then(formatPromptMessages)
+          : connection.client.getPrompt({ name: id, arguments: args }).then(formatPromptMessages)
       call.then(settle).catch((error: unknown) => {
-        // Transport errors are not cached — a re-unfold retries the read.
-        started.current.delete(key)
+        // Transport errors are not cached — selecting the subject again retries.
+        started.current.delete(guard)
         settle(formatReadError(error))
       })
     },

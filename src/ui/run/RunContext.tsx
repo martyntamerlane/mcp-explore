@@ -6,7 +6,7 @@ export type RunState = { status: "idle" } | { status: "running" } | { status: "d
 
 interface RunContextValue {
   runs: Record<string, RunState>
-  run: (toolName: string) => void
+  run: (toolName: string, args?: Record<string, unknown>) => void
 }
 
 const RunContext = createContext<RunContextValue | null>(null)
@@ -21,7 +21,7 @@ export function RunProvider({ connection, children }: { connection: Connection; 
   const inFlight = useRef(new Set<string>())
 
   const run = useCallback(
-    (toolName: string) => {
+    (toolName: string, args?: Record<string, unknown>) => {
       if (inFlight.current.has(toolName)) return
       inFlight.current.add(toolName)
       setRuns((r) => ({ ...r, [toolName]: { status: "running" } }))
@@ -30,7 +30,7 @@ export function RunProvider({ connection, children }: { connection: Connection; 
         setRuns((r) => ({ ...r, [toolName]: { status: "done", display } }))
       }
       connection.client
-        .callTool({ name: toolName, arguments: {} })
+        .callTool({ name: toolName, arguments: args ?? {} })
         .then((result) => settle(formatCallResult(result)))
         .catch((error: unknown) => settle(formatRunError(error)))
     },

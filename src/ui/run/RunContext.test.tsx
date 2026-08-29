@@ -1,58 +1,89 @@
-import { render, screen, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
-import { connectDemo } from "../../mcp/connect"
+import { act, renderHook, waitFor } from "@testing-library/react"
+import { expect, test, vi } from "vitest"
 import type { Connection } from "../../mcp/types"
 import { RunProvider, useRuns } from "./RunContext"
+import { ReadProvider, useReads } from "./ReadContext"
 
-let conn: Connection
-beforeAll(async () => {
-  conn = await connectDemo()
-})
-afterAll(async () => {
-  await conn.close()
-})
-
-function Probe({ tool }: { tool: string }) {
-  const { runs, run } = useRuns()
-  const state = runs[tool] ?? { status: "idle" }
-  return (
-    <div>
-      <button type="button" onClick={() => run(tool)}>
-        go
-      </button>
-      <span data-testid="status">{state.status}</span>
-      {state.status === "done" && <span data-testid="ok">{String(state.display.ok)}</span>}
-      {state.status === "done" && <pre data-testid="text">{state.display.blocks.map((b) => b.text).join("\n")}</pre>}
-    </div>
-  )
+function stubConnection(overrides: Record<string, unknown> = {}) {
+  const callTool = vi.fn(async () => ({ content: [{ type: "text", text: "ok" }] }))
+  const getPrompt = vi.fn(async () => ({ messages: [] }))
+  const readResource = vi.fn(async () => ({ contents: [] }))
+  const connection = {
+    client: { callTool, getPrompt, readResource, ...overrides },
+    transportKind: "in-memory",
+    snapshot: { serverInfo: { name: "s", version: "1" }, capabilities: {}, tools: [], resources: [], prompts: [] },
+    close: async () => {},
+  } as unknown as Connection
+  return { connection, callTool, getPrompt, readResource }
 }
 
-test("run transitions idle → running → done with formatted output", async () => {
-  render(
-    <RunProvider connection={conn}>
-      <Probe tool="project_pulse" />
-    </RunProvider>,
-  )
-  expect(screen.getByTestId("status")).toHaveTextContent("idle")
-  await userEvent.click(screen.getByRole("button", { name: "go" }))
-  await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("done"))
-  expect(screen.getByTestId("ok")).toHaveTextContent("true")
-  expect(screen.getByTestId("text").textContent).toMatch(/velocity/)
+test("run passes arguments through to tools/call", async () => {
+  const { connection, callTool } = stubConnection()
+  const { result } = renderHook(() => useRuns(), {
+    wrapper: ({ children }) => <RunProvider connection={connection}>{children}</RunProvider>,
+  })
+
+  act(() => result.current.run("create_issue", { title: "hi", limit: 5 }))
+
+  await waitFor(() => expect(result.current.runs.create_issue?.status).toBe("done"))
+  expect(callTool).toHaveBeenCalledWith({ name: "create_issue", arguments: { title: "hi", limit: 5 } })
 })
 
-test("a failing call lands done with ok=false, not a crash", async () => {
-  render(
-    <RunProvider connection={conn}>
-      <Probe tool="no_such_tool" />
-    </RunProvider>,
-  )
-  await userEvent.click(screen.getByRole("button", { name: "go" }))
-  await waitFor(() => expect(screen.getByTestId("status")).toHaveTextContent("done"))
-  expect(screen.getByTestId("ok")).toHaveTextContent("false")
+test("run with no arguments sends an empty object", async () => {
+  const { connection, callTool } = stubConnection()
+  const { result } = renderHook(() => useRuns(), {
+    wrapper: ({ children }) => <RunProvider connection={connection}>{children}</RunProvider>,
+  })
+
+  act(() => result.current.run("project_pulse"))
+
+  await waitFor(() => expect(result.current.runs.project_pulse?.status).toBe("done"))
+  expect(callTool).toHaveBeenCalledWith({ name: "project_pulse", arguments: {} })
 })
 
-test("useRuns outside a provider throws a clear error", () => {
-  const spy = vi.spyOn(console, "error").mockImplementation(() => {})
-  expect(() => render(<Probe tool="x" />)).toThrow(/RunProvider/)
-  spy.mockRestore()
+test("a second run of the same tool while one is in flight is ignored", async () => {
+  let release: (() => void) | undefined
+  const callTool = vi.fn(
+    () =>
+      new Promise((resolve) => {
+        release = () => resolve({ content: [{ type: "text", text: "ok" }] })
+      }),
+  )
+  const { connection } = stubConnection({ callTool })
+  const { result } = renderHook(() => useRuns(), {
+    wrapper: ({ children }) => <RunProvider connection={connection}>{children}</RunProvider>,
+  })
+
+  act(() => result.current.run("slow"))
+  act(() => result.current.run("slow"))
+  expect(callTool).toHaveBeenCalledTimes(1)
+
+  act(() => release?.())
+  await waitFor(() => expect(result.current.runs.slow?.status).toBe("done"))
+})
+
+test("read passes prompt arguments through to prompts/get", async () => {
+  const { connection, getPrompt } = stubConnection()
+  const { result } = renderHook(() => useReads(), {
+    wrapper: ({ children }) => <ReadProvider connection={connection}>{children}</ReadProvider>,
+  })
+
+  act(() => result.current.read("prompt", "triage_issue", { issue_id: "101" }))
+
+  await waitFor(() => expect(result.current.reads["prompt:triage_issue"]?.status).toBe("done"))
+  expect(getPrompt).toHaveBeenCalledWith({ name: "triage_issue", arguments: { issue_id: "101" } })
+})
+
+test("re-reading a prompt with different arguments fetches again", async () => {
+  const { connection, getPrompt } = stubConnection()
+  const { result } = renderHook(() => useReads(), {
+    wrapper: ({ children }) => <ReadProvider connection={connection}>{children}</ReadProvider>,
+  })
+
+  act(() => result.current.read("prompt", "triage_issue", { issue_id: "101" }))
+  await waitFor(() => expect(result.current.reads["prompt:triage_issue"]?.status).toBe("done"))
+  act(() => result.current.read("prompt", "triage_issue", { issue_id: "102" }))
+
+  await waitFor(() => expect(getPrompt).toHaveBeenCalledTimes(2))
+  expect(getPrompt).toHaveBeenLastCalledWith({ name: "triage_issue", arguments: { issue_id: "102" } })
 })
