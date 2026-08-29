@@ -1,10 +1,9 @@
 import { useState } from "react"
 import { connectUrl as realConnectUrl } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
+import ChromeBar from "./ui/ChromeBar"
 import ConnectScreen from "./ui/ConnectScreen"
 import DeckView from "./ui/deck/DeckView"
-import Prism from "./ui/deck/Prism"
-import ModeToggle from "./ui/ModeToggle"
 import { ReadProvider } from "./ui/run/ReadContext"
 import { RunProvider } from "./ui/run/RunContext"
 import type { EntitySelection } from "./ui/stage"
@@ -15,6 +14,7 @@ type Phase = { status: "idle" } | { status: "connected"; connection: Connection 
 export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: typeof realConnectUrl } = {}) {
   const [phase, setPhase] = useState<Phase>({ status: "idle" })
   const [selected, setSelected] = useState<EntitySelection | null>(null)
+  const [query, setQuery] = useState("")
   const [autoTarget, setAutoTarget] = useState<string | undefined>(
     () => new URLSearchParams(window.location.search).get("server") ?? undefined,
   )
@@ -27,6 +27,7 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
     }
     setAutoTarget(undefined)
     setSelected(null)
+    setQuery("")
     setPhase({ status: "connected", connection })
   }
 
@@ -50,25 +51,28 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
     )
   }
 
-  // Server identity lives in the deck boundary (the multi-server seam);
-  // app chrome carries only the brand and the session action.
+  // One chrome band carries brand, server identity and the filter; the stage
+  // below it is nothing but browse column + workspace (spec §3.1).
   const { snapshot, transportKind } = phase.connection
   return (
     <div className={styles.app}>
-      <header className={styles.header}>
-        <Prism className={styles.brandMark} />
-        <span className={styles.brand}>MCP EXPLORE</span>
-        <div className={styles.actions}>
-          <ModeToggle />
-          <button type="button" className={styles.disconnect} onClick={() => void disconnect()}>
-            Disconnect
-          </button>
-        </div>
-      </header>
+      <ChromeBar
+        snapshot={snapshot}
+        transportKind={transportKind}
+        query={query}
+        onQuery={setQuery}
+        onDisconnect={() => void disconnect()}
+      />
       <main className={styles.main}>
         <RunProvider connection={phase.connection}>
           <ReadProvider connection={phase.connection}>
-            <DeckView snapshot={snapshot} transportKind={transportKind} selection={selected} onSelect={setSelected} />
+            <DeckView
+              snapshot={snapshot}
+              transportKind={transportKind}
+              selection={selected}
+              onSelect={setSelected}
+              query={query}
+            />
           </ReadProvider>
         </RunProvider>
       </main>

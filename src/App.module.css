@@ -1,35 +1,11 @@
-.app { display: flex; flex-direction: column; height: 100vh; }
-.header {
+.app {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  border-bottom: 1px solid var(--panel-border);
-  background: var(--header-bg);
-  backdrop-filter: blur(20px);
+  flex-direction: column;
+  height: 100vh;
 }
-.brandMark { width: 26px; height: 17px; }
-.brand {
-  font-family: var(--display);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  color: var(--ink-2);
-}
-.actions {
-  margin-left: auto;
+
+.main {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  gap: 10px;
 }
-.disconnect {
-  padding: 8px 16px;
-  border-radius: var(--radius-s);
-  border: 1px solid var(--panel-border);
-  background: none;
-  color: var(--ink-2);
-  cursor: pointer;
-  transition: border-color var(--ease-hover), color var(--ease-hover);
-}
-.disconnect:hover { border-color: var(--danger); color: var(--ink); }
-.main { position: relative; flex: 1; min-height: 0; display: flex; }

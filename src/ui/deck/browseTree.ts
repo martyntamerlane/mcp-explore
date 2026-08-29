@@ -1,25 +1,25 @@
-import type { RailItem } from "./deckModel"
+import type { BrowseItem } from "./deckModel"
 
 /**
- * Folder tree derived from resource URIs (rail-browser spec §2). The tree is
+ * Folder tree derived from resource URIs (rail-browser spec §2, retained by the tool-first workspace spec §3.2). The tree is
  * earned, not imposed: a folder exists only when it groups >= 2 entries,
  * single-child folder chains collapse into one "a/b" segment, and a lone
  * shared scheme is invisible (mixed schemes become top-level folders).
  */
-export interface RailFolder {
+export interface BrowseFolder {
   type: "folder"
   name: string
   path: string
-  children: RailNode[]
+  children: BrowseNode[]
   count: number
 }
 
-export interface RailLeaf {
+export interface BrowseLeaf {
   type: "leaf"
-  item: RailItem
+  item: BrowseItem
 }
 
-export type RailNode = RailFolder | RailLeaf
+export type BrowseNode = BrowseFolder | BrowseLeaf
 
 const MIN_FOLDER_ENTRIES = 2
 
@@ -40,7 +40,7 @@ interface Trie {
 }
 
 interface OrderedLeaf {
-  item: RailItem
+  item: BrowseItem
   order: number
 }
 
@@ -49,13 +49,13 @@ const makeTrie = (): Trie => ({ folders: new Map(), leaves: [] })
 const join = (path: string, name: string) => (path === "" ? name : `${path}/${name}`)
 
 interface Emitted {
-  folders: RailFolder[]
+  folders: BrowseFolder[]
   leaves: OrderedLeaf[]
   count: number
 }
 
 function emit(node: Trie, path: string): Emitted {
-  const folders: RailFolder[] = []
+  const folders: BrowseFolder[] = []
   const leaves: OrderedLeaf[] = [...node.leaves]
   let count = node.leaves.length
 
@@ -86,9 +86,9 @@ function emit(node: Trie, path: string): Emitted {
   return { folders, leaves, count }
 }
 
-const toLeaf = (l: OrderedLeaf): RailLeaf => ({ type: "leaf", item: l.item })
+const toLeaf = (l: OrderedLeaf): BrowseLeaf => ({ type: "leaf", item: l.item })
 
-export function buildRailTree(items: RailItem[]): RailNode[] {
+export function buildBrowseTree(items: BrowseItem[]): BrowseNode[] {
   const parsed = items.map((item) => ({ item, ...parseUri(item.id) }))
   const schemes = new Set(parsed.filter((p) => p.scheme !== null).map((p) => p.scheme))
   const multiScheme = schemes.size > 1

@@ -1,11 +1,12 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react"
+import { useState } from "react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "../../mcp/connect"
 import type { Connection, ServerSnapshot, TransportKind } from "../../mcp/types"
 import { ReadProvider } from "../run/ReadContext"
 import { RunProvider } from "../run/RunContext"
 import type { EntitySelection } from "../stage"
-import DeckView, { TOOLS_PREVIEW_MAX } from "./DeckView"
+import DeckView from "./DeckView"
 
 let conn: Connection
 beforeAll(async () => {
@@ -15,287 +16,273 @@ afterAll(async () => {
   await conn.close()
 })
 
+/**
+ * The stage owns selection in the real app (App does), so the harness mirrors
+ * that: it keeps selection in a wrapper and re-renders, which is what makes the
+ * "run on select" contract testable end to end.
+ */
+interface HarnessProps {
+  snapshot: ServerSnapshot
+  transportKind: TransportKind
+  query: string
+  onSelect: (next: EntitySelection | null) => void
+}
+
+function Harness({ snapshot, transportKind, query, onSelect }: HarnessProps) {
+  const [selection, setSelection] = useState<EntitySelection | null>(null)
+  return (
+    <DeckView
+      snapshot={snapshot}
+      transportKind={transportKind}
+      selection={selection}
+      onSelect={(next) => {
+        onSelect(next)
+        setSelection(next)
+      }}
+      query={query}
+    />
+  )
+}
+
 function renderDeck({
   transportKind = "in-memory" as TransportKind,
   snapshot = conn.snapshot,
-  selection = null as EntitySelection | null,
-  armTimeoutMs = undefined as number | undefined,
+  query = "",
 } = {}) {
   const onSelect = vi.fn()
-  render(
+  const tree = (props: Partial<HarnessProps>) => (
     <RunProvider connection={conn}>
       <ReadProvider connection={conn}>
-        <DeckView
+        <Harness
           snapshot={snapshot}
           transportKind={transportKind}
-          selection={selection}
+          query={query}
           onSelect={onSelect}
-          armTimeoutMs={armTimeoutMs}
+          {...props}
         />
       </ReadProvider>
-    </RunProvider>,
+    </RunProvider>
   )
-  return { onSelect }
+  const utils = render(tree({}))
+  // Re-rendering the same Harness in place keeps its selection state, which is
+  // how App behaves when only the filter or the snapshot changes.
+  return { onSelect, update: (props: Partial<HarnessProps>) => utils.rerender(tree(props)) }
 }
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
 
-test("deck boundary carries server identity and canonical section headers", () => {
+const workspace = () => screen.getByRole("region", { name: "Workspace" })
+
+test("home is the resting subject and carries the server's own instructions", () => {
   renderDeck()
-  const boundary = screen.getByRole("region", { name: /server demo-issue-tracker/i })
-  expect(within(boundary).getByText(/v1\.0\.0/)).toBeInTheDocument()
-  expect(within(boundary).getByText("in-memory")).toBeInTheDocument()
-  expect(within(boundary).getByText(/TOOLS · 6/)).toBeInTheDocument()
-  expect(within(boundary).getByText(/RESOURCES · 7/)).toBeInTheDocument()
-  expect(within(boundary).getByText(/PROMPTS · 2/)).toBeInTheDocument()
-  expect(within(boundary).getByText("actions it can perform")).toBeInTheDocument()
-  expect(within(boundary).getByText("data it exposes")).toBeInTheDocument()
-  expect(within(boundary).getByText("ready-made instructions")).toBeInTheDocument()
+  expect(within(workspace()).getByText(/simulated issue tracker/i)).toBeInTheDocument()
+  expect(within(workspace()).getByText("6")).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "Home" })).toHaveAttribute("aria-current", "true")
 })
 
-test("instant class (readOnlyHint): a single click runs and selects", async () => {
-  const spy = vi.spyOn(conn.client, "callTool").mockResolvedValue({ content: [] })
-  const { onSelect } = renderDeck()
+test("a server with no instructions says so rather than showing an empty panel", () => {
+  const snapshot: ServerSnapshot = { ...conn.snapshot, instructions: undefined }
+  renderDeck({ snapshot })
+  expect(within(workspace()).getByText(/publishes no instructions/i)).toBeInTheDocument()
+})
+
+test("the column segments the three kinds with counts and swaps lists", async () => {
+  renderDeck()
+  expect(screen.getByRole("button", { name: /^Tools/ })).toHaveTextContent("6")
+  expect(screen.getByRole("button", { name: "tool project_pulse" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "prompt triage_issue" })).not.toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole("button", { name: /^Prompts/ }))
+  expect(screen.getByRole("button", { name: "prompt triage_issue" })).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: "tool project_pulse" })).not.toBeInTheDocument()
+})
+
+test("a zero-argument tool runs on a single click", async () => {
+  const spy = vi.spyOn(conn.client, "callTool")
+  renderDeck()
   await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
   expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "project_pulse", arguments: {} })
-  expect(onSelect).toHaveBeenCalledWith({ kind: "tool", id: "project_pulse" })
+  expect(await within(workspace()).findByText(/mcp-explore demo/)).toBeInTheDocument()
 })
 
-test("arm class: first click arms without running, second fires exactly once", async () => {
-  const spy = vi.spyOn(conn.client, "callTool").mockResolvedValue({ content: [] })
-  const { onSelect } = renderDeck()
-  const face = screen.getByRole("button", { name: "tool create_issue" })
-  await userEvent.click(face)
-  expect(spy).not.toHaveBeenCalled()
-  expect(onSelect).not.toHaveBeenCalled()
-  const armed = screen.getByRole("button", { name: "Run create_issue" })
-  expect(armed).toHaveAttribute("aria-pressed", "true")
-  await userEvent.click(armed)
-  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "create_issue", arguments: {} })
-  expect(onSelect).toHaveBeenCalledWith({ kind: "tool", id: "create_issue" })
+test("clicking an already-open zero-argument tool runs it again", async () => {
+  const spy = vi.spyOn(conn.client, "callTool")
+  renderDeck()
+  const row = screen.getByRole("button", { name: "tool project_pulse" })
+  await userEvent.click(row)
+  await within(workspace()).findByText(/mcp-explore demo/)
+  await userEvent.click(row)
+  await waitFor(() => expect(spy).toHaveBeenCalledTimes(2))
 })
 
-test("Escape disarms", async () => {
-  const spy = vi.spyOn(conn.client, "callTool").mockResolvedValue({ content: [] })
+test("a tool with arguments opens its fields and does not run until Run", async () => {
+  const spy = vi.spyOn(conn.client, "callTool")
   renderDeck()
   await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
-  await userEvent.keyboard("{Escape}")
-  expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "tool create_issue" })).toHaveAttribute("aria-pressed", "false")
   expect(spy).not.toHaveBeenCalled()
+
+  const title = screen.getByLabelText(/^title/)
+  await userEvent.type(title, "Graph mis-renders")
+  await userEvent.click(screen.getByRole("button", { name: /run create_issue/i }))
+
+  expect(spy).toHaveBeenCalledExactlyOnceWith({
+    name: "create_issue",
+    arguments: { title: "Graph mis-renders" },
+  })
+  expect(await within(workspace()).findByText(/created issue #104/i)).toBeInTheDocument()
 })
 
-test("arming a second tool re-arms — only one armed at a time", async () => {
-  renderDeck()
-  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
-  await userEvent.click(screen.getByRole("button", { name: "tool close_issue" }))
-  expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "Run close_issue" })).toBeInTheDocument()
-})
-
-test("an armed button times out and disarms (injectable timeout)", async () => {
-  renderDeck({ armTimeoutMs: 40 })
-  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
-  expect(screen.getByRole("button", { name: "Run create_issue" })).toBeInTheDocument()
-  await waitFor(() =>
-    expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument(),
-  )
-})
-
-test("the info icon opens details without ever running", async () => {
-  const spy = vi.spyOn(conn.client, "callTool").mockResolvedValue({ content: [] })
-  const { onSelect } = renderDeck()
-  await userEvent.click(screen.getByRole("button", { name: "details create_issue" }))
-  expect(onSelect).toHaveBeenCalledWith({ kind: "tool", id: "create_issue" })
-  expect(spy).not.toHaveBeenCalled()
-})
-
-test("input-required class: click opens details, never runs, face is signposted", async () => {
-  const spy = vi.spyOn(conn.client, "callTool").mockResolvedValue({ content: [] })
-  const snapshot: ServerSnapshot = {
-    ...conn.snapshot,
-    tools: [
-      {
-        name: "needs_args",
-        description: "Requires input.",
-        inputSchema: { type: "object", properties: { q: { type: "string" } }, required: ["q"] },
+test("Run is blocked while a required argument is empty, and says why", async () => {
+  const tools = [
+    {
+      name: "needs_args",
+      inputSchema: {
+        type: "object" as const,
+        properties: { who: { type: "string" } },
+        required: ["who"],
       },
-    ],
-  }
-  const { onSelect } = renderDeck({ transportKind: "streamable-http", snapshot })
-  const face = screen.getByRole("button", { name: "tool needs_args" })
-  expect(within(face).getByText(/needs input/i)).toBeInTheDocument()
-  await userEvent.click(face)
-  expect(onSelect).toHaveBeenCalledWith({ kind: "tool", id: "needs_args" })
-  expect(spy).not.toHaveBeenCalled()
+    },
+  ]
+  renderDeck({ snapshot: { ...conn.snapshot, tools } })
+  await userEvent.click(screen.getByRole("button", { name: "tool needs_args" }))
+  const run = screen.getByRole("button", { name: /run needs_args/i })
+  expect(run).toBeDisabled()
+  expect(screen.getByText(/fill who to run/i)).toBeInTheDocument()
+
+  await userEvent.type(screen.getByLabelText(/^who/), "you")
+  expect(screen.getByRole("button", { name: /run needs_args/i })).toBeEnabled()
 })
 
-test("keyboard: Enter arms, Enter fires", async () => {
-  const spy = vi.spyOn(conn.client, "callTool").mockResolvedValue({ content: [] })
+test("unsupported schema shapes fall back to an honest JSON field", async () => {
+  const tools = [
+    {
+      name: "odd_tool",
+      inputSchema: {
+        type: "object" as const,
+        properties: { payload: { type: "object", properties: { a: { type: "string" } } } },
+      },
+    },
+  ]
+  renderDeck({ snapshot: { ...conn.snapshot, tools } })
+  await userEvent.click(screen.getByRole("button", { name: "tool odd_tool" }))
+  const field = screen.getByLabelText(/^payload/)
+  expect(field.tagName).toBe("TEXTAREA")
+})
+
+test("a run result survives switching subject and coming back", async () => {
   renderDeck()
-  const face = screen.getByRole("button", { name: "tool create_issue" })
-  face.focus()
-  await userEvent.keyboard("{Enter}")
-  expect(screen.getByRole("button", { name: "Run create_issue" })).toBeInTheDocument()
-  await userEvent.keyboard("{Enter}")
-  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "create_issue", arguments: {} })
+  await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+  await within(workspace()).findByText(/mcp-explore demo/)
+  await userEvent.click(screen.getByRole("button", { name: "Home" }))
+  expect(within(workspace()).queryByText(/mcp-explore demo/)).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: "tool list_issues" }))
+  await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+  expect(await within(workspace()).findByText(/mcp-explore demo/)).toBeInTheDocument()
 })
 
-test("resource rows unfold in place and auto-load contents — the panel is never involved", async () => {
-  const { onSelect } = renderDeck()
-  const row = screen.getByRole("button", { name: "resource config" })
-  expect(row).toHaveAttribute("aria-expanded", "false")
-  await userEvent.click(row)
-  expect(row).toHaveAttribute("aria-expanded", "true")
-  await waitFor(() => expect(screen.getByText(/defaultPriority/)).toBeInTheDocument())
-  expect(screen.getByText("demo://config")).toBeInTheDocument()
-  expect(screen.getByText("application/json")).toBeInTheDocument()
-  expect(onSelect).not.toHaveBeenCalled()
-  // clicking the open row folds it back
-  await userEvent.click(row)
-  expect(row).toHaveAttribute("aria-expanded", "false")
-})
-
-test("accordion: unfolding a second row folds the first", async () => {
+test("a part-filled form survives switching subject and coming back", async () => {
   renderDeck()
-  const config = screen.getByRole("button", { name: "resource config" })
-  const readme = screen.getByRole("button", { name: "resource readme" })
-  await userEvent.click(config)
-  await userEvent.click(readme)
-  expect(config).toHaveAttribute("aria-expanded", "false")
-  expect(readme).toHaveAttribute("aria-expanded", "true")
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  await userEvent.type(screen.getByLabelText(/^title/), "half typed")
+  await userEvent.click(screen.getByRole("button", { name: "Home" }))
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  expect(screen.getByLabelText(/^title/)).toHaveValue("half typed")
+})
+
+test("read-only tools are badged; unannotated ones claim nothing", () => {
+  renderDeck()
+  expect(within(screen.getByRole("button", { name: "tool project_pulse" })).getByText("read only")).toBeInTheDocument()
+  expect(within(screen.getByRole("button", { name: "tool create_issue" })).queryByText("read only")).toBeNull()
+})
+
+test("selecting a resource loads and renders its contents in the workspace", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
+  await userEvent.click(screen.getByRole("button", { name: "resource config" }))
+  expect(await within(workspace()).findByText(/defaultPriority/)).toBeInTheDocument()
+  expect(within(workspace()).getByText("demo://config")).toBeInTheDocument()
+  expect(within(workspace()).getByText("application/json")).toBeInTheDocument()
 })
 
 test("path-structured resources group into folders; a folder click reveals children", async () => {
   renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
   expect(screen.queryByRole("button", { name: "resource getting-started" })).not.toBeInTheDocument()
-  const docs = screen.getByRole("button", { name: "folder docs" })
-  expect(docs).toHaveAttribute("aria-expanded", "false")
-  await userEvent.click(docs)
+  await userEvent.click(screen.getByRole("button", { name: "folder docs" }))
   expect(screen.getByRole("button", { name: "resource getting-started" })).toBeInTheDocument()
-  expect(screen.getByRole("button", { name: "resource writing-good-issues" })).toBeInTheDocument()
   expect(within(screen.getByRole("button", { name: "folder issues" })).getByText("3")).toBeInTheDocument()
 })
 
-test("zero-arg prompts unfold to their actual message text; parameterised show args honestly", async () => {
+test("a zero-argument prompt loads its messages on selection", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: /^Prompts/ }))
+  await userEvent.click(screen.getByRole("button", { name: "prompt weekly_summary" }))
+  expect(await within(workspace()).findByText(/three bullet points/)).toBeInTheDocument()
+})
+
+test("a prompt with arguments waits for Get prompt", async () => {
   const spy = vi.spyOn(conn.client, "getPrompt")
   renderDeck()
-  await userEvent.click(screen.getByRole("button", { name: "prompt weekly_summary" }))
-  await waitFor(() => expect(screen.getByText(/three bullet points/)).toBeInTheDocument())
-  expect(screen.getByText("USER")).toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: /^Prompts/ }))
   await userEvent.click(screen.getByRole("button", { name: "prompt triage_issue" }))
-  expect(screen.getByText("issue_id")).toBeInTheDocument()
-  expect(screen.getByText(/fill-in preview — coming with tool forms/)).toBeInTheDocument()
-  // parameterised prompts are never fetched
-  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "weekly_summary" })
+  expect(spy).not.toHaveBeenCalled()
+
+  const get = screen.getByRole("button", { name: /get prompt/i })
+  expect(get).toBeDisabled()
+  await userEvent.type(screen.getByLabelText(/^issue_id/), "101")
+  await userEvent.click(screen.getByRole("button", { name: /get prompt/i }))
+
+  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "triage_issue", arguments: { issue_id: "101" } })
+  expect(await within(workspace()).findByText(/triage issue 101/i)).toBeInTheDocument()
+})
+
+test("the filter recedes non-matching rows and reports per-kind hits", async () => {
+  renderDeck({ query: "pulse" })
+  expect(screen.getByRole("button", { name: "tool project_pulse" })).not.toHaveAttribute("data-receded")
+  expect(screen.getByRole("button", { name: "tool create_issue" })).toHaveAttribute("data-receded")
+  expect(screen.getByRole("button", { name: /^Tools/ })).toHaveTextContent("1")
+  expect(screen.getByRole("button", { name: /^Resources/ })).toHaveTextContent("0")
 })
 
 test("an active filter forces folders open so nested matches are visible", async () => {
-  renderDeck()
-  await userEvent.type(screen.getByLabelText(/filter items/i), "getting")
+  renderDeck({ query: "getting" })
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
   const match = screen.getByRole("button", { name: "resource getting-started" })
-  expect(match.closest("[data-receded]")).toBeNull()
-  // the folder holding no matches recedes with its contents
+  expect(match).not.toHaveAttribute("data-receded")
   expect(screen.getByRole("button", { name: "folder issues" }).closest("[data-receded]")).not.toBeNull()
 })
 
-test("rail preview cap counts top-level rows — a folder is one row", async () => {
-  const resources = Array.from({ length: 12 }, (_, i) => ({
-    uri: `flat://r${String(i).padStart(2, "0")}`,
-    name: `r${String(i).padStart(2, "0")}`,
-  }))
-  renderDeck({ snapshot: { ...conn.snapshot, resources } })
-  expect(screen.queryByRole("button", { name: "resource r11" })).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole("button", { name: /show all 12 resources/i }))
-  expect(screen.getByRole("button", { name: "resource r11" })).toBeInTheDocument()
+test("filtering never changes the workspace subject", async () => {
+  const { update } = renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+  await within(workspace()).findByText(/mcp-explore demo/)
+  update({ query: "create" })
+  expect(within(workspace()).getByRole("heading", { name: "project_pulse" })).toBeInTheDocument()
+  expect(screen.getByRole("button", { name: "tool project_pulse" })).toHaveAttribute("data-receded")
 })
 
-test("filter recedes non-matches across all kinds and bypasses the preview cap", async () => {
-  const many = Array.from({ length: TOOLS_PREVIEW_MAX + 2 }, (_, i) => ({
-    name: `bulk_${String(i).padStart(2, "0")}`,
-    inputSchema: { type: "object" as const },
-  }))
-  const snapshot: ServerSnapshot = { ...conn.snapshot, tools: many }
-  renderDeck({ snapshot })
-  // capped at rest
-  expect(screen.queryByRole("button", { name: "tool bulk_25" })).not.toBeInTheDocument()
-  expect(screen.getByRole("button", { name: /show all 26 tools/i })).toHaveTextContent("+ 2 more")
-  // active filter searches everything
-  await userEvent.type(screen.getByLabelText(/filter items/i), "bulk_25")
-  const match = screen.getByRole("button", { name: "tool bulk_25" })
-  expect(match).toBeInTheDocument()
-  expect(match.closest("[data-receded]")).toBeNull()
-  expect(screen.getByRole("button", { name: "tool bulk_00" }).closest("[data-receded]")).not.toBeNull()
-  // rail recedes too
-  expect(screen.getByRole("button", { name: "resource config" }).closest("[data-receded]")).not.toBeNull()
-})
-
-test("expander reveals the full grid and collapses back", async () => {
-  const many = Array.from({ length: TOOLS_PREVIEW_MAX + 2 }, (_, i) => ({
-    name: `bulk_${String(i).padStart(2, "0")}`,
-    inputSchema: { type: "object" as const },
-  }))
-  renderDeck({ snapshot: { ...conn.snapshot, tools: many } })
-  await userEvent.click(screen.getByRole("button", { name: /show all 26 tools/i }))
-  expect(screen.getByRole("button", { name: "tool bulk_25" })).toBeInTheDocument()
-  await userEvent.click(screen.getByRole("button", { name: /show fewer tools/i }))
-  expect(screen.queryByRole("button", { name: "tool bulk_25" })).not.toBeInTheDocument()
-})
-
-test("scrolling and clicking elsewhere both disarm", async () => {
+test("Escape returns to home", async () => {
   renderDeck()
   await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
-  expect(screen.getByRole("button", { name: "Run create_issue" })).toBeInTheDocument()
-  fireEvent.scroll(window)
-  expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument()
-  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
-  fireEvent.pointerDown(document.body)
-  expect(screen.queryByRole("button", { name: "Run create_issue" })).not.toBeInTheDocument()
+  expect(within(workspace()).getByText(/create a new issue/i)).toBeInTheDocument()
+  await userEvent.keyboard("{Escape}")
+  expect(within(workspace()).getByText(/simulated issue tracker/i)).toBeInTheDocument()
 })
 
-test("tool tooltips are anchored and described-by wired; rail rows have none", () => {
-  renderDeck()
-  const face = screen.getByRole("button", { name: "tool create_issue" })
-  const tipId = face.getAttribute("aria-describedby")
-  expect(tipId).toBeTruthy()
-  const tip = document.getElementById(tipId!)
-  expect(tip).toHaveAttribute("role", "tooltip")
-  expect(tip).toHaveTextContent(/create a new issue in the tracker/i)
-  // rail rows retired their tooltip — the description lives in the unfolded row
-  expect(screen.getByRole("button", { name: "resource config" })).not.toHaveAttribute("aria-describedby")
-})
-
-test("reduced motion: the deck's content renders synchronously with no entrance", () => {
-  // useReducedMotion reads matchMedia, which jsdom doesn't provide — stub it
-  // so the reduce query matches.
-  vi.stubGlobal(
-    "matchMedia",
-    (query: string) =>
-      ({
-        matches: query.includes("prefers-reduced-motion"),
-        media: query,
-        onchange: null,
-        addEventListener: () => {},
-        removeEventListener: () => {},
-        addListener: () => {},
-        removeListener: () => {},
-        dispatchEvent: () => false,
-      }) as unknown as MediaQueryList,
-  )
-  try {
-    renderDeck()
-    // the entrance branch must not gate first paint: every section is present at once
-    expect(screen.getByRole("button", { name: "tool project_pulse" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "resource config" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "prompt triage_issue" })).toBeInTheDocument()
-  } finally {
-    vi.unstubAllGlobals()
-  }
-})
-
-test("empty kinds render an honest none line", () => {
+test("empty kinds say so honestly", async () => {
   renderDeck({ snapshot: { ...conn.snapshot, resources: [], prompts: [] } })
-  expect(screen.getAllByText("none")).toHaveLength(2)
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
+  expect(screen.getByText(/exposes no resources/i)).toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: /^Prompts/ }))
+  expect(screen.getByText(/exposes no prompts/i)).toBeInTheDocument()
+})
+
+test("a subject that vanishes from the snapshot is reported, not blank", async () => {
+  const { update } = renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+  expect(within(workspace()).getByRole("heading", { name: "project_pulse" })).toBeInTheDocument()
+  update({ snapshot: { ...conn.snapshot, tools: [] } })
+  expect(within(workspace()).getByText(/no longer present/i)).toBeInTheDocument()
 })

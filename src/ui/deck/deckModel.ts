@@ -1,20 +1,16 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js"
-import type { ServerSnapshot, TransportKind } from "../../mcp/types"
-
-/**
- * How a click on a tool button behaves (redesign spec §4):
- * - "instant": runnable + readOnlyHint — runs on a single click
- * - "arm": runnable but not read-only-hinted — arm, then fire
- * - "input-required": not runnable in this slice — click opens the detail panel
- */
-export type RunClass = "instant" | "arm" | "input-required"
+import type { ServerSnapshot } from "../../mcp/types"
+import { fieldSpecs } from "../form/argValues"
 
 export interface DeckTool {
   kind: "tool"
   id: string
   label: string
   blurb?: string
-  runClass: RunClass
+  /** The server flagged this tool read-only. Untrusted — display only, never a permission. */
+  readOnly: boolean
+  /** No arguments at all: selecting it in the column runs it immediately (spec §4). */
+  zeroArg: boolean
 }
 
 export interface PromptArgSpec {
@@ -23,9 +19,8 @@ export interface PromptArgSpec {
   description?: string
 }
 
-// Rail rows unfold in place (rail-browser spec): the item carries everything
-// the unfolded row shows without a trip to the detail panel.
-export interface RailItem {
+// One row of the browse column, carrying what its workspace view needs.
+export interface BrowseItem {
   kind: "resource" | "prompt"
   id: string
   label: string
@@ -34,23 +29,16 @@ export interface RailItem {
   promptArgs?: PromptArgSpec[]
 }
 
-export interface RailGroup {
+export interface BrowseGroup {
   kind: "resource" | "prompt"
   label: string
-  gloss: string
-  items: RailItem[]
+  items: BrowseItem[]
 }
-
-export type DeckEmphasis = "regular" | "tool-light"
 
 export interface DeckModel {
   tools: DeckTool[]
-  rail: RailGroup[]
-  emphasis: DeckEmphasis
+  groups: BrowseGroup[]
 }
-
-/** Tool-light servers must not render a vast empty centre — the rail widens instead. */
-const TOOL_LIGHT_MAX = 4
 
 // Schemas come from an untrusted server: treat as unknown, narrow defensively.
 export function requiredArgCount(schema: unknown): number {
@@ -59,13 +47,13 @@ export function requiredArgCount(schema: unknown): number {
   return Array.isArray(required) ? required.filter((r) => typeof r === "string").length : 0
 }
 
-// Eligibility (spec §5): every demo (in-memory) tool, plus any tool whose schema
-// requires no arguments. readOnlyHint is untrusted — accepted only for the
-// single-click class, and only combined with runnability.
-export function classifyTool(tool: Tool, transportKind: TransportKind): RunClass {
-  const runnable = transportKind === "in-memory" || requiredArgCount(tool.inputSchema) === 0
-  if (!runnable) return "input-required"
-  return tool.annotations?.readOnlyHint === true ? "instant" : "arm"
+/**
+ * A tool with no properties at all runs on a single click; anything else opens
+ * its form first (tool-first workspace spec §4). Transport no longer matters —
+ * forms make every tool runnable, so the old in-memory-only carve-out is gone.
+ */
+export function isZeroArg(tool: Tool): boolean {
+  return fieldSpecs(tool.inputSchema).length === 0
 }
 
 function firstLine(text: string | undefined): string | undefined {
@@ -79,21 +67,21 @@ function dedupe<T extends { id: string }>(items: T[]): T[] {
   return items.filter((i) => (seen.has(i.id) ? false : (seen.add(i.id), true)))
 }
 
-export function buildDeckModel(snapshot: ServerSnapshot, transportKind: TransportKind): DeckModel {
+export function buildDeckModel(snapshot: ServerSnapshot): DeckModel {
   const tools = dedupe(
     snapshot.tools.map((t) => ({
       kind: "tool" as const,
       id: t.name,
       label: t.name,
       blurb: firstLine(t.description),
-      runClass: classifyTool(t, transportKind),
+      readOnly: t.annotations?.readOnlyHint === true,
+      zeroArg: isZeroArg(t),
     })),
   )
-  const rail: RailGroup[] = [
+  const groups: BrowseGroup[] = [
     {
       kind: "resource",
       label: "Resources",
-      gloss: "data it exposes",
       items: dedupe(
         snapshot.resources.map((r) => ({
           kind: "resource" as const,
@@ -107,7 +95,6 @@ export function buildDeckModel(snapshot: ServerSnapshot, transportKind: Transpor
     {
       kind: "prompt",
       label: "Prompts",
-      gloss: "ready-made instructions",
       items: dedupe(
         snapshot.prompts.map((p) => ({
           kind: "prompt" as const,
@@ -123,5 +110,5 @@ export function buildDeckModel(snapshot: ServerSnapshot, transportKind: Transpor
       ),
     },
   ]
-  return { tools, rail, emphasis: tools.length <= TOOL_LIGHT_MAX ? "tool-light" : "regular" }
+  return { tools, groups }
 }
