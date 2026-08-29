@@ -77,6 +77,20 @@ Decision on 2026-08-24: repo went public with **no license** (source-visible, al
 
 Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; ~~dedupe/suffix duplicate tool/prompt names and resource URIs~~ done 2026-08-26 in `buildDeckModel` (exact duplicates dropped, first wins); render non-string enum members via JSON.stringify and key chips by index; ~~Escape closes the detail panel~~ done 2026-08-27 (Esc closes the console drawer, disarm takes precedence — spec `2026-08-27-console-drawer-dark-mode.md`); ~~focus moves into/restores from the drawer on open/close~~ resolved 2026-08-29 by deleting the drawer — the workspace is permanent, selection does not move focus, and the region announces its subject via `aria-live`; ~~disarm an armed tool button on focus leaving its card (blur)~~ obsolete 2026-08-29 — arming is gone; aria-live announcements (run states are `aria-live`/`role=alert` since 2026-08-26; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
 
+### TODO-20: Resolve the three visual picks
+
+**Complexity**: S
+
+Open since the 2026-08-26 visual-iteration checkpoint and still unresolved after going live: (1) **UI face** — Inter (current) vs Geist; `@fontsource-variable/geist` stays installed until the call, then `npm uninstall` the loser and fix the import in `src/main.tsx`; (2) **prism variant** A/B/C in `src/ui/deck/Prism.tsx` — the pick becomes the favicon, which `index.html` still lacks entirely (add `<link rel="icon" href="data:image/svg+xml,…">`, touching nothing else in that file — the dune script tag stays); (3) **grain** on light, currently dropped. All three resolve only from rendered pixels; comparison sets regenerate via the headless rig.
+
+2026-08-29: untouched by the visual-system tightening (`docs/specs/2026-08-29-visual-system-tightening.md`), which deliberately stopped at the scale and left all three picks open. `@fontsource-variable/geist` is still an installed-but-unimported dependency. See also TODO-22, which is a fourth face question and probably wants deciding in the same sitting.
+
+### TODO-21: Structured editing for nested schema shapes
+
+**Complexity**: M
+
+The input forms (TODO-1) render nested objects, arrays of objects and mixed `anyOf`/`oneOf` unions as a raw JSON textarea labelled with the type — honest, but it asks the user to hand-write JSON. Simple unions already resolve to real controls (2026-08-29). Worth doing when a real server's important tool proves painful: object fields as nested field groups, arrays of objects as repeatable rows, and a variant picker for unions. `src/ui/form/argValues.ts` (`fieldSpecs`/`assembleArgs`) is the seam — it maps schema to `FieldSpec[]` and back to arguments, so richer kinds slot in without touching the views.
+
 ### TODO-13: Force separate Vite chunks for dune mode's entry
 
 **Complexity**: S
@@ -107,9 +121,33 @@ The differentiating idea (2026-08-25 flow-view grill session): connect to severa
 
 The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant contract; the Dune scene predates it and runs via its own overlay/entry mechanism. Rendering it as a stage would unify variant switching. Coordinate with (or leave to) the session that owns `src/dune/` — see the isolation rationale in `docs/architecture-overview.md`.
 
+### TODO-24: Markdown subset gaps
+
+**Complexity**: S
+
+`src/ui/markdown/parse.ts` implements a subset, not CommonMark (rationale and the full list in `docs/specs/2026-08-29-markdown-rendering.md` §2.1). Not implemented, and degrading to plain text today: reference links (`[a][b]` with a definition block), setext headings (`===`/`---` underlines), HTML blocks, footnotes, task-list checkboxes, and loose-vs-tight list spacing. Nested blockquotes and lists work but only to depth 6. Pick this up if a real server's output actually looks wrong — or, if the list grows, take it as the signal to swap in `react-markdown` after all; `parse.ts` and `Markdown.tsx` are the only two files that would change.
+
+### TODO-22: Pin the mono face
+
+**Complexity**: S
+
+`--mono` is the only unpinned family in the app — `ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace` — while `--display` and `--ui` are self-hosted via Fontsource. Every tool, resource, prompt and folder name, every input, every code block and the server's name in the chrome band render in it, so the app's dominant texture is a different typeface on every OS, and none of the spacing decisions in `docs/specs/2026-08-29-visual-system-tightening.md` were tuned against a face they can rely on. Fixing it means a real dependency decision (JetBrains Mono or IBM Plex Mono variable, ~30 kB subset) — flagged rather than taken during that work per CLAUDE.md's dependency rule. Decide alongside TODO-20's Inter-vs-Geist pick.
+
+### TODO-23: Clamp long server `instructions`
+
+**Complexity**: S
+
+Hugging Face publishes a 1,555-character `instructions` string that renders as a 24-line wall on the home view even after the 2026-08-29 measure cap took it from 82 to 71 characters per line. It wants a clamp (about 6 lines) with a "show more" — deliberately not built in that pass because a progressive-disclosure control on the home view is a new interaction, not covered by the existing system, and CLAUDE.md asks for confirmation before introducing one. `HomeView.tsx` / `Workspace.module.css .instructions` is the whole surface.
+
 ---
 
 ## Completed
+
+### TODO-19: Landing-page priority pass
+
+**Complexity**: S — **Completed 2026-08-29**
+
+The landing inverted its own priority: "Explore a live demo" carried the tinted wash, the lit hairline and the prism, while "Connect your server" — the app's actual purpose — was a plain box with a greyed-out Connect button. Diagnosed during the 2026-08-29 UX cohesion pass and left out of that work's scope (`docs/specs/2026-08-29-tool-first-workspace.md` §12); executed in the visual-system tightening the same day (`docs/specs/2026-08-29-visual-system-tightening.md` §6). The CTA treatment and the prism moved to the Connect door, which gained a one-line sub naming the actual differentiator; the demo door became a calm secondary with a neutral button. Both doors now share one structure and centre their contents, and the hero is centred in the viewport rather than finishing 40% up the page.
 
 ### TODO-1: Tool calling with schema-driven forms
 

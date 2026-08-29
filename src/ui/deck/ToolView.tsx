@@ -4,7 +4,7 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js"
 import ArgsForm from "../form/ArgsForm"
 import { assembleArgs, canSubmit, fieldSpecs, type Values } from "../form/argValues"
 import { useRuns, type RunState } from "../run/RunContext"
-import { Truncated } from "./blocks"
+import { TextBlock, Truncated } from "./blocks"
 import styles from "./Workspace.module.css"
 
 /**
@@ -54,7 +54,7 @@ function RunResult({ state }: { state: RunState }) {
             {state.display.blocks.map((b, i) => (
               <div key={i} className={styles.block}>
                 {b.label && <p className={styles.microlabel}>{b.label.toUpperCase()}</p>}
-                <pre className={styles.code}>{b.text}</pre>
+                <TextBlock text={b.text} />
               </div>
             ))}
             {state.display.truncated && <Truncated />}
@@ -93,38 +93,43 @@ export default function ToolView({ tool, values, onChange, onRun }: ToolViewProp
       <h2 className={styles.title}>{tool.name}</h2>
       {tool.description && <p className={styles.description}>{tool.description}</p>}
 
-      <div className={styles.columns}>
-        <div className={styles.inputCol}>
-          {specs.length > 0 && (
-            <>
-              <p className={styles.microlabel}>ARGUMENTS</p>
-              <ArgsForm
-                specs={specs}
-                values={values}
-                onChange={onChange}
-                errors={assembly.errors}
-                idPrefix={`tool-${tool.name}`}
-              />
-            </>
-          )}
+      <div className={styles.form}>
+        {specs.length > 0 && (
+          <>
+            <p className={styles.microlabel}>ARGUMENTS</p>
+            <ArgsForm
+              specs={specs}
+              values={values}
+              onChange={onChange}
+              errors={assembly.errors}
+              idPrefix={`tool-${tool.name}`}
+            />
+          </>
+        )}
 
-          <div className={styles.runRow}>
-            <button
-              type="button"
-              className={styles.run}
-              disabled={!ready || running}
-              onClick={() => onRun(assembly.args)}
-            >
-              {running ? "Running…" : specs.length === 0 ? `Run again` : `Run ${tool.name}`}
-            </button>
-            {reason && <span className={styles.quiet}>{reason}</span>}
-          </div>
-
-          <RawJson value={tool} />
+        <div className={styles.runRow}>
+          <button
+            type="button"
+            className={styles.run}
+            disabled={!ready || running}
+            onClick={() => onRun(assembly.args)}
+          >
+            {running ? (
+              "Running…"
+            ) : specs.length === 0 ? (
+              "Run again"
+            ) : (
+              <>
+                Run <span className={styles.runName}>{tool.name}</span>
+              </>
+            )}
+          </button>
+          {reason && <span className={styles.quiet}>{reason}</span>}
         </div>
-
-        <RunResult state={state} />
       </div>
+
+      <RunResult state={state} />
+      <RawJson value={tool} />
     </>
   )
 }

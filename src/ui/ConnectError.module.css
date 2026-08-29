@@ -1,6 +1,6 @@
 .box {
-  margin-top: 24px;
-  padding: 20px 24px;
+  margin-top: var(--sp-5);
+  padding: var(--sp-5);
   border: 1px solid color-mix(in srgb, var(--danger) 25%, var(--panel-border));
   border-left: 3px solid var(--danger);
   border-radius: var(--radius-m);
@@ -9,18 +9,18 @@
   box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent);
   text-align: left;
 }
-.headline { margin: 0 0 12px; color: var(--ink); }
-.attempts { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 6px; }
-.kind { color: var(--ink-2); margin-right: 12px; }
-.msg { color: var(--ink-3); font-family: var(--mono); font-size: 13px; }
-.hint { color: var(--ink-2); font-size: 14px; }
-.small { color: var(--ink-3); font-size: 13px; }
+.headline { margin: 0 0 var(--sp-3); color: var(--ink); }
+.attempts { list-style: none; margin: 0 0 var(--sp-4); padding: 0; display: grid; gap: var(--sp-2); }
+.kind { color: var(--ink-2); margin-right: var(--sp-3); }
+.msg { color: var(--ink-3); font-family: var(--mono); font-size: var(--fs-fine); }
+.hint { color: var(--ink-2); font-size: var(--fs-body); }
+.small { color: var(--ink-3); font-size: var(--fs-fine); }
 .code {
   font-family: var(--mono);
-  font-size: 13px;
-  padding: 12px;
-  border-radius: var(--radius-s);
+  font-size: var(--fs-fine);
+  padding: var(--sp-3);
+  border-radius: var(--radius-m);
   background: var(--code-bg);
   overflow-x: auto;
 }
-.details summary { color: var(--ink-3); cursor: pointer; font-size: 13px; }
+.details summary { color: var(--ink-3); cursor: pointer; font-size: var(--fs-fine); }

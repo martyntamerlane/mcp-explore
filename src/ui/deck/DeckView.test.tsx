@@ -206,6 +206,27 @@ test("selecting a resource loads and renders its contents in the workspace", asy
   expect(within(workspace()).getByText("application/json")).toBeInTheDocument()
 })
 
+test("a text/markdown resource renders as markdown, and the raw bytes stay one click away", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
+  await userEvent.click(screen.getByRole("button", { name: "resource readme" }))
+
+  // The heading is a real heading, not a line beginning with a hash.
+  expect(await within(workspace()).findByRole("heading", { name: "Demo issue tracker" })).toBeInTheDocument()
+  expect(within(workspace()).queryByText(/^# Demo issue tracker/)).not.toBeInTheDocument()
+
+  await userEvent.click(within(workspace()).getByRole("button", { name: "Show raw" }))
+  expect(within(workspace()).getByText(/# Demo issue tracker/)).toBeInTheDocument()
+  expect(within(workspace()).queryByRole("heading", { name: "Demo issue tracker" })).not.toBeInTheDocument()
+})
+
+test("a JSON result keeps its verbatim pre, with no markdown affordance", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+  expect(await within(workspace()).findByText(/issue #104 opened/)).toBeInTheDocument()
+  expect(within(workspace()).queryByRole("button", { name: "Show raw" })).not.toBeInTheDocument()
+})
+
 test("path-structured resources group into folders; a folder click reveals children", async () => {
   renderDeck()
   await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))

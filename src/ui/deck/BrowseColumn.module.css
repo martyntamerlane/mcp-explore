@@ -5,17 +5,21 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 22px 20px 24px 26px;
-  gap: 14px;
+  /* flex-basis alone does not hold this width: a flex item's min-width defaults
+     to min-content, so a server with long names (Hugging Face: 155 resources)
+     pushed the flank to 370px and re-proportioned the whole app. */
+  min-width: 0;
+  padding: var(--sp-5);
+  gap: var(--sp-4);
 }
 
 .home {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-2);
   width: fit-content;
-  padding: 6px 15px 6px 12px;
-  font-size: 13px;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-ui);
   color: var(--ink-2);
   background: none;
   border: 1px solid var(--panel-border);
@@ -36,14 +40,14 @@
 }
 
 .homeGlyph {
-  font-size: 14px;
+  font-size: var(--fs-ui);
   line-height: 1;
 }
 
 .segments {
   display: flex;
-  gap: 2px;
-  padding: 3px;
+  gap: var(--sp-0);
+  padding: var(--sp-0);
   border: 1px solid var(--panel-border);
   border-radius: 999px;
   background: color-mix(in srgb, var(--panel-solid) 55%, transparent);
@@ -51,8 +55,8 @@
 
 .segment {
   flex: 1;
-  padding: 6px 0;
-  font-size: 12px;
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-fine);
   color: var(--ink-3);
   background: none;
   border: none;
@@ -83,8 +87,8 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-right: 4px;
+  gap: var(--sp-2);
+  padding-right: var(--sp-1);
 }
 
 /* ── rows ── */
@@ -92,11 +96,11 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--sp-2);
   width: 100%;
   flex: none;
-  padding: 11px 13px;
-  font-size: 13px;
+  padding: var(--sp-3);
+  font-size: var(--fs-ui);
   text-align: left;
   color: var(--ink);
   background: color-mix(in srgb, var(--panel-solid) 55%, transparent);
@@ -106,16 +110,14 @@
   transition: border-color var(--ease-hover), box-shadow var(--ease-hover), background var(--ease-hover);
 }
 
-.row[data-kind="tool"] .name {
-  font-family: var(--mono);
-  font-size: 12.5px;
-}
-
 .row[data-receded] {
   opacity: 0.28;
 }
 
+/* Tool, resource, prompt and folder names are all identifiers — one face. */
 .name {
+  font-family: var(--mono);
+  font-size: var(--fs-fine);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -125,12 +127,11 @@
 .badge {
   margin-left: auto;
   flex: none;
-  font-size: 10px;
-  letter-spacing: 0.06em;
+  font-size: var(--fs-micro);
   color: var(--ink-3);
   border: 1px solid var(--panel-border);
   border-radius: 999px;
-  padding: 1px 7px;
+  padding: var(--sp-0) var(--sp-2);
 }
 
 /* Accent per kind, spent only on hover, focus and selection. */
@@ -171,7 +172,11 @@
   fill: var(--accent);
 }
 
-/* ── folders: quiet disclosure, no card chrome ── */
+/* ── folders ──
+   One row shape in this list. Folders used to drop the card entirely
+   (background: none, transparent border), so a resource-heavy server rendered
+   an all-flat list while Tools rendered an all-pill one — the two tabs read as
+   different applications. Folders keep the card and recede by fill instead. */
 
 .folder {
   display: flex;
@@ -184,20 +189,18 @@
 }
 
 .folderRow {
-  background: none;
-  border-color: transparent;
+  background: color-mix(in srgb, var(--panel-solid) 30%, transparent);
   color: var(--ink-2);
 }
 
 .folderRow:hover {
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
-  border-color: transparent;
+  background: color-mix(in srgb, var(--panel-solid) 70%, transparent);
 }
 
 .chevron {
   flex: none;
-  width: 10px;
-  font-size: 10px;
+  width: var(--sp-3);
+  font-size: var(--fs-micro);
   color: var(--ink-3);
   transition: transform var(--ease-hover);
 }
@@ -208,7 +211,7 @@
 
 .count {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--fs-micro);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -216,14 +219,14 @@
 .children {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin: 6px 0 2px 11px;
-  padding-left: 10px;
+  gap: var(--sp-2);
+  margin: var(--sp-2) 0 var(--sp-0) var(--sp-3);
+  padding-left: var(--sp-3);
   border-left: 1px solid var(--panel-border);
 }
 
 .none {
-  margin: 4px 2px;
-  font-size: 12.5px;
+  margin: var(--sp-1) var(--sp-0);
+  font-size: var(--fs-fine);
   color: var(--ink-3);
 }
