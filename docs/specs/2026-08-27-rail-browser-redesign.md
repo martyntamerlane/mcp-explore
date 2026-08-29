@@ -1,5 +1,9 @@
 # Rail browser — resources & prompts become a self-contained browser
 
+> **⚠ Partly superseded (2026-08-29)** by [`2026-08-29-tool-first-workspace.md`](2026-08-29-tool-first-workspace.md).
+> **No longer current**: the right-flank rail itself and its in-place accordion unfold — resources and prompts are now rows in the left browse column and open in the workspace, at full width.
+> **Still current**: the thresholded folder-tree derivation from resource URIs (the module is now `browseTree.ts`), filter-forces-folders-open, session read caching, and the type-specific presentation principle.
+
 **Date**: 2026-08-27
 **Status**: Agreed (grill session 2026-08-27 — placement, tree ambition, load semantics, accordion, tooltip fate all resolved with user)
 **Amends**: [`2026-08-26-luminous-deck-redesign.md`](2026-08-26-luminous-deck-redesign.md) §3 (rail geometry, hover-description tooltips on rail entries) and §4 (detail-panel scope). Everything else in that spec stands.

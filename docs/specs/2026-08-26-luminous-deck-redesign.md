@@ -1,5 +1,9 @@
 # Luminous Deck — baseline redesign (identity + IA + the Run verb)
 
+> **⚠ Partly superseded (2026-08-29)** by [`2026-08-29-tool-first-workspace.md`](2026-08-29-tool-first-workspace.md).
+> **No longer current**: §3–§5's deck body (tool grid + right rail + server boundary card), the arm-then-fire Run verb, adaptive tool-light emphasis, and the preview caps. One click now runs a tool; tools with arguments get a generated form.
+> **Still current**: the luminous light-first identity, typography, entity shape coding, the choreography vocabulary, the two-door landing, and the multi-server seam (now carried by the chrome band).
+
 **Date**: 2026-08-26
 **Status**: Agreed (grill session 2026-08-26 — goal, scope, feel, identity, material language, IA, verb scope, click semantics, motion tech, typography, sound, landing, phasing all resolved with user)
 **Supersedes**: [`2026-08-25-visual-identity.md`](2026-08-25-visual-identity.md) (the dark identity: surfaces, dark palette values, type ramp) and [`2026-08-25-flow-view-design.md`](2026-08-25-flow-view-design.md) (the left→right flow geometry, traces, readout strip, gate-ring core).

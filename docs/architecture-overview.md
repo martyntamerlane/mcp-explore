@@ -1,6 +1,6 @@
 # Architecture Overview — mcp-explore
 
-> **Status**: Built (luminous-deck redesign 2026-08-26, see [`docs/specs/2026-08-26-luminous-deck-redesign.md`](specs/2026-08-26-luminous-deck-redesign.md) — replaced the 2026-08-25 flow view). This file documents reality — project structure, module map, state shape — updated in the same change as the code.
+> **Status**: Built (tool-first workspace 2026-08-29, see [`docs/specs/2026-08-29-tool-first-workspace.md`](specs/2026-08-29-tool-first-workspace.md) — replaced the deck grid + rail + console drawer of the 2026-08-26/27 specs, which carry banners saying what still stands). This file documents reality — project structure, module map, state shape — updated in the same change as the code.
 
 ## Topology
 
@@ -16,11 +16,15 @@ GitHub Pages (Vite build, deployed by GitHub Actions on push to main)
 
 ## Stack
 
-React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: power-on cascade, drawer/unfold folds, AnimatePresence — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI), hand-rolled deterministic deck layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
+React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: the column's power-on cascade and the workspace's subject cross-fade — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI), hand-rolled deterministic layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
 
 ## Stages (display variants)
 
-`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`). `App` owns connection, selection, run state (via `RunProvider`), rail-load state (via `ReadProvider`), and shared chrome (brand header with mode toggle); stages are interchangeable. `DeckView` is the default stage; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17). Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only and the drawer sees the same per-tool state. Selection is tools-only since the rail-browser redesign (rail rows unfold in place and never call `onSelect`); it drives the console drawer, which `DeckView` renders inside the server boundary — the app has no overlay surfaces. Light/dark mode is a root `data-mode` attribute re-valuing tokens (`src/ui/mode.ts`); Dune wins via a `:not()` guard, untouched. The deck's server boundary is the multi-server seam (TODO-16): a second connection renders a second boundary tiled alongside.
+`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`, `query`). `App` owns connection, selection, the filter query, run state (via `RunProvider`), read state (via `ReadProvider`), and the chrome band; stages are interchangeable. `DeckView` is the default stage — a browse column plus a workspace, nothing else; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17).
+
+**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
+
+The app has **no overlay surfaces and no tooltips** in the connected view. Light/dark mode is a root `data-mode` attribute re-valuing tokens (`src/ui/mode.ts`); Dune wins via a `:not()` guard, untouched. The chrome band is the multi-server seam (TODO-16): a second connection renders a second band plus column/workspace pair tiled alongside.
 
 ## State & storage
 
@@ -34,7 +38,7 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 index.html            Vite entry
 src/
   main.tsx            React bootstrap (fonts, MotionConfig reduced-motion floor)
-  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync, RunProvider
+  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync, filter query, Run/Read providers
   App.module.css      CSS module for App component
   App.test.tsx        Tests for App component
   global.css          Light-first CSS custom properties (validated luminous palette; first :root
@@ -53,23 +57,30 @@ src/
     ConnectScreen.tsx      Two-door landing: connect door (URL/headers/recents), demo door
     ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
     recents.ts             localStorage recent-servers list (opt-in header persistence)
-    stage.ts               StageProps / EntitySelection — the display-variant contract
+    stage.ts               StageProps / EntitySelection — the display-variant contract (null selection = home)
+    ChromeBar.tsx          The single chrome band: brand, server identity, filter, mode toggle, disconnect
     deck/
-      deckModel.ts         buildDeckModel — snapshot → tools (run-classed) + rail groups (with mime/prompt args), dedupe, emphasis
-      railTree.ts          buildRailTree — resource URIs → thresholded folder tree (chain-collapse, scheme handling)
-      armState.ts          pressTool — pure arm-then-fire transition; ARM_TIMEOUT_MS
-      DeckView.tsx         Default stage: server boundary, tool grid + rail (right), console drawer, filter, power-on choreography
-      ToolButton.tsx       One tool: face + info sibling + anchored tooltip; armed/running/needs-input states
-      ToolDrawer.tsx       Console drawer docked in the boundary's bottom edge: identity | args table | RUN
-      Rail.tsx             Right-flank browser: folder tree, in-place accordion unfold, auto-load via useReads
-      Glyph.tsx            Entity shape coding (circle/square/diamond)
+      deckModel.ts         buildDeckModel — snapshot → tools (readOnly/zeroArg) + browse groups (mime, prompt args), dedupe
+      browseTree.ts        buildBrowseTree — resource URIs → thresholded folder tree (chain-collapse, scheme handling)
+      DeckView.tsx         Default stage: browse column + workspace; owns the click contract and per-subject form values
+      BrowseColumn.tsx     Left index: home, segmented Tools/Resources/Prompts, folder tree, power-on cascade
+      Workspace.tsx        Permanent work surface; routes the selected subject to one of the four views
+      HomeView.tsx         Server identity, counts and the server's own `instructions`
+      ToolView.tsx         Description, args form, Run, result, raw-JSON disclosure
+      ResourceView.tsx     Metadata + contents, loaded on selection
+      PromptView.tsx       Description, args form, Get prompt, returned messages
+      blocks.tsx           Shared render for sanitized read/run block lists
+      Glyph.tsx            Entity shape coding (circle/square/diamond), colourless — the row decides
       Prism.tsx            The brand mark (hairline prism, 3 variants)
+    form/
+      argValues.ts         Pure: inputSchema → FieldSpec[]; form strings → tools/call arguments; validation
+      ArgsForm.tsx         The generated fields (text/number/boolean/enum/list, JSON fallback)
     run/
       runResult.ts         formatCallResult/formatRunError — untrusted result → sanitized RunDisplay, size cap
       readResult.ts        formatResourceContents/formatPromptMessages — untrusted reads → sanitized ReadDisplay
-      RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool
-      ReadContext.tsx      ReadProvider/useReads — cached rail loads over readResource/getPrompt
-    schema.ts               JSON Schema → argument table rows + friendlyType for ToolDrawer
+      RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool(name, args)
+      ReadContext.tsx      ReadProvider/useReads — cached reads over readResource/getPrompt(name, args)
+    schema.ts               JSON Schema → schemaRows + friendlyType, under argValues and the views
     mode.ts                 Light/dark resolution: stored choice > system; data-mode stamping; live follow
     ModeToggle.tsx          Sun/moon toggle (header + landing) persisting explicit choices
     *.module.css            CSS modules for each ui/ component

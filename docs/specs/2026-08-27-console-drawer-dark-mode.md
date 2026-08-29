@@ -1,5 +1,9 @@
 # Console drawer + dark mode
 
+> **⚠ Partly superseded (2026-08-29)** by [`2026-08-29-tool-first-workspace.md`](2026-08-29-tool-first-workspace.md).
+> **No longer current**: §2's console drawer in its entirety — the tools' deep-dive is now the permanent workspace, so there is no drawer to open, close, or push content up. Esc returns to home rather than closing a drawer.
+> **Still current**: dark mode (§3) — the `data-mode` mechanism, the sun/moon toggle, system-follow and the Dune `:not()` guard all stand; only the glow values changed, per the 2026-08-29 spec §7.
+
 **Date**: 2026-08-27
 **Status**: Agreed (grill session 2026-08-27 — drawer placement, mechanics, rail side, dark-mode activation all resolved with user)
 **Amends**: [`2026-08-26-luminous-deck-redesign.md`](2026-08-26-luminous-deck-redesign.md) §3/§5/§6 (detail panel and its spring retire; run results move to the drawer) and [`2026-08-27-rail-browser-redesign.md`](2026-08-27-rail-browser-redesign.md) §2 (rail returns to the right flank). Executes the dark-mode direction TODO-5 anticipated (light-first with a dark variant).

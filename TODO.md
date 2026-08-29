@@ -8,14 +8,6 @@ Each entry has a stable ID (`TODO-N`) that is never reused. Completed items move
 
 ## Deferred from initial design (2026-08-24)
 
-### TODO-1: Tool calling with schema-driven forms
-
-**Complexity**: L
-
-The v2 flagship. Generate argument forms from each tool's JSON Schema, invoke the tool, render results inline in the detail panel. Deliberately excluded from v1 (design spec decision #5) because form generation from arbitrary JSON Schema is the single biggest feature in the app.
-
-2026-08-26: a scoped slice (running demo-server tools + zero-input tools on any server, no form generation) was pulled into the luminous-deck redesign — see `docs/specs/2026-08-26-luminous-deck-redesign.md` §5. This entry remains for parameterised tools; the eligibility check in that spec is the upgrade seam.
-
 ### TODO-2: OAuth 2.1 authentication flow
 
 **Complexity**: L
@@ -34,7 +26,7 @@ A small npx-distributed companion that exposes a local stdio MCP server over loc
 
 Group tools by shared prefix/namespace (`issues_create`, `issues_list` → `issues`) or by semantic similarity, adding a collapsible intermediate ring so 80-tool servers show ~8 tidy groups. v1 ships a flat ring (design spec decision #8). **Monetization note**: if this becomes a paid feature it needs an entitlement mechanism — a license-key check or a small auth'd API — which reopens the zero-backend decision; see design spec decision #9. Keep the layout code's grouping seam clean but build no entitlement machinery until this is a real goal.
 
-2026-08-26: inverted by the luminous-deck redesign (`docs/specs/2026-08-26-luminous-deck-redesign.md`) — the baseline goes **light-first**; this entry now means adding a *dark* variant later.
+2026-08-29: the grouping seam is now the browse column's tool list (`BrowseColumn`), not a graph ring — grouping would insert collapsible parents into that list. (A stray note about the light-first inversion sat here until 2026-08-29; it belongs to TODO-5, which carries it in Completed.)
 
 ### TODO-6: Docs-style list view as alternate to the graph
 
@@ -42,7 +34,7 @@ Group tools by shared prefix/namespace (`issues_create`, `issues_list` → `issu
 
 A switchable master-detail (sidebar + detail pane) view over the same data, for users who want scanning/searching over spatial browsing. Only worth it if the graph alone proves insufficient.
 
-2026-08-25: the flow view ([spec](docs/specs/2026-08-25-flow-view-design.md)) makes the diagram itself readable/scannable (always-visible labels, adaptive density, vertical scroll) — likely obsoletes this; revisit only if real usage still shows scanning pain.
+2026-08-25: the flow view ([spec](docs/specs/2026-08-25-flow-view-design.md)) makes the diagram itself readable/scannable — likely obsoletes this. 2026-08-29: **effectively delivered** — the tool-first workspace *is* a master-detail list + detail pane (`docs/specs/2026-08-29-tool-first-workspace.md`). Keep the entry only as the record of that decision.
 
 ### TODO-7: Opt-in CORS proxy
 
@@ -83,7 +75,7 @@ Decision on 2026-08-24: repo went public with **no license** (source-visible, al
 
 **Complexity**: S
 
-Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; ~~dedupe/suffix duplicate tool/prompt names and resource URIs~~ done 2026-08-26 in `buildDeckModel` (exact duplicates dropped, first wins); render non-string enum members via JSON.stringify and key chips by index; ~~Escape closes the detail panel~~ done 2026-08-27 (Esc closes the console drawer, disarm takes precedence — spec `2026-08-27-console-drawer-dark-mode.md`); focus moves into/restores from the drawer on open/close (still open); disarm an armed tool button on focus leaving its card (blur) — today the 4s timeout backstops it (2026-08-26 review note); aria-live announcements (run states are `aria-live`/`role=alert` since 2026-08-26; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
+Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; ~~dedupe/suffix duplicate tool/prompt names and resource URIs~~ done 2026-08-26 in `buildDeckModel` (exact duplicates dropped, first wins); render non-string enum members via JSON.stringify and key chips by index; ~~Escape closes the detail panel~~ done 2026-08-27 (Esc closes the console drawer, disarm takes precedence — spec `2026-08-27-console-drawer-dark-mode.md`); ~~focus moves into/restores from the drawer on open/close~~ resolved 2026-08-29 by deleting the drawer — the workspace is permanent, selection does not move focus, and the region announces its subject via `aria-live`; ~~disarm an armed tool button on focus leaving its card (blur)~~ obsolete 2026-08-29 — arming is gone; aria-live announcements (run states are `aria-live`/`role=alert` since 2026-08-26; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
 
 ### TODO-13: Force separate Vite chunks for dune mode's entry
 
@@ -118,6 +110,15 @@ The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant
 ---
 
 ## Completed
+
+### TODO-1: Tool calling with schema-driven forms
+
+**Complexity**: L — **Completed 2026-08-29**
+
+The v1 flagship, deferred from the initial design (decision #5) and shipped by the tool-first workspace redesign (`docs/specs/2026-08-29-tool-first-workspace.md` §5). Fields are generated from each tool's `inputSchema` — text, number, true/false, one-of, comma-separated list of text — with a JSON textarea fallback for nested objects, arrays of objects and `oneOf`/`anyOf` so nothing is silently hidden. Schema defaults prefill, required fields gate Run with the reason in plain text, empty optionals are omitted rather than sent as `""`, and unparseable numbers/JSON block the run with an inline message. Prompt arguments reuse the same form. Pure logic and its tests live in `src/ui/form/argValues.ts`.
+
+**Not covered, if it ever matters**: structured editing *inside* nested objects and arrays of objects (they get the raw JSON field), and `oneOf`/`anyOf` variant pickers.
+
 
 ### TODO-5: Light theme (inverted: dark theme)
 
