@@ -1,5 +1,10 @@
 # Rendering markdown results — design
 
+> **Partly superseded 2026-08-29** by [`2026-08-29-reading-pass.md`](2026-08-29-reading-pass.md):
+> block-level HTML from a known tag list is now dropped rather than printed as
+> text, and the rendered type is on a two-tier heading scale with unchipped
+> inline code. The parser's contract — data out, never markup — is unchanged.
+
 **Date**: 2026-08-29
 **Status**: implemented
 **Refines**: the result surfaces in [`2026-08-29-tool-first-workspace.md`](2026-08-29-tool-first-workspace.md) §6 and the block rendering in [`2026-08-27-rail-browser-redesign.md`](2026-08-27-rail-browser-redesign.md) §2. The security posture in [`2026-08-24-initial-design.md`](2026-08-24-initial-design.md) is unchanged and constrains everything below.

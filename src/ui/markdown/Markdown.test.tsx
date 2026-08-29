@@ -36,11 +36,21 @@ test("a javascript: URL never becomes a link", () => {
   expect(container.textContent).toBe("click")
 })
 
-test("HTML in the source is text, not markup", () => {
+test("HTML in the source never becomes markup", () => {
   const { container } = render(<Markdown text={'<img src=x onerror="alert(1)">\n\n<b>not bold</b>'} />)
   expect(container.querySelector("img")).toBeNull()
   expect(container.querySelector("b")).toBeNull()
-  expect(container.textContent).toContain("<b>not bold</b>")
+  // The tag is dropped, its text kept (2026-08-29 reading pass). Before that
+  // both lines rendered as literal angle brackets; the security property — that
+  // no element is ever constructed from a server's markup — is unchanged.
+  expect(container.textContent).toContain("not bold")
+  expect(container.textContent).not.toContain("onerror")
+})
+
+test("a tag inside a sentence stays inert text", () => {
+  const { container } = render(<Markdown text="use <b>bold</b> sparingly" />)
+  expect(container.querySelector("b")).toBeNull()
+  expect(container.textContent).toContain("use <b>bold</b> sparingly")
 })
 
 test("a remote image is never loaded — only offered as a link", () => {

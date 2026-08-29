@@ -16,7 +16,7 @@ GitHub Pages (Vite build, deployed by GitHub Actions on push to main)
 
 ## Stack
 
-React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: the column's power-on cascade and the workspace's subject cross-fade — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI; the mono face is still a system stack — TODO-22), hand-rolled deterministic layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
+React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: the column's power-on cascade and the workspace's subject cross-fade — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI + JetBrains Mono identifiers — all three pinned 2026-08-29; ~40 kB latin subset for the mono), hand-rolled deterministic layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
 
 ## Stages (display variants)
 

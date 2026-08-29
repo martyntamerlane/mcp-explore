@@ -1,5 +1,10 @@
 # Visual system tightening — design
 
+> **Partly superseded 2026-08-29** by [`2026-08-29-reading-pass.md`](2026-08-29-reading-pass.md):
+> the `ch`-based measures in §4 became one px measure (`--measure-read: 780px`), and
+> the one-size-for-all-heading-levels rule became two tiers. The scale, the
+> single-column result, the browse-column fix and everything else here stand.
+
 **Date**: 2026-08-29 (after the tool-first workspace shipped and went live)
 **Status**: implemented
 **Refines**: [`2026-08-29-tool-first-workspace.md`](2026-08-29-tool-first-workspace.md) and the identity in [`2026-08-26-luminous-deck-redesign.md`](2026-08-26-luminous-deck-redesign.md). Supersedes nothing — every decision in those specs stands. This adds the type/space layer they assumed and never wrote down, and corrects five places where the built UI diverged from their own intent.

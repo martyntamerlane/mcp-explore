@@ -11,8 +11,15 @@
  * Covers what MCP servers actually emit: ATX headings, fenced code, bullet and
  * ordered lists (nested), blockquotes, GFM tables, thematic breaks, paragraphs;
  * inline code, bold, italic, strikethrough, links, autolinks and images. Not
- * CommonMark-complete and not trying to be — reference links, setext headings,
- * HTML blocks and footnotes fall through to plain text, which is honest.
+ * CommonMark-complete and not trying to be — reference links, setext headings
+ * and footnotes fall through to plain text, which is honest.
+ *
+ * Block-level HTML is the one exception, added 2026-08-29: a line that is
+ * nothing but a known HTML tag is dropped, and a line that is a known tag pair
+ * wrapped around text keeps the text. Deepwiki opens every result with
+ * `<details>` / `<summary>Relevant source files</summary>`, which used to render
+ * as literal angle brackets two lines into every response. Dropping the tag is
+ * not the same as supporting HTML — nothing here ever emits markup.
  */
 
 export type Inline =
@@ -46,6 +53,23 @@ const RULE = /^ {0,3}([-*_])[ \t]*(?:\1[ \t]*){2,}$/
 const BULLET = /^( *)([-*+])[ \t]+(.*)$/
 const ORDERED = /^( *)(\d{1,9})[.)][ \t]+(.*)$/
 const QUOTE = /^ {0,3}> ?(.*)$/
+
+/**
+ * Element names recognised in the HTML-block rules below. An allowlist rather
+ * than a general `<[a-z]+>` pattern on purpose: a line of prose that happens to
+ * read `<not a tag>` matches any permissive pattern, and silently deleting a
+ * line of a server's output is a worse failure than printing one stray tag.
+ */
+const HTML_ELEMENTS =
+  "details|summary|div|span|p|br|hr|img|picture|source|center|figure|figcaption|" +
+  "b|i|u|s|small|sub|sup|strong|em|mark|kbd|abbr|a|code|pre|blockquote|" +
+  "table|thead|tbody|tfoot|tr|td|th|caption|colgroup|col|ul|ol|li|dl|dt|dd|h[1-6]"
+
+/** A line that is one tag and nothing else: `<details>`, `</details>`, `<br />`. */
+const HTML_TAG_ONLY = new RegExp(`^ {0,3}</?(?:${HTML_ELEMENTS})(?:\\s[^>]*)?/?>[ \\t]*$`, "i")
+
+/** A line that is one tag pair around text: `<summary>Relevant source files</summary>`. */
+const HTML_WRAPPED = new RegExp(`^ {0,3}<(${HTML_ELEMENTS})(?:\\s[^>]*)?>(.*)</\\1>[ \\t]*$`, "i")
 const BLANK = /^[ \t]*$/
 const LEADING_SPACE = /^ +/
 
@@ -116,7 +140,9 @@ function startsBlock(line: string): boolean {
     FENCE_OPEN.test(line) ||
     QUOTE.test(line) ||
     BULLET.test(line) ||
-    ORDERED.test(line)
+    ORDERED.test(line) ||
+    HTML_TAG_ONLY.test(line) ||
+    HTML_WRAPPED.test(line)
   )
 }
 
@@ -146,6 +172,20 @@ export function parseBlocks(src: string, depth = 0): Block[] {
       }
       i++ // consume the closing fence, or run off the end, which is fine
       out.push({ type: "code", value: body.join("\n"), ...(fence[2] ? { lang: fence[2] } : {}) })
+      continue
+    }
+
+    // Block-level HTML: drop the tag, keep any text it wrapped. Checked before
+    // the table rule so a `<td>` line can never be read as a table row.
+    if (HTML_TAG_ONLY.test(line)) {
+      i++
+      continue
+    }
+    const wrapped = HTML_WRAPPED.exec(line)
+    if (wrapped) {
+      const inner = wrapped[2].trim()
+      if (inner !== "") out.push({ type: "paragraph", children: parseInline(inner) })
+      i++
       continue
     }
 
