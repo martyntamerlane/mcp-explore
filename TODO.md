@@ -113,6 +113,36 @@ The differentiating idea (2026-08-25 flow-view grill session): connect to severa
 
 The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant contract; the Dune scene predates it and runs via its own overlay/entry mechanism. Rendering it as a stage would unify variant switching. Coordinate with (or leave to) the session that owns `src/dune/` — see the isolation rationale in `docs/architecture-overview.md`.
 
+### TODO-25: Selection in the URL
+
+**Complexity**: S
+
+`?server=…&tool=NAME` (and `&resource=`/`&prompt=`) so a link can address a specific subject, Back/Forward walk selection history, and reload holds your place. Today `App.tsx` puts only the server in the URL and uses `replaceState` for everything, so every share and every reload lands on Home — a hole in the app's core promise, since the whole pitch is "paste a URL and see inside a server". Session **S1** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md).
+
+### TODO-26: Keyboard navigation and command mode
+
+**Complexity**: M
+
+The app has exactly one key binding (Esc → home). Make the **existing** filter input in the chrome band the keyboard surface: `/` focuses it, ↑↓ walk the filtered list, ⏎ selects, `>` switches it to command mode. Deliberately **not** a ⌘K overlay — every source points at one, and it is the archetypal arriving surface this project has twice rejected; the permanent filter box gets a second job instead. Includes shortcut legibility (keycap glyphs are a new visual pattern needing approval). Sessions **S1** (navigation) and **S2** (command mode) of the interaction roadmap.
+
+### TODO-27: Run history per tool
+
+**Complexity**: M
+
+`RunContext` keys results by tool name and holds exactly one, so running a tool again with different arguments discards the previous answer. Keep a capped per-tool stack, each entry labelled by its arguments and restorable into the form so "edit and re-run" is one click. Request history is the one feature every API client treats as core. In-memory only in v1 — persisting server responses has a token/PII surface that needs its own thought. Session **S3** of the interaction roadmap.
+
+### TODO-28: Honest progress during a run
+
+**Complexity**: S
+
+`read_wiki_contents` takes 10–15 seconds showing a static "Running…" that cannot distinguish working from hung — the one place this app fails its own "precision, trust, accuracy" identity. Spike whether the SDK surfaces `notifications/progress` to a browser client and whether real servers send them; fall back to elapsed time plus a live character count as text arrives. Shares `RunContext` with TODO-27, so do them together. Session **S3** of the interaction roadmap.
+
+### TODO-29: Result outline in the right margin
+
+**Complexity**: S
+
+A sticky outline built from the heading levels `parseBlocks` already emits, making a 50,000-character wiki page navigable. Fills the margin the reading pass deliberately created (workspace 1140, content 780) without pushing prose past a readable measure — the honest answer to "use the empty space" that does not cost the measure. Needs stable, collision-free heading slugs generated from hostile input. Resolves only from rendered pixels. Session **S4** of the interaction roadmap.
+
 ### TODO-24: Markdown subset gaps
 
 **Complexity**: S
