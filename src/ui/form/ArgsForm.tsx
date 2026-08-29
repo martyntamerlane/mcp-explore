@@ -84,7 +84,7 @@ export default function ArgsForm({ specs, values, onChange, errors, idPrefix }: 
                 className={styles.textarea}
                 rows={4}
                 spellCheck={false}
-                placeholder={spec.rawType}
+                placeholder={spec.rawType === "any" ? "JSON value" : `JSON — ${spec.rawType}`}
                 value={value}
                 onChange={(e) => onChange(spec.name, e.target.value)}
               />

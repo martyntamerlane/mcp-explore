@@ -81,7 +81,10 @@ Fields are generated from `inputSchema` via `schemaRows`, which already narrows 
 | `number`, `integer` | numeric input |
 | `boolean` | toggle |
 | `array` of `string` | token input |
-| anything else (nested object, array of objects, `oneOf`/`anyOf`, absent `type`) | JSON textarea labelled with the raw type |
+| `anyOf`/`oneOf` with one honest answer — identical branches, `string \| string[]` ("one or many"), `number \| integer` | the control for that resolved type |
+| anything else (nested object, array of objects, mixed unions, absent `type`) | JSON textarea labelled with the raw type |
+
+Union resolution matters in practice: deepwiki's `ask_question.repoName` is `string | string[]`, a required argument on a popular server. Left unresolved it would demand hand-written JSON for a field the user thinks of as "owner/repo". It resolves to the list control, whose array output satisfies the union's array branch. Unions without one honest answer stay JSON — better an explicit JSON field than a control that quietly drops a branch.
 
 Rules:
 
