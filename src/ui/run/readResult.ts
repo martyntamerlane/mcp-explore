@@ -10,6 +10,10 @@ import { MAX_RESULT_BLOCKS, MAX_RESULT_CHARS, prettyIfJson } from "./runResult"
 export interface ReadBlock {
   label?: string
   text?: string
+  /** The server's declared mime type, where it gave one. Resources carry it;
+   *  prompt messages never do. The render layer uses it to decide whether a
+   *  text block is markdown without having to guess (see markdown/detect.ts). */
+  mime?: string
   image?: { src: string; alt: string }
 }
 
@@ -68,7 +72,7 @@ export function formatResourceContents(result: unknown): ReadDisplay {
     const c = item as { uri?: unknown; mimeType?: unknown; text?: unknown; blob?: unknown }
     const mime = typeof c.mimeType === "string" ? c.mimeType : undefined
     if (typeof c.text === "string") {
-      blocks.push({ text: prettyIfJson(c.text) })
+      blocks.push({ text: prettyIfJson(c.text), ...(mime ? { mime } : {}) })
     } else if (typeof c.blob === "string") {
       if (mime?.startsWith("image/")) {
         const alt = typeof c.uri === "string" ? c.uri : "resource image"

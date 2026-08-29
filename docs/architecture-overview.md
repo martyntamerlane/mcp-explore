@@ -85,6 +85,14 @@ src/
       readResult.ts        formatResourceContents/formatPromptMessages — untrusted reads → sanitized ReadDisplay
       RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool(name, args)
       ReadContext.tsx      ReadProvider/useReads — cached reads over readResource/getPrompt(name, args)
+    markdown/
+      detect.ts             looksLikeMarkdown — declared mime first, then a deliberately
+                            conservative heuristic; JSON is never markdown
+      parse.ts              Markdown subset → Block/Inline data. The output type contains no
+                            HTML, so no downstream layer can inject any. safeHref allowlists
+                            http/https/mailto and refuses relative and protocol-relative URLs
+      Markdown.tsx          Block/Inline → React elements. No dangerouslySetInnerHTML, ever;
+                            images render as links rather than firing a remote request
     schema.ts               JSON Schema → schemaRows + friendlyType, under argValues and the views
     mode.ts                 Light/dark resolution: stored choice > system; data-mode stamping; live follow
     ModeToggle.tsx          Sun/moon toggle (header + landing) persisting explicit choices

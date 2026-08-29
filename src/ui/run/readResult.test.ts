@@ -9,9 +9,20 @@ test("resource text contents pass through; JSON pretty-prints", () => {
     ],
   })
   expect(d.ok).toBe(true)
-  expect(d.blocks[0]).toEqual({ text: "hello" })
+  expect(d.blocks[0]).toEqual({ text: "hello", mime: "text/plain" })
   expect(d.blocks[1].text).toBe('{\n  "a": 1\n}')
   expect(d.truncated).toBe(false)
+})
+
+test("the server's declared mime rides along, so the render layer need not guess", () => {
+  const d = formatResourceContents({
+    contents: [
+      { uri: "d://doc", mimeType: "text/markdown", text: "plain words, no markup" },
+      { uri: "d://bare", text: "no mime given" },
+    ],
+  })
+  expect(d.blocks[0].mime).toBe("text/markdown")
+  expect(d.blocks[1].mime).toBeUndefined()
 })
 
 test("image blobs become image blocks with a data URI; other blobs an honest note", () => {

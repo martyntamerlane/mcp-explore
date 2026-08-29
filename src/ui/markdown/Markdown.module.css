@@ -1,0 +1,142 @@
+/* Rendered markdown from an untrusted server. Everything is on the app's own
+   scale (docs/specs/2026-08-29-visual-system-tightening.md) rather than the
+   browser's default heading sizes, so a server's document cannot shout over the
+   workspace's own hierarchy. */
+
+/* The measure is applied to the prose children, not the container: a table or a
+   code block is not prose and should get the room it needs. `break-word` rather
+   than `anywhere` — `anywhere` also shrinks intrinsic min-content width, which
+   squeezed table columns and broke "Transport" across two lines. */
+.md {
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--ink-2);
+  overflow-wrap: break-word;
+}
+
+.md .heading,
+.md .paragraph,
+.md .list,
+.md .quote {
+  max-width: var(--measure-prose);
+}
+
+.md .pre,
+.md .tableWrap {
+  max-width: 90ch;
+}
+
+.md > *:first-child {
+  margin-top: 0;
+}
+
+.md > *:last-child {
+  margin-bottom: 0;
+}
+
+/* All six levels share one size: the tree already caps at h3 and the outline is
+   carried by weight and spacing, not by six competing scales. */
+.heading {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-family: var(--display);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.paragraph {
+  margin: 0 0 var(--sp-3);
+}
+
+.list {
+  margin: 0 0 var(--sp-3);
+  padding-left: var(--sp-5);
+}
+
+.list li {
+  margin-bottom: var(--sp-1);
+}
+
+/* A paragraph inside a list item is the item's own text — no extra gap. */
+.list li > .paragraph:only-child {
+  margin-bottom: 0;
+}
+
+.code {
+  padding: 0 var(--sp-1);
+  font-family: var(--mono);
+  font-size: var(--fs-fine);
+  background: var(--code-bg);
+  border-radius: var(--radius-s);
+}
+
+.pre {
+  margin: 0 0 var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  font-family: var(--mono);
+  font-size: var(--fs-fine);
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--code-bg);
+  border-radius: var(--radius-m);
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.quote {
+  margin: 0 0 var(--sp-3);
+  padding-left: var(--sp-4);
+  border-left: 2px solid var(--panel-border);
+  color: var(--ink-3);
+}
+
+.rule {
+  margin: var(--sp-5) 0;
+  border: none;
+  border-top: 1px solid var(--panel-border);
+}
+
+.link {
+  color: var(--tool-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: var(--tool);
+}
+
+.link:focus-visible {
+  outline: none;
+  border-radius: 2px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool) 20%, transparent);
+}
+
+/* An image reference, never a loaded image — see Markdown.tsx. */
+.imageRef::before {
+  content: "▣ ";
+  color: var(--ink-3);
+}
+
+.tableWrap {
+  margin: 0 0 var(--sp-3);
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  font-size: var(--fs-ui);
+}
+
+.table th,
+.table td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  border: 1px solid var(--panel-border);
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--panel-solid) 55%, transparent);
+}

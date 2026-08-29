@@ -121,6 +121,12 @@ The differentiating idea (2026-08-25 flow-view grill session): connect to severa
 
 The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant contract; the Dune scene predates it and runs via its own overlay/entry mechanism. Rendering it as a stage would unify variant switching. Coordinate with (or leave to) the session that owns `src/dune/` — see the isolation rationale in `docs/architecture-overview.md`.
 
+### TODO-24: Markdown subset gaps
+
+**Complexity**: S
+
+`src/ui/markdown/parse.ts` implements a subset, not CommonMark (rationale and the full list in `docs/specs/2026-08-29-markdown-rendering.md` §2.1). Not implemented, and degrading to plain text today: reference links (`[a][b]` with a definition block), setext headings (`===`/`---` underlines), HTML blocks, footnotes, task-list checkboxes, and loose-vs-tight list spacing. Nested blockquotes and lists work but only to depth 6. Pick this up if a real server's output actually looks wrong — or, if the list grows, take it as the signal to swap in `react-markdown` after all; `parse.ts` and `Markdown.tsx` are the only two files that would change.
+
 ### TODO-22: Pin the mono face
 
 **Complexity**: S

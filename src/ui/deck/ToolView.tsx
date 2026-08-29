@@ -4,7 +4,7 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js"
 import ArgsForm from "../form/ArgsForm"
 import { assembleArgs, canSubmit, fieldSpecs, type Values } from "../form/argValues"
 import { useRuns, type RunState } from "../run/RunContext"
-import { Truncated } from "./blocks"
+import { TextBlock, Truncated } from "./blocks"
 import styles from "./Workspace.module.css"
 
 /**
@@ -54,7 +54,7 @@ function RunResult({ state }: { state: RunState }) {
             {state.display.blocks.map((b, i) => (
               <div key={i} className={styles.block}>
                 {b.label && <p className={styles.microlabel}>{b.label.toUpperCase()}</p>}
-                <pre className={styles.code}>{b.text}</pre>
+                <TextBlock text={b.text} />
               </div>
             ))}
             {state.display.truncated && <Truncated />}
