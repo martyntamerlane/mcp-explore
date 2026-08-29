@@ -29,7 +29,7 @@
 
 .description {
   margin: 0 0 var(--sp-5);
-  max-width: var(--measure-prose);
+  max-width: var(--measure-read);
   font-size: var(--fs-body);
   line-height: 1.55;
   color: var(--ink-2);
@@ -87,10 +87,21 @@
 
 .instructions {
   margin: 0;
-  max-width: var(--measure-prose);
+  max-width: var(--measure-read);
   font-size: var(--fs-body);
   line-height: 1.65;
   color: var(--ink-2);
+}
+
+/* Six lines, then "Show more" (TODO-23). -webkit-line-clamp is the unprefixed
+   behaviour everywhere that matters; `line-clamp` is still not universal, so the
+   prefixed trio stays until it is. */
+.clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  overflow: hidden;
 }
 
 /* ── one column: the result lands where you acted ──
@@ -180,9 +191,10 @@
   border-radius: var(--radius-m);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  /* Sized to a reading width, not to the viewport: eight lines of JSON used to
-     be stretched across a 1485px slab. */
-  max-width: 90ch;
+  /* The same edge as everything else in the workspace. This was 90ch, which at
+     12px mono resolved to 650px while prose beside it sat at 594 and a table at
+     810 — see --measure-read. */
+  max-width: var(--measure-read);
   max-height: 60vh;
   overflow: auto;
 }

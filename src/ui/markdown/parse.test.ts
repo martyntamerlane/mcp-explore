@@ -157,3 +157,43 @@ test("a realistic server response", () => {
   )
   expect(blocks.map((b) => b.type)).toEqual(["heading", "paragraph", "list", "quote"])
 })
+
+// ── block-level HTML (2026-08-29 reading pass) ───────────────────────
+
+test("a line that is nothing but an HTML tag is dropped", () => {
+  const blocks = parseBlocks("<details>\n\nreal text\n\n</details>")
+  expect(blocks.map((b) => b.type)).toEqual(["paragraph"])
+  expect(textOf((blocks[0] as Extract<Block, { type: "paragraph" }>).children)).toBe("real text")
+})
+
+test("a tag pair around text keeps the text and loses the tags", () => {
+  const blocks = parseBlocks("<summary>Relevant source files</summary>")
+  expect(blocks.map((b) => b.type)).toEqual(["paragraph"])
+  expect(textOf((blocks[0] as Extract<Block, { type: "paragraph" }>).children)).toBe("Relevant source files")
+})
+
+test("the deepwiki opener renders as its text alone", () => {
+  const blocks = parseBlocks("<details>\n<summary>Relevant source files</summary>\n\n- README.md\n\n</details>")
+  expect(blocks.map((b) => b.type)).toEqual(["paragraph", "list"])
+})
+
+test("an HTML line interrupts a paragraph rather than joining it", () => {
+  const blocks = parseBlocks("some text\n<details>")
+  expect(blocks.map((b) => b.type)).toEqual(["paragraph"])
+  expect(textOf((blocks[0] as Extract<Block, { type: "paragraph" }>).children)).toBe("some text")
+})
+
+test("prose that merely looks like a tag is left alone", () => {
+  const blocks = parseBlocks("<not a tag>")
+  expect(blocks.map((b) => b.type)).toEqual(["paragraph"])
+  expect(textOf((blocks[0] as Extract<Block, { type: "paragraph" }>).children)).toBe("<not a tag>")
+})
+
+test("an empty tag pair produces no block at all", () => {
+  expect(parseBlocks("<div></div>")).toEqual([])
+})
+
+test("tags with attributes are still recognised", () => {
+  expect(parseBlocks('<div class="x">')).toEqual([])
+  expect(parseBlocks("<br />")).toEqual([])
+})

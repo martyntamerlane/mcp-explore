@@ -3,10 +3,13 @@
    browser's default heading sizes, so a server's document cannot shout over the
    workspace's own hierarchy. */
 
-/* The measure is applied to the prose children, not the container: a table or a
-   code block is not prose and should get the room it needs. `break-word` rather
-   than `anywhere` — `anywhere` also shrinks intrinsic min-content width, which
-   squeezed table columns and broke "Transport" across two lines. */
+/* One measure for every child, prose or not (--measure-read). Until the
+   2026-08-29 reading pass the measure was applied only to prose and expressed in
+   `ch`, which resolves against each element's own font-size: prose, code and
+   tables landed on 594 / 650 / 810px and rules ran the full column, so a single
+   result had four right edges. `break-word` rather than `anywhere` — `anywhere`
+   also shrinks intrinsic min-content width, which squeezed table columns and
+   broke "Transport" across two lines. */
 .md {
   font-size: var(--fs-body);
   line-height: 1.6;
@@ -14,16 +17,8 @@
   overflow-wrap: break-word;
 }
 
-.md .heading,
-.md .paragraph,
-.md .list,
-.md .quote {
-  max-width: var(--measure-prose);
-}
-
-.md .pre,
-.md .tableWrap {
-  max-width: 90ch;
+.md > * {
+  max-width: var(--measure-read);
 }
 
 .md > *:first-child {
@@ -34,18 +29,45 @@
   margin-bottom: 0;
 }
 
-/* All six levels share one size: the tree already caps at h3 and the outline is
-   carried by weight and spacing, not by six competing scales. */
+/* Two tiers, not one and not six. Every level shared --fs-body until the
+   2026-08-29 reading pass, which meant a 4,000-word document arrived with no
+   outline at all: `## Work Loop and Scheduling` and the `**Sources:**` bold run
+   above it were the same size, so nothing marked where a section began.
+
+   The face is --ui, not --display. Space Grotesk earns its place in the app's
+   own chrome, where a little text does identity work; inside a server's prose it
+   was a third typeface competing in a block that already had two.
+
+   parse.ts offsets source levels by two (the workspace subject is the h2), so
+   these are `#` and `##` from the server. */
 .heading {
   margin: var(--sp-5) 0 var(--sp-2);
-  font-family: var(--display);
+  font-family: var(--ui);
   font-size: var(--fs-body);
   font-weight: 600;
   color: var(--ink);
 }
 
+h3.heading,
+h4.heading {
+  margin-top: var(--sp-6);
+  font-size: var(--fs-subhead);
+  line-height: 1.35;
+}
+
 .paragraph {
   margin: 0 0 var(--sp-3);
+}
+
+/* Colour marks structure, weight marks emphasis. The UA's 700 sat one notch
+   ABOVE the 600 of a heading of the same size, so a bold run outranked the
+   section it lived under; matching the heading exactly (600 + --ink) only made
+   the two indistinguishable, which is the original complaint. Bold stays in the
+   paragraph's own ink and lets --ink belong to headings alone — deepwiki opens
+   half its sections with a bare `**Sources:**` line, and that line is body text
+   the server chose not to make a heading. */
+.md strong {
+  font-weight: 600;
 }
 
 .list {
@@ -62,12 +84,16 @@
   margin-bottom: 0;
 }
 
+/* No chip. 163 of the ~950 styled nodes in one deepwiki result are inline code;
+   at four or five per paragraph the tinted pills stopped reading as emphasis and
+   turned the line into a chain of boxes. The mono face already says
+   "identifier" — the background was redundant signal paid for in noise. 0.92em
+   rather than a fixed --fs-fine so it tracks whatever it sits inside (body,
+   heading, or table cell) instead of introducing a third size. */
 .code {
-  padding: 0 var(--sp-1);
   font-family: var(--mono);
-  font-size: var(--fs-fine);
-  background: var(--code-bg);
-  border-radius: var(--radius-s);
+  font-size: 0.92em;
+  color: var(--ink);
 }
 
 .pre {
@@ -91,7 +117,7 @@
 }
 
 .rule {
-  margin: var(--sp-5) 0;
+  margin: var(--sp-6) 0;
   border: none;
   border-top: 1px solid var(--panel-border);
 }
@@ -124,8 +150,9 @@
 }
 
 .table {
+  width: 100%;
   border-collapse: collapse;
-  font-size: var(--fs-ui);
+  font-size: var(--fs-body);
 }
 
 .table th,

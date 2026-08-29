@@ -6,9 +6,13 @@ export type PrismVariant = "a" | "b" | "c"
  * The brand mark: one white-ink line in, three tinted threads out — the data
  * model as geometry (one server, three capability kinds). Abstract hairlines
  * only; no literal glass-triangle kitsch (redesign spec §2).
- * Variants exist for the screenshot pick (Task 12); "a" is the default.
+ * Variant "b" was picked 2026-08-29 (TODO-20.2) and is also the favicon in
+ * index.html: at 16px the open triangle of "a" and the bare hairline of "c" both
+ * collapse into indistinct scratches, and a closed outline is the only one of
+ * the three that survives. Keep the two in step — the mark and the favicon are
+ * the same shape or the tab stops being recognisable.
  */
-export default function Prism({ variant = "a", className }: { variant?: PrismVariant; className?: string }) {
+export default function Prism({ variant = "b", className }: { variant?: PrismVariant; className?: string }) {
   const cls = className ? `${styles.prism} ${className}` : styles.prism
   if (variant === "b") {
     // b: closed triangle, threads refract from its right face
