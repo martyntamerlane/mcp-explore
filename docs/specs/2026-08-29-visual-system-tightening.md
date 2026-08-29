@@ -90,9 +90,9 @@ The landing inverted its own priority: the demo door carried the tinted wash, th
 
 ## 7. Not done here
 
-- **Pinning `--mono` to a webfont.** It is the only unpinned face — `ui-monospace, SF Mono, Cascadia Code, Menlo, Consolas` — so the identifier texture, which is most of this app's surface, differs per OS. Fixing it means a new dependency (~30 kB subset) and is a call for the user, not a tidy-up. See TODO-22.
+- ~~**Pinning `--mono` to a webfont.**~~ **Done 2026-08-29** in the reading pass: JetBrains Mono Variable, ~40 kB latin subset. Original text: it is the only unpinned face — `ui-monospace, SF Mono, Cascadia Code, Menlo, Consolas` — so the identifier texture, which is most of this app's surface, differs per OS. Fixing it means a new dependency (~30 kB subset) and is a call for the user, not a tidy-up. See TODO-22.
 - **Clamping long server `instructions`.** Hugging Face's is a 24-line wall even at 66ch. A "show more" is a new interaction and needs its own decision. See TODO-23.
-- **The third visual pick.** TODO-20's Inter-vs-Geist question is untouched; `@fontsource-variable/geist` is still an unimported dependency.
+- ~~**The third visual pick.**~~ **Resolved 2026-08-29** in the reading pass: Inter kept, `@fontsource-variable/geist` uninstalled, prism variant "b" adopted as the mark and favicon, grain still dropped. Original text: TODO-20's Inter-vs-Geist question is untouched; `@fontsource-variable/geist` is still an unimported dependency.
 
 ## 8. Verification
 

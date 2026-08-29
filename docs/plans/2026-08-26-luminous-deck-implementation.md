@@ -602,6 +602,8 @@ Changes (spec §7 — behaviour of connect/headers/remember/recents/diagnostics 
 
 ### Task 12: Visual iteration checkpoint (screenshots ⇒ user)
 
+> **Closed 2026-08-29** by the reading pass (`docs/specs/2026-08-29-reading-pass.md` §3.6): Inter kept and `@fontsource-variable/geist` uninstalled, prism variant **b** adopted as the mark and the favicon, grain on light still dropped. The paragraph below is the 2026-08-26 record.
+>
 > **Status 2026-08-26**: comparison sets captured and presented (session scratchpad: `shots-inter-a/`, `shots-geist/`, `shots-prism-b/`, `shots-prism-c/`, `shots-grain/`). The picks — UI face (Inter vs Geist), prism variant (A/B/C), grain keep/drop — are **deliberately pending the user's reveal review**, not dropped: `@fontsource-variable/geist` stays installed until the face is chosen (the loser is uninstalled then), and the favicon follows the prism choice. Working defaults meanwhile: Inter, prism A, no grain.
 
 The spec resolves these **only from rendered pixels**: UI face (Inter vs Geist), prism variant (draw 2–3), grain-on-light keep/drop, adaptive-emphasis behaviour, choreography timings, palette feel. Iterate autonomously to a presentable state, then present screenshot sets to the user in prose (never AskUserQuestion — user preference).
