@@ -75,7 +75,12 @@ src/
                            cascade; owns the app's key model (highlight, /, arrows, Enter, Escape)
       keynav.ts            Pure: flatten the visible rows, move the highlight, map a keystroke to an
                            action, name the folders above a leaf
-      Workspace.tsx        Permanent work surface; routes the selected subject to one of the four views
+      Workspace.tsx        Permanent work surface; routes the selected subject to one of the four views,
+                           and hosts the result outline in the content column's margin
+      Outline.tsx          Sticky "on this page" list: scroll-spy, click-to-jump, stands down when
+                           its headings are not rendered
+      resultOutline.ts     Pure: display blocks → heading refs, reusing the renderer's own markdown
+                           test, parse and id prefixes so entry and anchor cannot disagree
       HomeView.tsx         Server identity, counts and the server's own `instructions`
       ToolView.tsx         Description, args form, Run, result, raw-JSON disclosure
       ResourceView.tsx     Metadata + contents, loaded on selection
@@ -99,7 +104,9 @@ src/
                             conservative heuristic; JSON is never markdown
       parse.ts              Markdown subset → Block/Inline data. The output type contains no
                             HTML, so no downstream layer can inject any. safeHref allowlists
-                            http/https/mailto and refuses relative and protocol-relative URLs
+                            http/https/mailto and refuses relative and protocol-relative URLs.
+                            parseDocument additionally stamps stable, collision-free heading ids
+                            (slugify is total against hostile headings) — the outline's anchors
       Markdown.tsx          Block/Inline → React elements. No dangerouslySetInnerHTML, ever;
                             images render as links rather than firing a remote request
     schema.ts               JSON Schema → schemaRows + friendlyType, under argValues and the views

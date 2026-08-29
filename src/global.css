@@ -134,6 +134,13 @@
   --measure-read: 780px;
   --measure-form: 780px;
   --measure-subject: 1080px;
+  /* The result outline's column (interaction roadmap S4). 780 + 32 + 200 = 1012,
+     which fits inside --measure-subject, so the outline spends only the margin
+     the reading pass already created and costs the measure nothing. */
+  --outline-width: 200px;
+  /* The chrome band's height, so the sticky outline can size itself to what is
+     actually on screen below it rather than to the whole viewport. */
+  --chrome-height: 58px;
 }
 
 * {

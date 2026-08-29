@@ -4,7 +4,7 @@
   align-items: center;
   gap: var(--sp-3);
   flex: none;
-  height: 58px;
+  height: var(--chrome-height);
   padding: 0 var(--sp-5);
   border-bottom: 1px solid var(--panel-border);
   background: var(--header-bg);

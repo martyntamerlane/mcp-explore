@@ -1,5 +1,5 @@
 import { createElement, Fragment, type ReactNode } from "react"
-import { parseBlocks, type Block, type Inline } from "./parse"
+import { parseDocument, type Block, type Inline } from "./parse"
 import styles from "./Markdown.module.css"
 
 /**
@@ -60,7 +60,12 @@ function renderBlocks(blocks: Block[]): ReactNode {
   return blocks.map((b, i) => {
     switch (b.type) {
       case "heading":
-        return createElement(`h${b.level}`, { key: i, className: styles.heading }, renderInline(b.children))
+        // The id is the outline's anchor; parseDocument stamped it (TODO-29).
+        return createElement(
+          `h${b.level}`,
+          { key: i, id: b.id, className: styles.heading },
+          renderInline(b.children),
+        )
       case "paragraph":
         return (
           <p key={i} className={styles.paragraph}>
@@ -126,6 +131,6 @@ function renderBlocks(blocks: Block[]): ReactNode {
   })
 }
 
-export default function Markdown({ text }: { text: string }) {
-  return <div className={styles.md}>{renderBlocks(parseBlocks(text))}</div>
+export default function Markdown({ text, idPrefix = "" }: { text: string; idPrefix?: string }) {
+  return <div className={styles.md}>{renderBlocks(parseDocument(text, idPrefix))}</div>
 }

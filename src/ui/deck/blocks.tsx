@@ -19,7 +19,7 @@ import styles from "./Workspace.module.css"
  * it is always reversible: "Show raw" gives back the exact bytes the server
  * sent (spec 2026-08-29-markdown-rendering.md §4).
  */
-export function TextBlock({ text, mime }: { text: string; mime?: string }) {
+export function TextBlock({ text, mime, idPrefix }: { text: string; mime?: string; idPrefix?: string }) {
   const markdown = useMemo(() => looksLikeMarkdown(text, mime), [text, mime])
   const [raw, setRaw] = useState(false)
 
@@ -30,7 +30,7 @@ export function TextBlock({ text, mime }: { text: string; mime?: string }) {
       <button type="button" className={styles.ghostButton} onClick={() => setRaw((r) => !r)}>
         {raw ? "Show rendered" : "Show raw"}
       </button>
-      {raw ? <pre className={styles.code}>{text}</pre> : <Markdown text={text} />}
+      {raw ? <pre className={styles.code}>{text}</pre> : <Markdown text={text} idPrefix={idPrefix} />}
     </>
   )
 }
@@ -52,7 +52,7 @@ export function ReadBlocks({ display }: { display: ReadDisplay }) {
       {display.blocks.map((b, i) => (
         <div key={i} className={styles.block}>
           {b.label && <p className={styles.microlabel}>{b.label.toUpperCase()}</p>}
-          {b.text !== undefined && <TextBlock text={b.text} mime={b.mime} />}
+          {b.text !== undefined && <TextBlock text={b.text} mime={b.mime} idPrefix={`b${i}`} />}
           {b.image && <img className={styles.image} src={b.image.src} alt={b.image.alt} />}
         </div>
       ))}

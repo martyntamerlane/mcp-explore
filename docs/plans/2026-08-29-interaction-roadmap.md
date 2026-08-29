@@ -1,9 +1,12 @@
 # Interaction roadmap — four sessions
 
-**Date**: 2026-08-29 · **Status**: S1 built
-([`2026-08-29-addressable-selection.md`](../specs/2026-08-29-addressable-selection.md)),
-S3 built ([`2026-08-29-run-record.md`](../specs/2026-08-29-run-record.md));
-S2 and S4 planned · **Source**: the five
+**Date**: 2026-08-29 · **Status**: S1, S3 and S4 built — see
+[`2026-08-29-addressable-selection.md`](../specs/2026-08-29-addressable-selection.md),
+[`2026-08-29-run-record.md`](../specs/2026-08-29-run-record.md),
+[`2026-08-29-result-outline.md`](../specs/2026-08-29-result-outline.md).
+**S2 is the one still open**, and it is held deliberately: it carries a design
+approval gate (keycap glyphs are a new visual pattern) that needs the user, not
+a decision made in flight · **Source**: the five
 UI/interactivity suggestions from the 2026-08-29 research pass, all accepted.
 
 Each session below is sized to finish at **~35% of a context window** and must
@@ -211,7 +214,7 @@ most tests. Do not add anything to it.
 
 ---
 
-## S4 · The result outline
+## S4 · The result outline — **built 2026-08-29**
 
 Suggestion **#5**.
 
@@ -230,15 +233,17 @@ the space that pass deliberately created (workspace 1140, content 780).
   headings and absent when it does not.
 - Click to jump; the current section highlights while scrolling.
 
-### Open — decide in-session
+### Open — resolved in-session
 
-- The threshold: how many headings before an outline appears at all. Three is a
-  guess; check it against `read_wiki_contents`, a short `ask_question` answer,
-  and a Hugging Face resource.
-- What happens below ~1180px, where the margin does not exist. Most likely: no
-  outline, no substitute. Confirm rather than inventing a mobile affordance.
-- Whether it also covers the home view's expanded `instructions` (probably not —
-  that text has no headings).
+- **Three headings.** Checked against all three named cases: a short
+  `ask_question` answer (3, and it earns its place — the answer is longer than a
+  screen), `read_wiki_contents` (76), a Hugging Face `SKILL.md` (7).
+- **1380px, not 1180.** 780 + 32 + 200 = 1012 must fit inside the workspace, and
+  at 1180 it would have narrowed the reading measure — which the whole point was
+  to avoid. Below it: no outline, no substitute, as expected.
+- Home's `instructions` are **not** outlined — that text has no headings.
+- Not anticipated: the outline must also stand down while a block is switched to
+  "Show raw", because then its headings do not exist.
 
 ### Files
 
@@ -258,6 +263,7 @@ margin stops reading as empty.
 
 **Drop first if long:** scroll-spy highlighting. A clickable outline with no
 active-section tracking is still useful; the reverse is not.
+— Not needed; scroll-spy shipped.
 
 **Budget:** ~30%. Small code, heavy visual iteration.
 

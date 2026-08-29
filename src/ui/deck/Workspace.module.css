@@ -9,8 +9,20 @@
   border-left: 1px solid var(--panel-border);
 }
 
+/* Content column plus the outline's margin (interaction roadmap S4). Without an
+   outline this is exactly what it was: one column capped at --measure-read with
+   empty margin to its right. */
 .subject {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-6);
   max-width: var(--measure-subject);
+}
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: var(--measure-read);
 }
 
 .title {

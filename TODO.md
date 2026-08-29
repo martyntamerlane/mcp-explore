@@ -121,12 +121,6 @@ The app has exactly one key binding (Esc → home). Make the **existing** filter
 
 2026-08-29: **S1 shipped** — `/`, ↑↓ (a highlight, not a per-keystroke selection), ⏎, →←, and Escape's two-stage unwind, with the key model pure in `src/ui/deck/keynav.ts` (`docs/specs/2026-08-29-addressable-selection.md`). Still open, and the whole of **S2**: `>` command mode, and shortcut legibility — `/` is advertised only as `aria-keyshortcuts` today, and the keycap glyphs remain an unapproved visual pattern.
 
-### TODO-29: Result outline in the right margin
-
-**Complexity**: S
-
-A sticky outline built from the heading levels `parseBlocks` already emits, making a 50,000-character wiki page navigable. Fills the margin the reading pass deliberately created (workspace 1140, content 780) without pushing prose past a readable measure — the honest answer to "use the empty space" that does not cost the measure. Needs stable, collision-free heading slugs generated from hostile input. Resolves only from rendered pixels. Session **S4** of the interaction roadmap.
-
 ### TODO-24: Markdown subset gaps
 
 **Complexity**: S
@@ -139,6 +133,16 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 ---
 
 ## Completed
+
+### TODO-29: Result outline in the right margin
+
+**Complexity**: S — **Completed 2026-08-29**
+
+A sticky **ON THIS PAGE** list built from the heading levels the parser already emits, making deepwiki's 76-heading `read_wiki_contents` navigable. It fills the margin the reading pass created — 780 content + 32 + 200 outline fits inside the existing 1080 subject cap — so it costs the reading measure nothing. Session **S4** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md), specced in [`docs/specs/2026-08-29-result-outline.md`](docs/specs/2026-08-29-result-outline.md).
+
+Resolved in-session: **three headings** is the threshold (checked against a short `ask_question` answer, `read_wiki_contents` and a Hugging Face `SKILL.md`); **1380px** is the width below which it simply is not there, with no mobile substitute; the home view's `instructions` are not outlined. Anchors and entries come from one function (`parseDocument`) so they cannot drift, and ids carry a per-block prefix so two blocks opening with the same heading do not collide.
+
+Recorded for the next component that measures the DOM: the first version returned `null` until it had measured, so it never had a node to measure from and never appeared — silently, on the live site only, with every unit test passing. It now stays mounted and marks itself `data-empty`.
 
 ### TODO-27: Run history per tool
 

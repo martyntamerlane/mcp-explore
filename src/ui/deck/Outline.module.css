@@ -1,0 +1,87 @@
+/* The result outline (interaction roadmap S4). It lives in the margin the
+   reading pass created — workspace 1140, content 780 — so it costs the measure
+   nothing. Hairlines and type only: no card, no fill, in keeping with the
+   workspace's "the canvas is the ground" rule. */
+
+.outline {
+  /* Hidden until the workspace is wide enough to hold 780 + gap + 200 without
+     taking a pixel from the measure. */
+  display: none;
+  position: sticky;
+  top: 0;
+  align-self: start;
+  flex: 0 0 var(--outline-width);
+  /* The scroller starts below the chrome band, so the sticky column's room is
+     the viewport minus that band and the workspace's own top padding. */
+  max-height: calc(100vh - var(--chrome-height) - var(--sp-6));
+  overflow-y: auto;
+  padding-left: var(--sp-5);
+  border-left: 1px solid var(--panel-border);
+}
+
+/* Above this the margin exists. Below it there is deliberately no substitute —
+   the page still scrolls, and a drawer would be the arriving surface this app
+   keeps rejecting. */
+@media (min-width: 1380px) {
+  /* :not([data-empty]) rather than the `hidden` attribute — an author rule on
+     .outline would beat the UA stylesheet's [hidden] { display: none }. */
+  .outline:not([data-empty]) {
+    display: block;
+  }
+}
+
+.label {
+  margin: 0 0 var(--sp-3);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: block;
+  padding: var(--sp-1) 0 var(--sp-1) var(--sp-2);
+  font-size: var(--fs-fine);
+  line-height: 1.4;
+  color: var(--ink-3);
+  text-decoration: none;
+  /* The lit edge is the active marker; every row carries the track it moves on. */
+  border-left: 2px solid transparent;
+  margin-left: -2px;
+  transition: color var(--ease-hover), border-color var(--ease-hover);
+}
+
+/* Nesting is expressed by indent alone — a second type size in a 5-line list
+   would be noise, and depth is capped at two so a deep document stays legible. */
+.link[data-depth="1"] {
+  padding-left: var(--sp-4);
+}
+
+.link[data-depth="2"] {
+  padding-left: var(--sp-6);
+}
+
+.link:hover {
+  color: var(--ink);
+}
+
+.link:focus-visible {
+  outline: none;
+  color: var(--ink);
+  border-color: var(--ink-2);
+}
+
+.link[aria-current] {
+  color: var(--ink);
+  border-color: var(--tool);
+}

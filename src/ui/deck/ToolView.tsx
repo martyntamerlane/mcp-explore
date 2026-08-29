@@ -73,7 +73,7 @@ function Answer({ record }: { record: RunRecord }) {
       {display.blocks.map((b, i) => (
         <div key={i} className={styles.block}>
           {b.label && <p className={styles.microlabel}>{b.label.toUpperCase()}</p>}
-          <TextBlock text={b.text} />
+          <TextBlock text={b.text} idPrefix={`b${i}`} />
         </div>
       ))}
       {display.truncated && <Truncated />}
