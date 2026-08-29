@@ -155,6 +155,16 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--ink)) 16%, transparent);
 }
 
+/* The keyboard highlight (interaction roadmap S1). Selection does not move
+   focus, so the ring the browser would have drawn is drawn here instead — the
+   same treatment as :focus-visible, deliberately not a new visual pattern, and
+   deliberately weaker than aria-current so "where I am" still outranks
+   "where I am pointing". */
+.row[data-active] {
+  border-color: color-mix(in srgb, var(--accent, var(--ink)) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--ink)) 14%, transparent);
+}
+
 .row[aria-current] {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);

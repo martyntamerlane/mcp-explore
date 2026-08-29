@@ -1,6 +1,8 @@
 # Interaction roadmap — four sessions
 
-**Date**: 2026-08-29 · **Status**: planned, not started · **Source**: the five
+**Date**: 2026-08-29 · **Status**: S1 built (see
+[`docs/specs/2026-08-29-addressable-selection.md`](../specs/2026-08-29-addressable-selection.md));
+S2–S4 planned · **Source**: the five
 UI/interactivity suggestions from the 2026-08-29 research pass, all accepted.
 
 Each session below is sized to finish at **~35% of a context window** and must
@@ -24,7 +26,7 @@ S2 and S4 carry less scope than S1 and S3.
 
 ---
 
-## S1 · Addressable selection + keyboard navigation
+## S1 · Addressable selection + keyboard navigation — **built 2026-08-29**
 
 Suggestions **#2** (selection in the URL) and the navigation half of **#1**.
 
@@ -50,16 +52,17 @@ does not update the URL would have to be revisited the moment #2 lands.
   (`DeckView.tsx:31`) and that must keep working.
 - Selection still does not move focus, per the tool-first workspace spec.
 
-### Open — decide in-session
+### Open — resolved in-session
 
-- Whether ↑↓ from the filter box moves a *highlight* separate from the current
-  selection (VS Code-style: highlight moves, Enter commits) or selects directly
-  as it moves. Direct selection is fewer concepts and this workspace re-renders
-  cheaply; highlight-then-commit is what a list of 155 Hugging Face resources
-  probably wants. Resolve against the Hugging Face case, not the demo server.
-- What a resource URI does to URL length — percent-encoded URIs are long, and
-  `hf://` resources will make an ugly link. Consider an index instead of a URI
-  if it gets silly.
+- ↑↓ move a **highlight**, ⏎ commits. Resolved against the Hugging Face case as
+  required: selecting per keystroke would push a history entry and fire a read
+  for every row passed, breaking the Back button this session exists to deliver.
+- Resource URIs **stay URIs**. Measured: a link to a Hugging Face resource three
+  folders deep is 143 characters. An index would break the moment the server
+  reorders its list.
+- Not anticipated, found live: a resource deep link opened its subject while the
+  column sat on the Tools list showing nothing. The column now opens on the
+  kind of the selection and unfolds the folders above it.
 
 ### Files
 
@@ -81,6 +84,7 @@ the app, and the browse column can be driven start to finish with no mouse.
 
 **Drop first if long:** keyboard navigation of *resources* (the tree adds
 expand/collapse to the key model). Ship tools and prompts, note the gap.
+— Not needed; resources shipped with →← folder control.
 
 **Budget:** ~30%. Logic-heavy, one screenshot round.
 

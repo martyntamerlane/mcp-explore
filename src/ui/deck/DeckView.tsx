@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useReads } from "../run/ReadContext"
 import { useRuns } from "../run/RunContext"
 import { fieldSpecs, initialValues, type Values } from "../form/argValues"
@@ -18,21 +18,22 @@ const subjectKey = (selection: EntitySelection) => `${selection.kind}:${selectio
  * switching subject and coming back. They are session state only — nothing is
  * persisted, because arguments can carry anything the user typed.
  */
-export default function DeckView({ snapshot, transportKind, selection, onSelect, query }: StageProps) {
+export default function DeckView({
+  snapshot,
+  transportKind,
+  selection,
+  onSelect,
+  query,
+  onQuery,
+  onFocusFilter,
+}: StageProps) {
   const model = useMemo(() => buildDeckModel(snapshot), [snapshot])
   const { run } = useRuns()
   const { read } = useReads()
   const [valuesBySubject, setValuesBySubject] = useState<Record<string, Values>>({})
 
-  // Escape returns to home. Nothing else listens for it now that arming is gone.
-  useEffect(() => {
-    if (selection === null) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onSelect(null)
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [selection, onSelect])
+  // Keys are the browse column's job now (interaction roadmap S1) — Escape
+  // included, since it first clears the filter and only then returns home.
 
   const values = selection === null ? {} : (valuesBySubject[subjectKey(selection)] ?? {})
 
@@ -64,7 +65,14 @@ export default function DeckView({ snapshot, transportKind, selection, onSelect,
 
   return (
     <div className={styles.stage}>
-      <BrowseColumn model={model} query={query} selection={selection} onSelect={select} />
+      <BrowseColumn
+        model={model}
+        query={query}
+        onQuery={onQuery}
+        onFocusFilter={onFocusFilter}
+        selection={selection}
+        onSelect={select}
+      />
       <Workspace
         snapshot={snapshot}
         transportKind={transportKind}

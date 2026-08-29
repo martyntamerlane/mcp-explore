@@ -113,17 +113,13 @@ The differentiating idea (2026-08-25 flow-view grill session): connect to severa
 
 The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant contract; the Dune scene predates it and runs via its own overlay/entry mechanism. Rendering it as a stage would unify variant switching. Coordinate with (or leave to) the session that owns `src/dune/` — see the isolation rationale in `docs/architecture-overview.md`.
 
-### TODO-25: Selection in the URL
-
-**Complexity**: S
-
-`?server=…&tool=NAME` (and `&resource=`/`&prompt=`) so a link can address a specific subject, Back/Forward walk selection history, and reload holds your place. Today `App.tsx` puts only the server in the URL and uses `replaceState` for everything, so every share and every reload lands on Home — a hole in the app's core promise, since the whole pitch is "paste a URL and see inside a server". Session **S1** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md).
-
 ### TODO-26: Keyboard navigation and command mode
 
-**Complexity**: M
+**Complexity**: M — **navigation half done 2026-08-29**
 
 The app has exactly one key binding (Esc → home). Make the **existing** filter input in the chrome band the keyboard surface: `/` focuses it, ↑↓ walk the filtered list, ⏎ selects, `>` switches it to command mode. Deliberately **not** a ⌘K overlay — every source points at one, and it is the archetypal arriving surface this project has twice rejected; the permanent filter box gets a second job instead. Includes shortcut legibility (keycap glyphs are a new visual pattern needing approval). Sessions **S1** (navigation) and **S2** (command mode) of the interaction roadmap.
+
+2026-08-29: **S1 shipped** — `/`, ↑↓ (a highlight, not a per-keystroke selection), ⏎, →←, and Escape's two-stage unwind, with the key model pure in `src/ui/deck/keynav.ts` (`docs/specs/2026-08-29-addressable-selection.md`). Still open, and the whole of **S2**: `>` command mode, and shortcut legibility — `/` is advertised only as `aria-keyshortcuts` today, and the keycap glyphs remain an unapproved visual pattern.
 
 ### TODO-27: Run history per tool
 
@@ -155,6 +151,14 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 ---
 
 ## Completed
+
+### TODO-25: Selection in the URL
+
+**Complexity**: S — **Completed 2026-08-29**
+
+`?server=…&tool=NAME` (and `&resource=`/`&prompt=`) so a link can address a specific subject, Back/Forward walk selection history, and reload holds your place. Before this, `App.tsx` put only the server in the URL and used `replaceState` for everything, so every share and every reload landed on Home — a hole in the app's core promise, since the whole pitch is "paste a URL and see inside a server". Session **S1** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md), specced in [`docs/specs/2026-08-29-addressable-selection.md`](docs/specs/2026-08-29-addressable-selection.md).
+
+Decisions worth keeping: a user-made selection pushes, everything the app decides replaces, and `popstate` reads the URL without writing back. A subject the server does not expose — or an empty parameter, or two kinds at once — reads as home and is cleaned out of the URL rather than shown as an error. A selection applies only to the server its link named. **A deep link opens a zero-argument tool but does not run it**, unlike a click. Resource URIs stay URIs rather than becoming indices: measured against Hugging Face, a link to a resource three folders deep is 143 characters, and an index would break the moment the server reorders its list.
 
 ### TODO-20: Resolve the three visual picks
 

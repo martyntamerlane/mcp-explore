@@ -26,9 +26,11 @@ interface HarnessProps {
   transportKind: TransportKind
   query: string
   onSelect: (next: EntitySelection | null) => void
+  onQuery: (q: string) => void
+  onFocusFilter: () => void
 }
 
-function Harness({ snapshot, transportKind, query, onSelect }: HarnessProps) {
+function Harness({ snapshot, transportKind, query, onSelect, onQuery, onFocusFilter }: HarnessProps) {
   const [selection, setSelection] = useState<EntitySelection | null>(null)
   return (
     <DeckView
@@ -40,6 +42,8 @@ function Harness({ snapshot, transportKind, query, onSelect }: HarnessProps) {
         setSelection(next)
       }}
       query={query}
+      onQuery={onQuery}
+      onFocusFilter={onFocusFilter}
     />
   )
 }
@@ -50,6 +54,8 @@ function renderDeck({
   query = "",
 } = {}) {
   const onSelect = vi.fn()
+  const onQuery = vi.fn()
+  const onFocusFilter = vi.fn()
   const tree = (props: Partial<HarnessProps>) => (
     <RunProvider connection={conn}>
       <ReadProvider connection={conn}>
@@ -58,6 +64,8 @@ function renderDeck({
           transportKind={transportKind}
           query={query}
           onSelect={onSelect}
+          onQuery={onQuery}
+          onFocusFilter={onFocusFilter}
           {...props}
         />
       </ReadProvider>
@@ -66,7 +74,7 @@ function renderDeck({
   const utils = render(tree({}))
   // Re-rendering the same Harness in place keeps its selection state, which is
   // how App behaves when only the filter or the snapshot changes.
-  return { onSelect, update: (props: Partial<HarnessProps>) => utils.rerender(tree(props)) }
+  return { onSelect, onQuery, onFocusFilter, update: (props: Partial<HarnessProps>) => utils.rerender(tree(props)) }
 }
 
 afterEach(() => {
@@ -306,4 +314,108 @@ test("a subject that vanishes from the snapshot is reported, not blank", async (
   expect(within(workspace()).getByRole("heading", { name: "project_pulse" })).toBeInTheDocument()
   update({ snapshot: { ...conn.snapshot, tools: [] } })
   expect(within(workspace()).getByText(/no longer present/i)).toBeInTheDocument()
+})
+
+/* ── keyboard navigation (interaction roadmap S1) ── */
+
+test("↓ highlights without selecting, and ⏎ is what commits", async () => {
+  renderDeck()
+  await userEvent.keyboard("{ArrowDown}")
+  const first = screen.getByRole("button", { name: "tool create_issue" })
+  expect(first).toHaveAttribute("data-active")
+  // Highlighting is not selecting: the workspace is still home.
+  expect(within(workspace()).getByText(/simulated issue tracker/i)).toBeInTheDocument()
+
+  await userEvent.keyboard("{Enter}")
+  expect(first).toHaveAttribute("aria-current", "true")
+  expect(within(workspace()).getByText(/create a new issue/i)).toBeInTheDocument()
+})
+
+test("⏎ on a zero-argument tool runs it, exactly as a click does", async () => {
+  const spy = vi.spyOn(conn.client, "callTool")
+  renderDeck({ query: "pulse" })
+  await userEvent.keyboard("{ArrowDown}{Enter}")
+  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "project_pulse", arguments: {} })
+})
+
+test("↑↓ clamp at the ends rather than wrapping", async () => {
+  renderDeck()
+  await userEvent.keyboard("{ArrowUp}")
+  const last = screen.getByRole("button", { name: "tool generate_release_notes" })
+  expect(last).toHaveAttribute("data-active")
+  await userEvent.keyboard("{ArrowDown}")
+  expect(last).toHaveAttribute("data-active")
+})
+
+test("the highlight skips rows the filter has receded", async () => {
+  renderDeck({ query: "pulse" })
+  // Only project_pulse matches, so one ↓ jumps the four rows above it.
+  await userEvent.keyboard("{ArrowDown}")
+  expect(screen.getByRole("button", { name: "tool project_pulse" })).toHaveAttribute("data-active")
+  expect(screen.getByRole("button", { name: "tool create_issue" })).not.toHaveAttribute("data-active")
+})
+
+test("a click moves the highlight too, so ↓ continues from where you pointed", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  await userEvent.keyboard("{ArrowDown}")
+  expect(screen.getByRole("button", { name: "tool list_issues" })).toHaveAttribute("data-active")
+})
+
+test("→ and ← unfold and fold the highlighted folder", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
+  await userEvent.keyboard("{ArrowDown}")
+  expect(screen.getByRole("button", { name: "folder docs" })).toHaveAttribute("data-active")
+
+  await userEvent.keyboard("{ArrowRight}")
+  expect(screen.getByRole("button", { name: "resource getting-started" })).toBeInTheDocument()
+  await userEvent.keyboard("{ArrowLeft}")
+  expect(screen.queryByRole("button", { name: "resource getting-started" })).not.toBeInTheDocument()
+})
+
+test("⏎ on a folder folds it, and the children join the key order once open", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
+  await userEvent.keyboard("{ArrowDown}{Enter}{ArrowDown}")
+  expect(screen.getByRole("button", { name: "resource getting-started" })).toHaveAttribute("data-active")
+})
+
+test("switching segment drops the highlight rather than carrying it across", async () => {
+  renderDeck()
+  await userEvent.keyboard("{ArrowDown}")
+  await userEvent.click(screen.getByRole("button", { name: /^Prompts/ }))
+  expect(document.querySelector("[data-active]")).toBeNull()
+})
+
+test("/ asks for the filter; typing in a tool's own field does not", async () => {
+  const { onFocusFilter } = renderDeck()
+  await userEvent.keyboard("/")
+  expect(onFocusFilter).toHaveBeenCalledOnce()
+
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  await userEvent.type(screen.getByLabelText(/^title/), "a/b")
+  expect(onFocusFilter).toHaveBeenCalledOnce()
+  expect(screen.getByLabelText(/^title/)).toHaveValue("a/b")
+})
+
+test("↑↓⏎ inside a tool's argument field belong to the field", async () => {
+  const { onSelect } = renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  onSelect.mockClear()
+  await userEvent.type(screen.getByLabelText(/^title/), "{ArrowDown}{ArrowUp}{Enter}")
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+test("Escape clears the filter first and only then returns home", async () => {
+  const { onQuery, update } = renderDeck({ query: "issue" })
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  await userEvent.keyboard("{Escape}")
+  expect(onQuery).toHaveBeenCalledWith("")
+  // The subject survived that Escape; the filter took it.
+  expect(within(workspace()).getByText(/create a new issue/i)).toBeInTheDocument()
+
+  update({ query: "" })
+  await userEvent.keyboard("{Escape}")
+  expect(within(workspace()).getByText(/simulated issue tracker/i)).toBeInTheDocument()
 })

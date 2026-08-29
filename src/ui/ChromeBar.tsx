@@ -1,3 +1,4 @@
+import type { RefObject } from "react"
 import type { ServerSnapshot, TransportKind } from "../mcp/types"
 import Prism from "./deck/Prism"
 import ModeToggle from "./ModeToggle"
@@ -16,10 +17,19 @@ export interface ChromeBarProps {
   transportKind: TransportKind
   query: string
   onQuery: (q: string) => void
+  /** `/` focuses the filter from anywhere in the app (interaction roadmap S1). */
+  filterRef?: RefObject<HTMLInputElement | null>
   onDisconnect: () => void
 }
 
-export default function ChromeBar({ snapshot, transportKind, query, onQuery, onDisconnect }: ChromeBarProps) {
+export default function ChromeBar({
+  snapshot,
+  transportKind,
+  query,
+  onQuery,
+  filterRef,
+  onDisconnect,
+}: ChromeBarProps) {
   return (
     <header className={styles.bar}>
       <Prism className={styles.mark} />
@@ -30,7 +40,10 @@ export default function ChromeBar({ snapshot, transportKind, query, onQuery, onD
       <span className={styles.chip}>{transportKind}</span>
       <div className={styles.actions}>
         <input
+          ref={filterRef}
           aria-label="Filter items"
+          aria-keyshortcuts="/"
+          data-filter=""
           className={styles.filter}
           placeholder="filter…"
           value={query}

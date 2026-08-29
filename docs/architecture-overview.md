@@ -20,9 +20,9 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 
 ## Stages (display variants)
 
-`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`, `query`). `App` owns connection, selection, the filter query, run state (via `RunProvider`), read state (via `ReadProvider`), and the chrome band; stages are interchangeable. `DeckView` is the default stage — a browse column plus a workspace, nothing else; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17).
+`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`, `query`, `onQuery`, `onFocusFilter` — the last two so a stage can clear and focus the band's filter from its own key model). `App` owns connection, selection, the filter query, run state (via `RunProvider`), read state (via `ReadProvider`), and the chrome band; stages are interchangeable. `DeckView` is the default stage — a browse column plus a workspace, nothing else; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17).
 
-**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
+**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home — and since 2026-08-29 it is also **addressable**, living in the query string as one of `tool`/`resource`/`prompt` beside `server` (spec [`2026-08-29-addressable-selection.md`](specs/2026-08-29-addressable-selection.md)). `App` owns every History call: `pushState` for a user-initiated selection, `replaceState` for anything the app decided, plus a `popstate` listener that reads the URL back without writing to it, so the two can never chase each other. `src/ui/selectionUrl.ts` is the pure counterpart — what the strings mean, and whether a snapshot still contains them. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
 
 The app has **no overlay surfaces and no tooltips** in the connected view. Light/dark mode is a root `data-mode` attribute re-valuing tokens (`src/ui/mode.ts`); Dune wins via a `:not()` guard, untouched. The chrome band is the multi-server seam (TODO-16): a second connection renders a second band plus column/workspace pair tiled alongside.
 
@@ -30,7 +30,7 @@ The app has **no overlay surfaces and no tooltips** in the connected view. Light
 
 - App state: React Context + hooks. No external state libraries.
 - localStorage: recent servers; optionally their headers (user can decline storing tokens).
-- URL query string: `?server=…` only — never headers/tokens.
+- URL query string: `?server=…` plus at most one of `&tool=`/`&resource=`/`&prompt=` — never headers/tokens.
 
 ## Project structure
 
@@ -38,7 +38,8 @@ The app has **no overlay surfaces and no tooltips** in the connected view. Light
 index.html            Vite entry
 src/
   main.tsx            React bootstrap (fonts, MotionConfig reduced-motion floor)
-  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync, filter query, Run/Read providers
+  App.tsx             Top-level composition: idle/connected phases, server + selection URL sync
+                      (push/replace/popstate), filter query and focus, Run/Read providers
   App.module.css      CSS module for App component
   App.test.tsx        Tests for App component
   global.css          Light-first CSS custom properties (validated luminous palette; first :root
@@ -63,12 +64,16 @@ src/
     ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
     recents.ts             localStorage recent-servers list (opt-in header persistence)
     stage.ts               StageProps / EntitySelection — the display-variant contract (null selection = home)
+    selectionUrl.ts        Pure: query string <-> EntitySelection, resolve against a snapshot, compare
     ChromeBar.tsx          The single chrome band: brand, server identity, filter, mode toggle, disconnect
     deck/
       deckModel.ts         buildDeckModel — snapshot → tools (readOnly/zeroArg) + browse groups (mime, prompt args), dedupe
       browseTree.ts        buildBrowseTree — resource URIs → thresholded folder tree (chain-collapse, scheme handling)
       DeckView.tsx         Default stage: browse column + workspace; owns the click contract and per-subject form values
-      BrowseColumn.tsx     Left index: home, segmented Tools/Resources/Prompts, folder tree, power-on cascade
+      BrowseColumn.tsx     Left index: home, segmented Tools/Resources/Prompts, folder tree, power-on
+                           cascade; owns the app's key model (highlight, /, arrows, Enter, Escape)
+      keynav.ts            Pure: flatten the visible rows, move the highlight, map a keystroke to an
+                           action, name the folders above a leaf
       Workspace.tsx        Permanent work surface; routes the selected subject to one of the four views
       HomeView.tsx         Server identity, counts and the server's own `instructions`
       ToolView.tsx         Description, args form, Run, result, raw-JSON disclosure
