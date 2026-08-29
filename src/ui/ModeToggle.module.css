@@ -1,0 +1,25 @@
+.toggle {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color var(--ease-hover), color var(--ease-hover);
+}
+
+.toggle:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.toggle:focus-visible {
+  outline: none;
+  border-color: var(--tool);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool) 16%, transparent);
+}

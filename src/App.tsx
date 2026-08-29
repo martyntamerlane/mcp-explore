@@ -1,26 +1,23 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { connectUrl as realConnectUrl } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
+import ChromeBar from "./ui/ChromeBar"
 import ConnectScreen from "./ui/ConnectScreen"
-import DetailPanel from "./ui/DetailPanel"
-import Graph, { type GraphSelection } from "./ui/Graph"
-import { computeLayout } from "./ui/layout"
+import DeckView from "./ui/deck/DeckView"
+import { ReadProvider } from "./ui/run/ReadContext"
+import { RunProvider } from "./ui/run/RunContext"
+import type { EntitySelection } from "./ui/stage"
 import styles from "./App.module.css"
 
 type Phase = { status: "idle" } | { status: "connected"; connection: Connection }
 
 export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: typeof realConnectUrl } = {}) {
   const [phase, setPhase] = useState<Phase>({ status: "idle" })
-  const [selected, setSelected] = useState<GraphSelection | null>(null)
+  const [selected, setSelected] = useState<EntitySelection | null>(null)
+  const [query, setQuery] = useState("")
   const [autoTarget, setAutoTarget] = useState<string | undefined>(
     () => new URLSearchParams(window.location.search).get("server") ?? undefined,
   )
-
-  const layout = useMemo(() => {
-    if (phase.status !== "connected") return null
-    const { tools, resources, prompts } = phase.connection.snapshot
-    return computeLayout({ tools, resources, prompts })
-  }, [phase])
 
   function handleConnected(connection: Connection, source: { url?: string }) {
     if (source.url) {
@@ -30,6 +27,7 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
     }
     setAutoTarget(undefined)
     setSelected(null)
+    setQuery("")
     setPhase({ status: "connected", connection })
   }
 
@@ -53,25 +51,30 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
     )
   }
 
+  // One chrome band carries brand, server identity and the filter; the stage
+  // below it is nothing but browse column + workspace (spec §3.1).
   const { snapshot, transportKind } = phase.connection
   return (
     <div className={styles.app}>
-      <header className={styles.header}>
-        <span className={styles.serverName}>{snapshot.serverInfo.name}</span>
-        <span className={styles.chip}>v{snapshot.serverInfo.version}</span>
-        <span className={styles.chip}>{transportKind}</span>
-        <span className={styles.counts}>
-          {snapshot.tools.length} tools · {snapshot.resources.length} resources · {snapshot.prompts.length} prompts
-        </span>
-        <button type="button" className={styles.disconnect} onClick={() => void disconnect()}>
-          Disconnect
-        </button>
-      </header>
+      <ChromeBar
+        snapshot={snapshot}
+        transportKind={transportKind}
+        query={query}
+        onQuery={setQuery}
+        onDisconnect={() => void disconnect()}
+      />
       <main className={styles.main}>
-        {layout && (
-          <Graph layout={layout} serverName={snapshot.serverInfo.name} selected={selected} onSelect={setSelected} />
-        )}
-        <DetailPanel connection={phase.connection} selected={selected} onClose={() => setSelected(null)} />
+        <RunProvider connection={phase.connection}>
+          <ReadProvider connection={phase.connection}>
+            <DeckView
+              snapshot={snapshot}
+              transportKind={transportKind}
+              selection={selected}
+              onSelect={setSelected}
+              query={query}
+            />
+          </ReadProvider>
+        </RunProvider>
       </main>
     </div>
   )

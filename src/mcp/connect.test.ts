@@ -28,8 +28,8 @@ test("connectDemo yields a full snapshot over in-memory transport", async () => 
   const conn = await connectDemo()
   expect(conn.transportKind).toBe("in-memory")
   expect(conn.snapshot.serverInfo.name).toBe(DEMO_SERVER_NAME)
-  expect(conn.snapshot.tools).toHaveLength(4)
-  expect(conn.snapshot.resources).toHaveLength(2)
+  expect(conn.snapshot.tools).toHaveLength(6)
+  expect(conn.snapshot.resources).toHaveLength(7)
   expect(conn.snapshot.prompts).toHaveLength(2)
   expect(conn.snapshot.instructions).toMatch(/simulated issue tracker/i)
   await conn.close()
@@ -55,7 +55,7 @@ test("connectUrl falls back to SSE when streamable fails", async () => {
   }
   const conn = await connectUrl("https://example.com/mcp", {}, factories)
   expect(conn.transportKind).toBe("sse")
-  expect(conn.snapshot.tools).toHaveLength(4)
+  expect(conn.snapshot.tools).toHaveLength(6)
   await conn.close()
 })
 

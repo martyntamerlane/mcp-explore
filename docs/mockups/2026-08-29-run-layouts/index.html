@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Run-layout mockups — 2026-08-29</title>
+<style>
+  @font-face{font-family:"Space Grotesk Variable";src:url("fonts/space-grotesk-latin-wght-normal.woff2") format("woff2");font-weight:300 700}
+  @font-face{font-family:"Inter Variable";src:url("fonts/inter-latin-wght-normal.woff2") format("woff2");font-weight:100 900}
+  :root{--ink:#171b26;--ink-2:#4d5468;--ink-3:#666c82;--line:rgba(23,27,38,.1);--tool:#0891b2}
+  *{box-sizing:border-box}
+  body{margin:0;padding:56px 48px 80px;background:#f4f6fa;
+       background-image:radial-gradient(900px 700px at 15% -10%,rgba(8,145,178,.07),transparent 60%),
+                        radial-gradient(1000px 800px at 90% 110%,rgba(109,40,217,.05),transparent 60%);
+       background-attachment:fixed;color:var(--ink);font-family:"Inter Variable",system-ui,sans-serif;font-size:15px;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1180px;margin:0 auto}
+  h1{font-family:"Space Grotesk Variable",system-ui,sans-serif;font-size:30px;font-weight:600;margin:0 0 6px}
+  .sub{color:var(--ink-2);margin:0 0 10px;font-size:15px}
+  .meta{color:var(--ink-3);font-size:13px;margin:0 0 44px}
+  h2{font-family:"Space Grotesk Variable",system-ui,sans-serif;font-size:19px;font-weight:600;margin:0 0 4px}
+  .rec{display:inline-block;margin-left:10px;font-size:11px;letter-spacing:.08em;color:var(--tool);
+       border:1px solid var(--tool);border-radius:999px;padding:2px 10px;vertical-align:middle}
+  section{margin-bottom:56px}
+  .note{color:var(--ink-2);font-size:14px;line-height:1.6;margin:0 0 18px;max-width:760px}
+  .note b{font-weight:600;color:var(--ink)}
+  figure{margin:0 0 18px}
+  figcaption{font-size:12.5px;color:var(--ink-3);margin-bottom:8px}
+  img{width:100%;display:block;border:1px solid var(--line);border-radius:14px;
+      box-shadow:0 1px 2px rgba(23,27,38,.05),0 14px 44px rgba(23,27,38,.07)}
+  a.open{display:inline-block;font-size:13px;color:var(--ink-2);text-decoration:none;
+         border:1px solid var(--line);border-radius:999px;padding:6px 15px;background:rgba(255,255,255,.6)}
+  a.open:hover{color:var(--ink);border-color:rgba(23,27,38,.28)}
+  hr{border:none;border-top:1px solid var(--line);margin:0 0 44px}
+  .shared{background:rgba(255,255,255,.55);border:1px solid var(--line);border-radius:14px;padding:20px 24px;margin-bottom:52px}
+  .shared ul{margin:10px 0 0;padding-left:20px;color:var(--ink-2);font-size:14px;line-height:1.75}
+  .shared p{margin:0;font-weight:600;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Run-layout mockups</h1>
+  <p class="sub">Where a tool's input fields and its result live, once one click runs a tool.</p>
+  <p class="meta">2026-08-29 · branch <code>feat/luminous-deck</code> · real demo-server data, real app tokens and fonts · static mockups, not the running app</p>
+
+  <div class="shared">
+    <p>Applied to all three, so only the layout differs:</p>
+    <ul>
+      <li>One chrome band — app header and server header merged; one prism, not two</li>
+      <li>Monochrome at rest — no teal/amber/violet dots before you touch anything</li>
+      <li>No <code>i</code> button; one target per tool</li>
+      <li><code>read only</code> badge instead of the invisible armed state</li>
+      <li>Resources and prompts demoted to plain rows</li>
+    </ul>
+  </div>
+
+  <section>
+    <h2>Option 1 — In-card unfold</h2>
+    <p class="note">Tools are a two-column list; the clicked tool opens in place, fields left and result right, pushing the rest down. Rail stays on the right, quiet.<br>
+    <b>For:</b> list stays visible, same grammar as the rail browser. <b>Against:</b> dead space at rest, and a tool low in a long list opens below the fold.</p>
+    <figure><figcaption>At rest</figcaption><img src="mock-1-rest.png" alt="Option 1 at rest"></figure>
+    <figure><figcaption><code>create_issue</code> open</figcaption><img src="mock-1-open.png" alt="Option 1 with a tool open"></figure>
+    <a class="open" href="mock-1-rest.html">open rest &rsaquo;</a>
+    <a class="open" href="mock-1-open.html">open expanded &rsaquo;</a>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Option 2 — Persistent workspace<span class="rec">RECOMMENDED</span></h2>
+    <p class="note">Left column browses tools, resources and prompts through one segmented control; the right side is always the active tool.<br>
+    <b>For:</b> composed at rest and after a click — no dead half, no reflow, no scrolling to reach what you opened; the two competing card languages collapse into one column. <b>Against:</b> it is a right-hand pane, which you rejected for resources — though this one is permanent furniture rather than a panel that arrives.</p>
+    <figure><img src="mock-2.png" alt="Option 2 persistent workspace"></figure>
+    <a class="open" href="mock-2.html">open &rsaquo;</a>
+    <a class="open" href="background.html">background strength &rsaquo;</a>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>Option 4 — Full swap</h2>
+    <p class="note">The tool takes the whole screen; a back control returns to the list.<br>
+    <b>For:</b> most focused, most room for large results. <b>Against:</b> the list disappears, and every tool switch costs two clicks.</p>
+    <figure><img src="mock-4.png" alt="Option 4 full swap"></figure>
+    <a class="open" href="mock-4.html">open &rsaquo;</a>
+  </section>
+
+  <hr>
+
+  <section>
+    <h2>For comparison — today</h2>
+    <p class="note">The current deck at rest, and with the console drawer open on a run result.</p>
+    <figure><figcaption>At rest</figcaption><img src="current-deck.png" alt="Current deck at rest"></figure>
+    <figure><figcaption>Drawer open</figcaption><img src="current-drawer.png" alt="Current deck with drawer open"></figure>
+  </section>
+
+</div>
+</body>
+</html>

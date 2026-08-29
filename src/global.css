@@ -1,40 +1,83 @@
 :root {
-  /* surfaces — visual identity spec 2026-08-25 */
-  --bg: #07070f;
-  --glow-a: rgba(30, 27, 75, 0.55);
-  --glow-b: rgba(46, 16, 101, 0.4);
-  --panel: rgba(255, 255, 255, 0.03);
-  --panel-border: rgba(255, 255, 255, 0.08);
+  /* surfaces — luminous-deck redesign 2026-08-26 (light-first "luminous precision") */
+  --bg: #eaf0f8;
+  --glow-a: rgba(8, 145, 178, 0.2);
+  --glow-b: rgba(109, 40, 217, 0.12);
+  --panel: rgba(255, 255, 255, 0.6);
+  --panel-border: rgba(23, 27, 38, 0.1);
 
   /* ink — text never wears entity colors */
-  --ink: #e7e9f4;
-  --ink-2: #9aa0b5;
-  --ink-3: #5d6378;
+  --ink: #171b26;
+  --ink-2: #4d5468;
+  --ink-3: #5a6070;
 
-  /* entity accents — validated palette, do not change without re-running the dataviz validator */
+  /* entity accents — validated 2026-08-26 (dataviz six checks, light canvas, all-pairs;
+     record in docs/plans/2026-08-26-luminous-deck-implementation.md). "-bright" token
+     names kept for the dune theme contract — on light these are DEEP companions
+     (hover/edge tints darker than the fill, never lighter). */
   --tool: #0891b2;
-  --tool-bright: #22d3ee;
-  --resource: #d97706;
-  --resource-bright: #fbbf24;
-  --prompt: #8b5cf6;
-  --prompt-bright: #c4b5fd;
+  --tool-bright: #155e75;
+  --resource: #b45309;
+  --resource-bright: #92400e;
+  --prompt: #6d28d9;
+  --prompt-bright: #5b21b6;
 
-  /* graph marks — neutral (non-entity) SVG strokes/fills for edges and the server node */
-  --edge: rgba(255, 255, 255, 0.07);
-  --node-core: rgba(255, 255, 255, 0.06);
-  --node-ring: rgba(255, 255, 255, 0.25);
-
-  --danger: #f87171;
-  --cta-gradient: linear-gradient(135deg, rgba(8, 145, 178, 0.35), rgba(139, 92, 246, 0.35));
-  --code-bg: rgba(0, 0, 0, 0.35);
-  --panel-solid: rgba(10, 10, 20, 0.75);
-  --header-bg: rgba(10, 10, 20, 0.5);
+  --danger: #b91c1c;
+  --cta-gradient: linear-gradient(135deg, rgba(8, 145, 178, 0.1), rgba(109, 40, 217, 0.1));
+  /* --code-bg is on the dune parity-test ALLOWLIST as theme-neutral, so it must
+     stay legible on BOTH canvases: mid-grey alpha darkens light surfaces and
+     lightens dark ones. Don't swap it for a one-canvas value without moving it
+     off that allowlist (src/dune/theme.test.ts — coordinate with that session). */
+  --code-bg: rgba(102, 108, 130, 0.12);
+  --panel-solid: rgba(252, 253, 255, 0.92);
+  --header-bg: rgba(238, 244, 251, 0.72);
   --radius-s: 8px;
   --radius-m: 12px;
   --radius-l: 16px;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
   --ease-hover: 160ms ease-out;
   --ease-panel: 240ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Dark mode — luminous dark, validated 2026-08-27 (dataviz six checks, dark,
+   surface #0f141c, all-pairs: fills PASS — CVD worst 12.6 deutan / 10.2 tritan,
+   normal floor 21.1, contrast >= 3:1; inks 15.50/8.25/5.20:1, danger 6.68:1,
+   bright companions 10.22/8.60/6.79:1). Same hue families; the "-bright"
+   companions are genuinely brighter than their fills here (their original
+   meaning — on light they are deep). Re-values only, no new token names (dune
+   parity contract); the :not() guard makes Dune win whenever it is active.
+   --code-bg is deliberately absent: theme-neutral by allowlist (see above). */
+:root[data-mode="dark"]:not([data-theme="dune"]) {
+  --bg: #0f141c;
+  --glow-a: rgba(34, 211, 238, 0.14);
+  --glow-b: rgba(167, 139, 250, 0.1);
+  --panel: rgba(21, 27, 38, 0.55);
+  --panel-border: rgba(232, 235, 244, 0.12);
+
+  --ink: #e8ebf4;
+  --ink-2: #a6adc2;
+  --ink-3: #818899;
+
+  --tool: #0891b2;
+  --tool-bright: #22d3ee;
+  --resource: #d97706;
+  --resource-bright: #f59e0b;
+  --prompt: #8b5cf6;
+  --prompt-bright: #a78bfa;
+
+  --danger: #f87171;
+  --cta-gradient: linear-gradient(135deg, rgba(34, 211, 238, 0.12), rgba(167, 139, 250, 0.12));
+  --panel-solid: rgba(19, 24, 34, 0.94);
+  --header-bg: rgba(15, 20, 28, 0.72);
+}
+
+/* Structural (non-palette) tokens in a separate :root block: the dune theme-parity
+   test scans only the first block for colour tokens. --display/--ui belong on its
+   allowlist next to --mono; fold them in there (src/dune/theme.test.ts) when that
+   file's owning session is done. */
+:root {
+  --display: "Space Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ui: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 * {
@@ -46,11 +89,11 @@ body {
   min-height: 100vh;
   background-color: var(--bg);
   background-image:
-    radial-gradient(900px 700px at 15% -10%, var(--glow-a), transparent 60%),
-    radial-gradient(1000px 800px at 90% 110%, var(--glow-b), transparent 60%);
+    radial-gradient(1050px 820px at 10% -14%, var(--glow-a), transparent 64%),
+    radial-gradient(1100px 880px at 94% 114%, var(--glow-b), transparent 62%);
   background-attachment: fixed;
   color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--ui);
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
@@ -59,4 +102,14 @@ button,
 input {
   font: inherit;
   color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -1,6 +1,6 @@
 # Architecture Overview — mcp-explore
 
-> **Status**: Designed, not yet built. Topology below is the agreed design (see [`docs/specs/2026-08-24-initial-design.md`](specs/2026-08-24-initial-design.md)). Once code exists, this file must document reality — project structure, module map, state shape — updated in the same change as the code.
+> **Status**: Built (tool-first workspace 2026-08-29, see [`docs/specs/2026-08-29-tool-first-workspace.md`](specs/2026-08-29-tool-first-workspace.md) — replaced the deck grid + rail + console drawer of the 2026-08-26/27 specs, which carry banners saying what still stands). This file documents reality — project structure, module map, state shape — updated in the same change as the code.
 
 ## Topology
 
@@ -16,7 +16,15 @@ GitHub Pages (Vite build, deployed by GitHub Actions on push to main)
 
 ## Stack
 
-React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), hand-rolled SVG graph (computed polar layout, no graph/physics libraries), Vitest + RTL + Playwright.
+React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: the column's power-on cascade and the workspace's subject cross-fade — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI), hand-rolled deterministic layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
+
+## Stages (display variants)
+
+`ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`, `query`). `App` owns connection, selection, the filter query, run state (via `RunProvider`), read state (via `ReadProvider`), and the chrome band; stages are interchangeable. `DeckView` is the default stage — a browse column plus a workspace, nothing else; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17).
+
+**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
+
+The app has **no overlay surfaces and no tooltips** in the connected view. Light/dark mode is a root `data-mode` attribute re-valuing tokens (`src/ui/mode.ts`); Dune wins via a `:not()` guard, untouched. The chrome band is the multi-server seam (TODO-16): a second connection renders a second band plus column/workspace pair tiled alongside.
 
 ## State & storage
 
@@ -29,11 +37,13 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 ```
 index.html            Vite entry
 src/
-  main.tsx            React bootstrap
-  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync
+  main.tsx            React bootstrap (fonts, MotionConfig reduced-motion floor)
+  App.tsx             Top-level composition: idle/connected phases, ?server= URL sync, filter query, Run/Read providers
   App.module.css      CSS module for App component
   App.test.tsx        Tests for App component
-  global.css          Dark-first CSS custom properties (visual identity tokens)
+  global.css          Light-first CSS custom properties (validated luminous palette; first :root
+                      block is the dune token-parity contract — see src/dune/theme.test.ts) plus
+                      the validated luminous-dark re-values under [data-mode="dark"]
   test-setup.ts       Test environment configuration
   vite-env.d.ts       Vite environment types
   mcp/
@@ -44,16 +54,48 @@ src/
       demoServer.ts   Built-in in-page McpServer (demo-issue-tracker), test fixture
       demoServer.test.ts  Tests for demoServer
   ui/
-    ConnectScreen.tsx      Landing screen: URL input, headers disclosure, recents, demo button
+    ConnectScreen.tsx      Two-door landing: connect door (URL/headers/recents), demo door
     ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
     recents.ts             localStorage recent-servers list (opt-in header persistence)
-    Graph.tsx              SVG capability graph: polar layout, zoom/pan, search-dim, selection
-    layout.ts              computeLayout — deterministic polar layout math (no physics)
-    DetailPanel.tsx         Slide-in panel: schema table, resource contents, raw-JSON disclosure
-    schema.ts               JSON Schema → argument table rows for DetailPanel
+    stage.ts               StageProps / EntitySelection — the display-variant contract (null selection = home)
+    ChromeBar.tsx          The single chrome band: brand, server identity, filter, mode toggle, disconnect
+    deck/
+      deckModel.ts         buildDeckModel — snapshot → tools (readOnly/zeroArg) + browse groups (mime, prompt args), dedupe
+      browseTree.ts        buildBrowseTree — resource URIs → thresholded folder tree (chain-collapse, scheme handling)
+      DeckView.tsx         Default stage: browse column + workspace; owns the click contract and per-subject form values
+      BrowseColumn.tsx     Left index: home, segmented Tools/Resources/Prompts, folder tree, power-on cascade
+      Workspace.tsx        Permanent work surface; routes the selected subject to one of the four views
+      HomeView.tsx         Server identity, counts and the server's own `instructions`
+      ToolView.tsx         Description, args form, Run, result, raw-JSON disclosure
+      ResourceView.tsx     Metadata + contents, loaded on selection
+      PromptView.tsx       Description, args form, Get prompt, returned messages
+      blocks.tsx           Shared render for sanitized read/run block lists
+      Glyph.tsx            Entity shape coding (circle/square/diamond), colourless — the row decides
+      Prism.tsx            The brand mark (hairline prism, 3 variants)
+    form/
+      argValues.ts         Pure: inputSchema → FieldSpec[]; form strings → tools/call arguments; validation
+      ArgsForm.tsx         The generated fields (text/number/boolean/enum/list, JSON fallback)
+    run/
+      runResult.ts         formatCallResult/formatRunError — untrusted result → sanitized RunDisplay, size cap
+      readResult.ts        formatResourceContents/formatPromptMessages — untrusted reads → sanitized ReadDisplay
+      RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool(name, args)
+      ReadContext.tsx      ReadProvider/useReads — cached reads over readResource/getPrompt(name, args)
+    schema.ts               JSON Schema → schemaRows + friendlyType, under argValues and the views
+    mode.ts                 Light/dark resolution: stored choice > system; data-mode stamping; live follow
+    ModeToggle.tsx          Sun/moon toggle (header + landing) persisting explicit choices
     *.module.css            CSS modules for each ui/ component
     *.test.ts[x]            Colocated tests for each ui/ module
+  dune/
+    main.tsx               Independent bootstrap: mounts DuneOverlay into its own React root
+    DuneOverlay.tsx         Konami trigger, localStorage persistence, theme-attribute sync
+    konami.ts               Deterministic rolling-buffer Konami-sequence detector
+    CinematicScene.tsx      Full-bleed animated backdrop: hero image, parallax layers, starfield, sun, haze, grain
+    assets/hero.webp        The AI-generated hero image (source PNG in docs/external-sources/)
+    theme.css               :root[data-theme="dune"] token overrides (see spec, 2026-08-26-dune-cinematic-redesign.md)
+    *.module.css, *.test.ts[x]   CSS modules and colocated tests
 ```
+
+**Dune mode's isolation** (see [`docs/specs/2026-08-24-dune-mode-design.md`](specs/2026-08-24-dune-mode-design.md), scene redesigned per [`docs/specs/2026-08-26-dune-cinematic-redesign.md`](specs/2026-08-26-dune-cinematic-redesign.md)): `src/dune/` shares no files, imports, or component coupling with the rest of `src/`. It is loaded via a second, independent `<script type="module" src="/src/dune/main.tsx">` entry in `index.html` — the only file outside `src/dune/` the feature touches, by exactly one added line. It reaches the rest of the page only through generic `document`-level DOM observation (`keydown` for the trigger; pointer position is read passively for parallax), never `preventDefault`/`stopPropagation`, and reskins the whole app purely via a second CSS token block cascading over the same `var(--…)` custom properties every component already uses. This was a deliberate choice to allow it to be built concurrently with other work touching `App.tsx`/`global.css`/`ConnectScreen.tsx`/`Graph.tsx` without merge risk.
 
 Tests are colocated (`*.test.ts[x]`), run by Vitest (jsdom, globals).
 

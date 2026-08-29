@@ -1,10 +1,12 @@
 .box {
   margin-top: 24px;
   padding: 20px 24px;
-  border: 1px solid var(--panel-border);
+  border: 1px solid color-mix(in srgb, var(--danger) 25%, var(--panel-border));
   border-left: 3px solid var(--danger);
   border-radius: var(--radius-m);
-  background: var(--panel);
+  background: color-mix(in srgb, var(--danger) 3%, var(--panel));
+  backdrop-filter: blur(14px);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 5%, transparent);
   text-align: left;
 }
 .headline { margin: 0 0 12px; color: var(--ink); }

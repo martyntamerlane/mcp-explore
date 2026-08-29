@@ -1,0 +1,229 @@
+/* Left flank: a narrow, scannable index. Monochrome at rest — colour is earned
+   by selection, one accent lit at a time (tool-first workspace spec §3.2). */
+.column {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 22px 20px 24px 26px;
+  gap: 14px;
+}
+
+.home {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 6px 15px 6px 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color var(--ease-hover), border-color var(--ease-hover), background var(--ease-hover);
+}
+
+.home:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 26%, transparent);
+}
+
+.home[aria-current] {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 30%, transparent);
+  background: color-mix(in srgb, var(--panel-solid) 75%, transparent);
+}
+
+.homeGlyph {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.segments {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--panel-solid) 55%, transparent);
+}
+
+.segment {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 12px;
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--ease-hover), background var(--ease-hover);
+}
+
+.segment:hover {
+  color: var(--ink-2);
+}
+
+.segment[aria-pressed="true"] {
+  color: var(--ink);
+  background: var(--panel-solid);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.segment:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+
+/* ── rows ── */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  flex: none;
+  padding: 11px 13px;
+  font-size: 13px;
+  text-align: left;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--panel-solid) 55%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  transition: border-color var(--ease-hover), box-shadow var(--ease-hover), background var(--ease-hover);
+}
+
+.row[data-kind="tool"] .name {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.row[data-receded] {
+  opacity: 0.28;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.badge {
+  margin-left: auto;
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+/* Accent per kind, spent only on hover, focus and selection. */
+.row[data-kind="tool"] {
+  --accent: var(--tool);
+}
+.row[data-kind="resource"] {
+  --accent: var(--resource);
+}
+.row[data-kind="prompt"] {
+  --accent: var(--prompt);
+}
+
+.row:hover {
+  border-color: color-mix(in srgb, var(--accent, var(--ink)) 42%, transparent);
+}
+
+.row:focus-visible {
+  outline: none;
+  border-color: var(--accent, var(--ink));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--ink)) 16%, transparent);
+}
+
+.row[aria-current] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* Glyphs stay hollow until their row is the subject. */
+.row svg[data-glyph] {
+  stroke: var(--ink-3);
+  fill: none;
+}
+
+.row[aria-current] svg[data-glyph] {
+  stroke: var(--accent);
+  fill: var(--accent);
+}
+
+/* ── folders: quiet disclosure, no card chrome ── */
+
+.folder {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+
+.folder[data-receded] {
+  opacity: 0.28;
+}
+
+.folderRow {
+  background: none;
+  border-color: transparent;
+  color: var(--ink-2);
+}
+
+.folderRow:hover {
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border-color: transparent;
+}
+
+.chevron {
+  flex: none;
+  width: 10px;
+  font-size: 10px;
+  color: var(--ink-3);
+  transition: transform var(--ease-hover);
+}
+
+.chevron[data-open] {
+  transform: rotate(90deg);
+}
+
+.count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.children {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 6px 0 2px 11px;
+  padding-left: 10px;
+  border-left: 1px solid var(--panel-border);
+}
+
+.none {
+  margin: 4px 2px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+}

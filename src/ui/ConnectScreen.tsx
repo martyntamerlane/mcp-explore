@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react"
 import { connectDemo as realConnectDemo, connectUrl as realConnectUrl } from "../mcp/connect"
 import type { Connection } from "../mcp/types"
 import ConnectError from "./ConnectError"
+import Prism from "./deck/Prism"
+import ModeToggle from "./ModeToggle"
 import { loadRecents, saveRecent, type RecentServer } from "./recents"
 import styles from "./ConnectScreen.module.css"
 
@@ -70,89 +72,105 @@ export default function ConnectScreen({
 
   return (
     <main className={styles.hero}>
+      <div className={styles.modeCorner}>
+        <ModeToggle />
+      </div>
       <p className={styles.kicker}>MCP EXPLORE</p>
       <h1 className={styles.title}>See inside any MCP server.</h1>
-      <p className={styles.sub}>Paste a server URL — get a living map of its tools, resources and prompts.</p>
+      <p className={styles.sub}>Paste a server URL — get a living control deck of its tools, resources and prompts.</p>
+      <p className={styles.gloss}>
+        MCP is how apps hand tools and data to AI assistants — this shows you what a server offers.
+      </p>
 
-      <form
-        className={styles.form}
-        onSubmit={(e) => {
-          e.preventDefault()
-          if (url.trim()) {
-            const h = headersOf(rows)
-            void connectTo(url.trim(), h, remember ? h : undefined)
-          }
-        }}
-      >
-        <input
-          aria-label="Server URL"
-          className={styles.url}
-          placeholder="https://your-server.example/mcp"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          spellCheck={false}
-        />
-        <button className={styles.connect} disabled={busy || url.trim() === ""}>
-          {busy ? "Connecting…" : "Connect"}
-        </button>
-      </form>
-
-      <button type="button" className={styles.disclose} onClick={() => setShowHeaders((s) => !s)}>
-        {showHeaders ? "▾" : "▸"} Add headers
-      </button>
-
-      {showHeaders && (
-        <div className={styles.headers}>
-          {rows.map((row, i) => (
-            <div key={i} className={styles.headerRow}>
-              <input
-                aria-label={`Header name ${i + 1}`}
-                placeholder="Authorization"
-                value={row.name}
-                onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
-              />
-              <input
-                aria-label={`Header value ${i + 1}`}
-                placeholder="Bearer …"
-                value={row.value}
-                onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))}
-              />
-            </div>
-          ))}
-          <div className={styles.headerActions}>
-            <button type="button" onClick={() => setRows([...rows, { name: "", value: "" }])}>
-              + row
+      <div className={styles.doors}>
+        <section className={styles.door} aria-label="Connect your server">
+          <h2 className={styles.doorTitle}>Connect your server</h2>
+          <form
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault()
+              if (url.trim()) {
+                const h = headersOf(rows)
+                void connectTo(url.trim(), h, remember ? h : undefined)
+              }
+            }}
+          >
+            <input
+              aria-label="Server URL"
+              className={styles.url}
+              placeholder="https://your-server.example/mcp"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              spellCheck={false}
+            />
+            <button className={styles.connect} disabled={busy || url.trim() === ""}>
+              {busy ? "Connecting…" : "Connect"}
             </button>
-            <label className={styles.remember}>
-              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-              Remember headers on this device
-            </label>
-          </div>
-        </div>
-      )}
+          </form>
+
+          <button type="button" className={styles.disclose} onClick={() => setShowHeaders((s) => !s)}>
+            {showHeaders ? "▾" : "▸"} Add headers
+          </button>
+
+          {showHeaders && (
+            <div className={styles.headers}>
+              {rows.map((row, i) => (
+                <div key={i} className={styles.headerRow}>
+                  <input
+                    aria-label={`Header name ${i + 1}`}
+                    placeholder="Authorization"
+                    value={row.name}
+                    onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, name: e.target.value } : r)))}
+                  />
+                  <input
+                    aria-label={`Header value ${i + 1}`}
+                    placeholder="Bearer …"
+                    value={row.value}
+                    onChange={(e) => setRows(rows.map((r, j) => (j === i ? { ...r, value: e.target.value } : r)))}
+                  />
+                </div>
+              ))}
+              <div className={styles.headerActions}>
+                <button type="button" onClick={() => setRows([...rows, { name: "", value: "" }])}>
+                  + row
+                </button>
+                <label className={styles.remember}>
+                  <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+                  Remember headers on this device
+                </label>
+              </div>
+            </div>
+          )}
+
+          {recents.length > 0 && (
+            <section className={styles.recents} aria-label="Recent servers">
+              <p className={styles.microlabel}>RECENT</p>
+              {recents.map((r) => (
+                <button
+                  key={r.url}
+                  type="button"
+                  className={styles.recent}
+                  disabled={busy}
+                  onClick={() => void connectTo(r.url, r.headers ?? {}, r.headers)}
+                >
+                  {r.url}
+                </button>
+              ))}
+            </section>
+          )}
+        </section>
+
+        <section className={`${styles.door} ${styles.demoDoor}`} aria-label="Explore a live demo">
+          <Prism className={styles.doorPrism} />
+          <h2 className={styles.doorTitle}>Explore a live demo</h2>
+          <p className={styles.doorSub}>No setup — a demo server runs entirely in your browser tab.</p>
+          <button type="button" className={styles.demo} onClick={() => void handleDemo()} disabled={busy}>
+            Explore the demo
+          </button>
+        </section>
+      </div>
 
       {error !== null && <ConnectError error={error} />}
-
-      {recents.length > 0 && (
-        <section className={styles.recents} aria-label="Recent servers">
-          <p className={styles.microlabel}>RECENT</p>
-          {recents.map((r) => (
-            <button
-              key={r.url}
-              type="button"
-              className={styles.recent}
-              disabled={busy}
-              onClick={() => void connectTo(r.url, r.headers ?? {}, r.headers)}
-            >
-              {r.url}
-            </button>
-          ))}
-        </section>
-      )}
-
-      <button type="button" className={styles.demo} onClick={() => void handleDemo()} disabled={busy}>
-        Try the demo
-      </button>
     </main>
   )
 }

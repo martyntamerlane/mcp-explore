@@ -60,7 +60,7 @@ test("recent servers render and one click reconnects with stored headers", async
 test("demo button connects via connectDemoFn and reports no url source", async () => {
   const onConnected = vi.fn()
   render(<ConnectScreen onConnected={onConnected} connectDemoFn={connectDemo} />)
-  await userEvent.click(screen.getByRole("button", { name: /try the demo/i }))
+  await userEvent.click(screen.getByRole("button", { name: /explore the demo/i }))
   await vi.waitFor(() => expect(onConnected).toHaveBeenCalledOnce())
   expect(onConnected.mock.calls[0][1]).toEqual({})
 })

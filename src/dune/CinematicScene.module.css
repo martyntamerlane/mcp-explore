@@ -1,0 +1,260 @@
+.scene {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* ---------- camera: one glacial zoom so the scene is never static ---------- */
+.zoom {
+  position: absolute;
+  inset: -3.5%;
+  animation: camera 80s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes camera {
+  from { transform: scale(1); }
+  to { transform: scale(1.05); }
+}
+.lyr {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* ---------- base plate: the generated hero image ---------- */
+.base,
+.baseGlow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.base {
+  filter: hue-rotate(150deg) saturate(1.5) brightness(1.04) contrast(1.06);
+}
+/* neon bloom: blurred duplicate, screen-blended over the sharp plate */
+.baseGlow {
+  filter: hue-rotate(150deg) saturate(1.8) brightness(1.1) blur(16px);
+  mix-blend-mode: screen;
+  opacity: 0.22;
+}
+
+/* ---------- city lights on the night surface ---------- */
+.cities {
+  position: absolute;
+  inset: 0;
+}
+.cities i {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  animation: cityShimmer var(--d, 10s) ease-in-out var(--dl, 0s) infinite alternate;
+}
+.cityShade {
+  background: radial-gradient(circle, var(--dune-city-shade), transparent 70%);
+  filter: blur(20px);
+  mix-blend-mode: multiply;
+  animation: none;
+}
+.cityHalo {
+  background: radial-gradient(circle, var(--dune-city-halo), transparent 70%);
+  filter: blur(14px);
+}
+.cityWarm {
+  background: radial-gradient(circle, var(--dune-city-warm) 0%, transparent 70%);
+  filter: blur(1.5px);
+  opacity: var(--o, 0.6);
+}
+.cityCool {
+  background: radial-gradient(circle, var(--dune-city-cool) 0%, transparent 70%);
+  filter: blur(1.5px);
+  opacity: var(--o, 0.6);
+}
+@keyframes cityShimmer {
+  from { opacity: var(--o, 0.6); }
+  to { opacity: calc(var(--o, 0.6) * 0.55); }
+}
+
+/* ---------- deep space accents ---------- */
+.nebula {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse 55% 40% at 15% 20%, var(--dune-nebula-a), transparent 65%),
+    radial-gradient(ellipse 45% 35% at 70% 8%, var(--dune-nebula-b), transparent 65%),
+    radial-gradient(ellipse 60% 45% at 88% 70%, var(--dune-nebula-c), transparent 60%);
+}
+
+.stars i {
+  position: absolute;
+  background: var(--dune-star);
+  border-radius: 50%;
+}
+.stars i.tw {
+  animation: twinkle var(--d, 4s) ease-in-out var(--dl, 0s) infinite alternate;
+}
+@keyframes twinkle {
+  from { opacity: var(--o, 0.4); }
+  to { opacity: 0.05; }
+}
+.stars i.big {
+  box-shadow: 0 0 6px 1px var(--dune-star-glow);
+}
+
+.shooter {
+  position: absolute;
+  left: 78vw;
+  top: 6vh;
+  width: 130px;
+  height: 2px;
+  opacity: 0;
+  background: linear-gradient(270deg, var(--dune-shooter), transparent);
+  transform: rotate(158deg);
+  animation: shoot 26s linear 6s infinite;
+}
+@keyframes shoot {
+  0% { opacity: 0; transform: rotate(158deg) translateX(0); }
+  1% { opacity: 0.9; }
+  5% { opacity: 0; transform: rotate(158deg) translateX(46vw); }
+  100% { opacity: 0; transform: rotate(158deg) translateX(46vw); }
+}
+
+/* ---------- drifting haze: reads as moving atmosphere over the limb ---------- */
+.haze1,
+.haze2 {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  filter: blur(60px);
+}
+.haze1 {
+  width: 55vw;
+  height: 22vh;
+  right: -5vw;
+  bottom: 16vh;
+  background: radial-gradient(ellipse, var(--dune-haze-a), transparent 70%);
+  animation: drift1 47s ease-in-out infinite alternate;
+}
+.haze2 {
+  width: 40vw;
+  height: 16vh;
+  right: 20vw;
+  bottom: 3vh;
+  background: radial-gradient(ellipse, var(--dune-haze-b), transparent 70%);
+  animation: drift2 61s ease-in-out infinite alternate;
+}
+@keyframes drift1 {
+  from { transform: translate(0, 0); }
+  to { transform: translate(-5vw, 1vh); }
+}
+@keyframes drift2 {
+  from { transform: translate(0, 0); }
+  to { transform: translate(6vw, -1vh); }
+}
+
+/* ---------- the sun, breathing on the limb ----------
+   Position matches the baked-in sun of assets/hero.webp at 16:9 cover. */
+.sun {
+  position: absolute;
+  left: 54vw;
+  top: 41vh;
+  width: 0;
+  height: 0;
+}
+.core {
+  position: absolute;
+  left: -8px;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--dune-sun-core) 0%, var(--dune-sun-mid) 40%, transparent 75%);
+  box-shadow:
+    0 0 18px 5px var(--dune-sun-glow-a),
+    0 0 50px 14px var(--dune-sun-glow-b);
+  animation: sunPulse 5.3s ease-in-out infinite alternate;
+  opacity: 0.75;
+}
+@keyframes sunPulse {
+  from { transform: scale(1); opacity: 0.92; }
+  to { transform: scale(1.14); opacity: 1; }
+}
+.bloom {
+  position: absolute;
+  left: -110px;
+  top: -110px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--dune-bloom-a) 0%, var(--dune-bloom-b) 40%, transparent 70%);
+  animation: bloomPulse 7.7s ease-in-out infinite alternate;
+}
+@keyframes bloomPulse {
+  from { opacity: 0.4; }
+  to { opacity: 0.55; }
+}
+.streak {
+  position: absolute;
+  left: -34vw;
+  top: -1px;
+  width: 68vw;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--dune-streak-edge) 30%,
+    var(--dune-streak-core) 50%,
+    var(--dune-streak-edge) 70%,
+    transparent
+  );
+  filter: blur(1px);
+  animation: shimmer 6.1s ease-in-out infinite alternate;
+}
+@keyframes shimmer {
+  from { opacity: 0.35; transform: scaleX(1); }
+  to { opacity: 0.55; transform: scaleX(1.05); }
+}
+
+/* ---------- cinematic finish ---------- */
+.grade {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 27vw 17vh at 50% 45%, var(--dune-scrim), transparent 72%),
+    linear-gradient(180deg, var(--dune-shade) 0%, transparent 18%, transparent 78%, var(--dune-shade-strong) 100%),
+    radial-gradient(ellipse 130% 100% at 42% 42%, transparent 55%, var(--dune-vignette) 100%);
+}
+.grain {
+  position: absolute;
+  inset: -10px;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  animation: grainJitter 0.45s steps(2) infinite;
+}
+@keyframes grainJitter {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-3px, 2px); }
+  100% { transform: translate(2px, -3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoom,
+  .stars i.tw,
+  .shooter,
+  .haze1,
+  .haze2,
+  .cities i,
+  .core,
+  .bloom,
+  .streak,
+  .grain {
+    animation: none;
+  }
+}
