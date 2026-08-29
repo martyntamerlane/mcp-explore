@@ -16,7 +16,7 @@ GitHub Pages (Vite build, deployed by GitHub Actions on push to main)
 
 ## Stack
 
-React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: the column's power-on cascade and the workspace's subject cross-fade — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI), hand-rolled deterministic layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
+React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser client), `motion` (choreography: the column's power-on cascade and the workspace's subject cross-fade — CSS handles all static-state transitions), self-hosted fonts via Fontsource (Space Grotesk display + Inter UI; the mono face is still a system stack — TODO-22), hand-rolled deterministic layout (no graph/physics libraries), Vitest + RTL (Playwright tier still TODO-11).
 
 ## Stages (display variants)
 
@@ -43,7 +43,12 @@ src/
   App.test.tsx        Tests for App component
   global.css          Light-first CSS custom properties (validated luminous palette; first :root
                       block is the dune token-parity contract — see src/dune/theme.test.ts) plus
-                      the validated luminous-dark re-values under [data-mode="dark"]
+                      the validated luminous-dark re-values under [data-mode="dark"], then a
+                      SECOND :root block holding the structural scale — type (--fs-*), spacing
+                      (--sp-*), tracking (--track-*), measures (--measure-*) and the font stacks.
+                      New non-colour tokens go in that second block: the parity test scans only
+                      the first and would demand a dune equivalent. See
+                      docs/specs/2026-08-29-visual-system-tightening.md
   test-setup.ts       Test environment configuration
   vite-env.d.ts       Vite environment types
   mcp/

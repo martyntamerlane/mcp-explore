@@ -51,43 +51,34 @@ export default function PromptView({ prompt, values, onChange, onGet }: PromptVi
       <h2 className={styles.title}>{prompt.name}</h2>
       {prompt.description && <p className={styles.description}>{prompt.description}</p>}
 
-      <div className={styles.columns}>
-        <div className={styles.inputCol}>
-          {specs.length > 0 && (
-            <>
-              <p className={styles.microlabel}>ARGUMENTS</p>
-              <ArgsForm
-                specs={specs}
-                values={values}
-                onChange={onChange}
-                errors={{}}
-                idPrefix={`prompt-${prompt.name}`}
-              />
-              <div className={styles.runRow}>
-                <button
-                  type="button"
-                  className={styles.run}
-                  disabled={missing.length > 0}
-                  onClick={() => onGet(args)}
-                >
-                  Get prompt
-                </button>
-                {missing.length > 0 && <span className={styles.quiet}>fill {missing.join(", ")} to fetch</span>}
-              </div>
-            </>
-          )}
+      {specs.length > 0 && (
+        <div className={styles.form}>
+          <p className={styles.microlabel}>ARGUMENTS</p>
+          <ArgsForm
+            specs={specs}
+            values={values}
+            onChange={onChange}
+            errors={{}}
+            idPrefix={`prompt-${prompt.name}`}
+          />
+          <div className={styles.runRow}>
+            <button type="button" className={styles.run} disabled={missing.length > 0} onClick={() => onGet(args)}>
+              Get prompt
+            </button>
+            {missing.length > 0 && <span className={styles.quiet}>fill {missing.join(", ")} to fetch</span>}
+          </div>
         </div>
+      )}
 
-        <div className={styles.resultArea} aria-live="polite">
-          <p className={styles.microlabel}>MESSAGES</p>
-          {state === undefined ? (
-            <p className={styles.quiet}>Fill the arguments and fetch to see the messages.</p>
-          ) : state.status === "loading" ? (
-            <p className={styles.quiet}>Loading…</p>
-          ) : (
-            <ReadBlocks display={state.display} />
-          )}
-        </div>
+      <div className={styles.resultArea} aria-live="polite">
+        <p className={styles.microlabel}>MESSAGES</p>
+        {state === undefined ? (
+          <p className={styles.quiet}>Fill the arguments and fetch to see the messages.</p>
+        ) : state.status === "loading" ? (
+          <p className={styles.quiet}>Loading…</p>
+        ) : (
+          <ReadBlocks display={state.display} />
+        )}
       </div>
     </>
   )

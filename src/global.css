@@ -6,9 +6,13 @@
   --panel: rgba(255, 255, 255, 0.6);
   --panel-border: rgba(23, 27, 38, 0.1);
 
-  /* ink — text never wears entity colors */
+  /* ink — text never wears entity colors. Three evenly-spaced steps against
+     --bg: 15.0 / 8.6 / 5.5:1. --ink-2 was #4d5468 (6.7:1) until 2026-08-29;
+     one step from --ink-3 it read as the same grey, so the primary/secondary
+     hierarchy it encodes was invisible. Darkened rather than lightening
+     --ink-3, which carries 11px uppercase labels and must stay legible. */
   --ink: #171b26;
-  --ink-2: #4d5468;
+  --ink-2: #3d4356;
   --ink-3: #5a6070;
 
   /* entity accents — validated 2026-08-26 (dataviz six checks, light canvas, all-pairs;
@@ -74,10 +78,46 @@
 /* Structural (non-palette) tokens in a separate :root block: the dune theme-parity
    test scans only the first block for colour tokens. --display/--ui belong on its
    allowlist next to --mono; fold them in there (src/dune/theme.test.ts) when that
-   file's owning session is done. */
+   file's owning session is done. Everything below is structural too — keep new
+   type/space/measure tokens in THIS block or the parity test will demand a dune
+   equivalent for them. */
 :root {
   --display: "Space Grotesk Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --ui: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Type scale — seven steps, added 2026-08-29. The shipped UI had drifted to
+     thirteen sizes, five of them inside a 2px band (12/12.5/13/13.5/14), which
+     reads as noise rather than hierarchy and makes vertical rhythm impossible.
+     A size that isn't one of these is a bug. */
+  --fs-micro: 11px; /* uppercase micro labels, chips, badges, type hints */
+  --fs-fine: 12px; /* fine print: field descriptions, code, meta, quiet notes */
+  --fs-ui: 13px; /* controls: list rows, buttons, inputs, segments */
+  --fs-body: 15px; /* prose: descriptions, instructions, subtitles */
+  --fs-title: 21px; /* the subject's name; the landing's door titles */
+  --fs-figure: 26px; /* the home view's count numerals */
+  --fs-hero: 46px; /* the landing headline */
+
+  /* Spacing scale — 4px base, with a 2px rung for hairline insets only. */
+  --sp-0: 2px;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* Tracking — two values. The same "MCP EXPLORE" wordmark previously shipped
+     at 0.32em on the landing and 0.22em in the chrome bar. */
+  --track-label: 0.12em; /* uppercase micro labels, count labels, badges */
+  --track-wordmark: 0.24em; /* MCP EXPLORE, wherever it appears */
+
+  /* Measures. Prose was running at 82 characters per line; the form and the
+     subject need caps too, or a 1920px viewport strands the content on the left. */
+  --measure-prose: 66ch;
+  --measure-form: 640px;
+  --measure-subject: 1080px;
 }
 
 * {
@@ -94,7 +134,7 @@ body {
   background-attachment: fixed;
   color: var(--ink);
   font-family: var(--ui);
-  font-size: 15px;
+  font-size: var(--fs-body);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -102,6 +142,17 @@ button,
 input {
   font: inherit;
   color: inherit;
+}
+
+/* <code>/<pre> carry a UA font-family that beats inheritance, so a bare <code>
+   renders in the browser's generic `monospace` rather than --mono — a fourth
+   face, different on every OS. Caught 2026-08-29 on the resource URI. */
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--mono);
+  font-size: inherit;
 }
 
 @media (prefers-reduced-motion: reduce) {

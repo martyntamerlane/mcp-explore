@@ -83,8 +83,12 @@ export default function ConnectScreen({
       </p>
 
       <div className={styles.doors}>
-        <section className={styles.door} aria-label="Connect your server">
+        <section className={`${styles.door} ${styles.connectDoor}`} aria-label="Connect your server">
+          <Prism className={styles.doorPrism} />
           <h2 className={styles.doorTitle}>Connect your server</h2>
+          <p className={styles.doorSub}>
+            Any CORS-enabled MCP server. It connects straight from this tab — no backend, nothing stored.
+          </p>
           <form
             className={styles.form}
             onSubmit={(e) => {
@@ -160,8 +164,7 @@ export default function ConnectScreen({
           )}
         </section>
 
-        <section className={`${styles.door} ${styles.demoDoor}`} aria-label="Explore a live demo">
-          <Prism className={styles.doorPrism} />
+        <section className={styles.door} aria-label="Explore a live demo">
           <h2 className={styles.doorTitle}>Explore a live demo</h2>
           <p className={styles.doorSub}>No setup — a demo server runs entirely in your browser tab.</p>
           <button type="button" className={styles.demo} onClick={() => void handleDemo()} disabled={busy}>
