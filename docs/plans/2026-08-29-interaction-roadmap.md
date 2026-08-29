@@ -1,8 +1,9 @@
 # Interaction roadmap — four sessions
 
-**Date**: 2026-08-29 · **Status**: S1 built (see
-[`docs/specs/2026-08-29-addressable-selection.md`](../specs/2026-08-29-addressable-selection.md));
-S2–S4 planned · **Source**: the five
+**Date**: 2026-08-29 · **Status**: S1 built
+([`2026-08-29-addressable-selection.md`](../specs/2026-08-29-addressable-selection.md)),
+S3 built ([`2026-08-29-run-record.md`](../specs/2026-08-29-run-record.md));
+S2 and S4 planned · **Source**: the five
 UI/interactivity suggestions from the 2026-08-29 research pass, all accepted.
 
 Each session below is sized to finish at **~35% of a context window** and must
@@ -145,7 +146,7 @@ works; shortcuts without command mode do not.
 
 ---
 
-## S3 · The run record: history and honest progress
+## S3 · The run record: history and honest progress — **built 2026-08-29**
 
 Suggestions **#3** (run history) and **#4** (progress).
 
@@ -169,18 +170,18 @@ and doing them separately means designing that shape twice.
 - The history list is furniture inside the existing result region — not a drawer,
   not a panel.
 
-### Open — decide in-session
+### Open — resolved in-session
 
-- **Spike first, before committing to the streaming half.** Does the installed
-  `@modelcontextprotocol/sdk` surface progress notifications
-  (`notifications/progress`) to a browser client, and does deepwiki or Hugging
-  Face actually send them? Time-box it. If yes, show real progress. If no, fall
-  back to elapsed-time plus a live character count as text arrives — which is
-  honest and still fixes the "is it hung?" problem.
-- How a run is labelled in the list when its arguments are long. A 200-character
-  question needs truncating without becoming ambiguous.
-- Whether a failed run joins the history (argument: yes — the failures are what
-  you want to compare).
+- **Spike answered.** The SDK does surface `notifications/progress`
+  (`callTool(..., { onprogress })`); no real server sends any — zero from
+  deepwiki `read_wiki_contents`, deepwiki `ask_question` (12.2 s) and Hugging
+  Face `hub_repo_search`. Elapsed time ships; `onprogress` is wired anyway and
+  renders beside the counter when a server does report. The character-count
+  fallback is impossible — `tools/call` returns one result, not a stream.
+- Labels give each argument value an **equal share** of the budget, not
+  first-come truncation: deepwiki's long `repoName` otherwise ate the whole
+  budget and left every run reading `question: How does…`.
+- Failed runs **do** join the history, marked `failed`.
 
 ### Files
 
@@ -203,6 +204,7 @@ earlier one without retyping.
 
 **Drop first if long:** the streaming half of #4. Elapsed time alone already
 fixes the trust problem; ship it and leave a TODO for real progress.
+— Not needed as a drop: the spike showed there is no real progress to stream.
 
 **Budget:** ~35%. The largest session — a spike, a state-shape rewrite, and the
 most tests. Do not add anything to it.

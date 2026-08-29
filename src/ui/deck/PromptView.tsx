@@ -3,7 +3,7 @@ import type { Prompt } from "@modelcontextprotocol/sdk/types.js"
 import ArgsForm from "../form/ArgsForm"
 import type { FieldSpec, Values } from "../form/argValues"
 import { readKey, useReads } from "../run/ReadContext"
-import { ReadBlocks } from "./blocks"
+import { Elapsed, ReadBlocks } from "./blocks"
 import styles from "./Workspace.module.css"
 
 /**
@@ -75,7 +75,9 @@ export default function PromptView({ prompt, values, onChange, onGet }: PromptVi
         {state === undefined ? (
           <p className={styles.quiet}>Fill the arguments and fetch to see the messages.</p>
         ) : state.status === "loading" ? (
-          <p className={styles.quiet}>Loading…</p>
+          <p className={styles.quiet}>
+            Loading… <Elapsed since={state.startedAt} />
+          </p>
         ) : (
           <ReadBlocks display={state.display} />
         )}

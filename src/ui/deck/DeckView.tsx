@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 import { useReads } from "../run/ReadContext"
 import { useRuns } from "../run/RunContext"
-import { fieldSpecs, initialValues, type Values } from "../form/argValues"
+import { fieldSpecs, initialValues, valuesFromArgs, type Values } from "../form/argValues"
 import type { EntitySelection, StageProps } from "../stage"
 import BrowseColumn from "./BrowseColumn"
 import { buildDeckModel } from "./deckModel"
@@ -63,6 +63,20 @@ export default function DeckView({
     setValuesBySubject((all) => (key in all ? all : { ...all, [key]: initialValues(specs) }))
   }
 
+  /**
+   * Restoring a past run refills the form that produced it, so "edit and re-run"
+   * is one click (interaction roadmap S3). It replaces the whole value set
+   * rather than merging: a run is a complete set of arguments, and half-merging
+   * it with what is currently typed would produce a form matching neither.
+   */
+  const restoreArgs = (args: Record<string, unknown>) => {
+    if (selection === null || selection.kind !== "tool") return
+    const tool = snapshot.tools.find((t) => t.name === selection.id)
+    if (!tool) return
+    const restored = valuesFromArgs(fieldSpecs(tool.inputSchema), args)
+    setValuesBySubject((all) => ({ ...all, [subjectKey(selection)]: restored }))
+  }
+
   return (
     <div className={styles.stage}>
       <BrowseColumn
@@ -80,6 +94,7 @@ export default function DeckView({
         values={values}
         onValueChange={setValue}
         onRun={run}
+        onRestoreArgs={restoreArgs}
         onGetPrompt={(name, args) => read("prompt", name, args)}
       />
     </div>

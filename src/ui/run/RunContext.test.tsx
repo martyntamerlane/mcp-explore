@@ -25,8 +25,12 @@ test("run passes arguments through to tools/call", async () => {
 
   act(() => result.current.run("create_issue", { title: "hi", limit: 5 }))
 
-  await waitFor(() => expect(result.current.runs.create_issue?.status).toBe("done"))
-  expect(callTool).toHaveBeenCalledWith({ name: "create_issue", arguments: { title: "hi", limit: 5 } })
+  await waitFor(() => expect(result.current.runs.create_issue?.records[0]?.display).toBeDefined())
+  expect(callTool).toHaveBeenCalledWith(
+    { name: "create_issue", arguments: { title: "hi", limit: 5 } },
+    undefined,
+    expect.objectContaining({ onprogress: expect.any(Function) }),
+  )
 })
 
 test("run with no arguments sends an empty object", async () => {
@@ -37,8 +41,12 @@ test("run with no arguments sends an empty object", async () => {
 
   act(() => result.current.run("project_pulse"))
 
-  await waitFor(() => expect(result.current.runs.project_pulse?.status).toBe("done"))
-  expect(callTool).toHaveBeenCalledWith({ name: "project_pulse", arguments: {} })
+  await waitFor(() => expect(result.current.runs.project_pulse?.records[0]?.display).toBeDefined())
+  expect(callTool).toHaveBeenCalledWith(
+    { name: "project_pulse", arguments: {} },
+    undefined,
+    expect.objectContaining({ onprogress: expect.any(Function) }),
+  )
 })
 
 test("a second run of the same tool while one is in flight is ignored", async () => {
@@ -59,7 +67,7 @@ test("a second run of the same tool while one is in flight is ignored", async ()
   expect(callTool).toHaveBeenCalledTimes(1)
 
   act(() => release?.())
-  await waitFor(() => expect(result.current.runs.slow?.status).toBe("done"))
+  await waitFor(() => expect(result.current.runs.slow?.records[0]?.display).toBeDefined())
 })
 
 test("read passes prompt arguments through to prompts/get", async () => {

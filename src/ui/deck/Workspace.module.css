@@ -240,3 +240,88 @@
   color: var(--ink);
   border-color: color-mix(in srgb, var(--ink) 28%, transparent);
 }
+
+/* ── run history (interaction roadmap S3) ──
+   Furniture inside the result region, not a drawer and not a panel: it sits
+   under the answer it belongs to and appears only once there is more than one
+   run to choose between. Rows borrow the browse column's row language —
+   hairline card, identifier face, accent earned by aria-current — so the two
+   lists in the app read as the same component family. */
+
+.history {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--panel-border);
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyRow {
+  --accent: var(--tool);
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-fine);
+  text-align: left;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  transition: border-color var(--ease-hover), background var(--ease-hover), color var(--ease-hover);
+}
+
+.historyRow:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.historyRow:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.historyRow[aria-current] {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.historyTime {
+  flex: none;
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The label is the run's identity, so it takes the room and truncates last. */
+.historyLabel {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyStatus {
+  flex: none;
+  font-size: var(--fs-micro);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.historyStatus[data-failed] {
+  color: var(--danger);
+}

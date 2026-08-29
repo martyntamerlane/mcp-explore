@@ -20,6 +20,8 @@ export interface WorkspaceProps {
   values: Values
   onValueChange: (name: string, value: string) => void
   onRun: (toolName: string, args: Record<string, unknown>) => void
+  /** Refill the current tool's form from a past run's arguments. */
+  onRestoreArgs: (args: Record<string, unknown>) => void
   onGetPrompt: (name: string, args: Record<string, string>) => void
 }
 
@@ -34,6 +36,7 @@ export default function Workspace({
   values,
   onValueChange,
   onRun,
+  onRestoreArgs,
   onGetPrompt,
 }: WorkspaceProps) {
   const reduced = useReducedMotion()
@@ -56,7 +59,13 @@ export default function Workspace({
       >
         {selection === null && <HomeView snapshot={snapshot} transportKind={transportKind} />}
         {tool && (
-          <ToolView tool={tool} values={values} onChange={onValueChange} onRun={(args) => onRun(tool.name, args)} />
+          <ToolView
+            tool={tool}
+            values={values}
+            onChange={onValueChange}
+            onRun={(args) => onRun(tool.name, args)}
+            onRestore={onRestoreArgs}
+          />
         )}
         {resource && <ResourceView resource={resource} />}
         {prompt && (

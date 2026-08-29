@@ -121,18 +121,6 @@ The app has exactly one key binding (Esc → home). Make the **existing** filter
 
 2026-08-29: **S1 shipped** — `/`, ↑↓ (a highlight, not a per-keystroke selection), ⏎, →←, and Escape's two-stage unwind, with the key model pure in `src/ui/deck/keynav.ts` (`docs/specs/2026-08-29-addressable-selection.md`). Still open, and the whole of **S2**: `>` command mode, and shortcut legibility — `/` is advertised only as `aria-keyshortcuts` today, and the keycap glyphs remain an unapproved visual pattern.
 
-### TODO-27: Run history per tool
-
-**Complexity**: M
-
-`RunContext` keys results by tool name and holds exactly one, so running a tool again with different arguments discards the previous answer. Keep a capped per-tool stack, each entry labelled by its arguments and restorable into the form so "edit and re-run" is one click. Request history is the one feature every API client treats as core. In-memory only in v1 — persisting server responses has a token/PII surface that needs its own thought. Session **S3** of the interaction roadmap.
-
-### TODO-28: Honest progress during a run
-
-**Complexity**: S
-
-`read_wiki_contents` takes 10–15 seconds showing a static "Running…" that cannot distinguish working from hung — the one place this app fails its own "precision, trust, accuracy" identity. Spike whether the SDK surfaces `notifications/progress` to a browser client and whether real servers send them; fall back to elapsed time plus a live character count as text arrives. Shares `RunContext` with TODO-27, so do them together. Session **S3** of the interaction roadmap.
-
 ### TODO-29: Result outline in the right margin
 
 **Complexity**: S
@@ -151,6 +139,22 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 ---
 
 ## Completed
+
+### TODO-27: Run history per tool
+
+**Complexity**: M — **Completed 2026-08-29**
+
+`RunContext` kept exactly one result per tool name, so running a tool again with different arguments discarded the previous answer — request history being the one feature every API client treats as core. A tool now keeps its last **ten** runs, newest first, each labelled by its arguments and restorable into the form so "edit and re-run" is one click. Failed runs join the list beside the successes. In memory only: persisting server responses has a token/PII surface that needs its own decision, and a single deepwiki result is ~1 MB. Session **S3** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md), specced in [`docs/specs/2026-08-29-run-record.md`](docs/specs/2026-08-29-run-record.md). The state shape is pure in `src/ui/run/runHistory.ts`; `valuesFromArgs` in `argValues.ts` is the restore path and round-trips against `assembleArgs`.
+
+Label budget resolved live: each argument value gets an **equal share**, not first-come truncation — deepwiki's long `repoName` otherwise ate the whole budget and left every run labelled `question: How does…`.
+
+### TODO-28: Honest progress during a run
+
+**Complexity**: S — **Completed 2026-08-29**
+
+A call in flight now shows a ticking elapsed time (`Running… 4.2s`) instead of a static word, for tool runs and for slow resource/prompt reads alike.
+
+The spike the plan required, answered 2026-08-29: the installed SDK **does** surface `notifications/progress` to a browser client (`callTool(..., { onprogress, resetTimeoutOnProgress })`), and **no real server sends any** — measured zero notifications from deepwiki `read_wiki_contents` (0.8 s), deepwiki `ask_question` (12.2 s) and Hugging Face `hub_repo_search`. `onprogress` is wired regardless and its report renders beside the counter, but elapsed time is what carries the common case. The plan's other fallback — a live character count as text arrives — is **not possible**: `tools/call` returns one JSON-RPC result, not a stream, so nothing arrives until everything does; claiming a count would have been the dishonest option.
 
 ### TODO-25: Selection in the URL
 

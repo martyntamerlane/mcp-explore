@@ -22,13 +22,14 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 
 `ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`, `query`, `onQuery`, `onFocusFilter` — the last two so a stage can clear and focus the band's filter from its own key model). `App` owns connection, selection, the filter query, run state (via `RunProvider`), read state (via `ReadProvider`), and the chrome band; stages are interchangeable. `DeckView` is the default stage — a browse column plus a workspace, nothing else; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17).
 
-**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home — and since 2026-08-29 it is also **addressable**, living in the query string as one of `tool`/`resource`/`prompt` beside `server` (spec [`2026-08-29-addressable-selection.md`](specs/2026-08-29-addressable-selection.md)). `App` owns every History call: `pushState` for a user-initiated selection, `replaceState` for anything the app decided, plus a `popstate` listener that reads the URL back without writing to it, so the two can never chase each other. `src/ui/selectionUrl.ts` is the pure counterpart — what the strings mean, and whether a snapshot still contains them. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
+**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home — and since 2026-08-29 it is also **addressable**, living in the query string as one of `tool`/`resource`/`prompt` beside `server` (spec [`2026-08-29-addressable-selection.md`](specs/2026-08-29-addressable-selection.md)). `App` owns every History call: `pushState` for a user-initiated selection, `replaceState` for anything the app decided, plus a `popstate` listener that reads the URL back without writing to it, so the two can never chase each other. `src/ui/selectionUrl.ts` is the pure counterpart — what the strings mean, and whether a snapshot still contains them. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only. Run state is a **capped per-tool history** rather than one result (`src/ui/run/runHistory.ts`, spec [`2026-08-29-run-record.md`](specs/2026-08-29-run-record.md)); it is session-only and never persisted, for the same reason form values are not. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
 
 The app has **no overlay surfaces and no tooltips** in the connected view. Light/dark mode is a root `data-mode` attribute re-valuing tokens (`src/ui/mode.ts`); Dune wins via a `:not()` guard, untouched. The chrome band is the multi-server seam (TODO-16): a second connection renders a second band plus column/workspace pair tiled alongside.
 
 ## State & storage
 
 - App state: React Context + hooks. No external state libraries.
+- Run history: in memory only, ten runs per tool, cleared on disconnect/reload — never localStorage (results can be megabytes and carry whatever the server chose to return).
 - localStorage: recent servers; optionally their headers (user can decline storing tokens).
 - URL query string: `?server=…` plus at most one of `&tool=`/`&resource=`/`&prompt=` — never headers/tokens.
 
@@ -88,7 +89,10 @@ src/
     run/
       runResult.ts         formatCallResult/formatRunError — untrusted result → sanitized RunDisplay, size cap
       readResult.ts        formatResourceContents/formatPromptMessages — untrusted reads → sanitized ReadDisplay
-      RunContext.tsx       RunProvider/useRuns — per-tool run state over client.callTool(name, args)
+      runHistory.ts        Pure: the per-tool run history state shape (start/progress/settle/view,
+                           the ten-run cap) plus run labels and elapsed/progress formatting
+      RunContext.tsx       RunProvider/useRuns — per-tool run history over client.callTool, with
+                           onprogress wired for servers that report
       ReadContext.tsx      ReadProvider/useReads — cached reads over readResource/getPrompt(name, args)
     markdown/
       detect.ts             looksLikeMarkdown — declared mime first, then a deliberately

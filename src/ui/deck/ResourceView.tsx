@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import type { Resource } from "@modelcontextprotocol/sdk/types.js"
 import { readKey, useReads } from "../run/ReadContext"
-import { ReadBlocks } from "./blocks"
+import { Elapsed, ReadBlocks } from "./blocks"
 import styles from "./Workspace.module.css"
 
 /**
@@ -27,8 +27,12 @@ export default function ResourceView({ resource }: { resource: Resource }) {
 
       <div className={styles.resultArea} aria-live="polite">
         <p className={styles.microlabel}>CONTENTS</p>
-        {state === undefined || state.status === "loading" ? (
+        {state === undefined ? (
           <p className={styles.quiet}>Loading…</p>
+        ) : state.status === "loading" ? (
+          <p className={styles.quiet}>
+            Loading… <Elapsed since={state.startedAt} />
+          </p>
         ) : (
           <ReadBlocks display={state.display} />
         )}

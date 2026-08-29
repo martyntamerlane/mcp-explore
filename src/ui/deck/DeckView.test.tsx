@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { render, screen, waitFor, within } from "@testing-library/react"
+import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "../../mcp/connect"
 import type { Connection, ServerSnapshot, TransportKind } from "../../mcp/types"
@@ -111,7 +111,7 @@ test("a zero-argument tool runs on a single click", async () => {
   const spy = vi.spyOn(conn.client, "callTool")
   renderDeck()
   await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
-  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "project_pulse", arguments: {} })
+  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "project_pulse", arguments: {} }, undefined, expect.anything())
   expect(await within(workspace()).findByText(/mcp-explore demo/)).toBeInTheDocument()
 })
 
@@ -135,10 +135,11 @@ test("a tool with arguments opens its fields and does not run until Run", async 
   await userEvent.type(title, "Graph mis-renders")
   await userEvent.click(screen.getByRole("button", { name: /run create_issue/i }))
 
-  expect(spy).toHaveBeenCalledExactlyOnceWith({
-    name: "create_issue",
-    arguments: { title: "Graph mis-renders" },
-  })
+  expect(spy).toHaveBeenCalledExactlyOnceWith(
+    { name: "create_issue", arguments: { title: "Graph mis-renders" } },
+    undefined,
+    expect.anything(),
+  )
   expect(await within(workspace()).findByText(/created issue #104/i)).toBeInTheDocument()
 })
 
@@ -335,7 +336,7 @@ test("⏎ on a zero-argument tool runs it, exactly as a click does", async () =>
   const spy = vi.spyOn(conn.client, "callTool")
   renderDeck({ query: "pulse" })
   await userEvent.keyboard("{ArrowDown}{Enter}")
-  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "project_pulse", arguments: {} })
+  expect(spy).toHaveBeenCalledExactlyOnceWith({ name: "project_pulse", arguments: {} }, undefined, expect.anything())
 })
 
 test("↑↓ clamp at the ends rather than wrapping", async () => {
@@ -418,4 +419,100 @@ test("Escape clears the filter first and only then returns home", async () => {
   update({ query: "" })
   await userEvent.keyboard("{Escape}")
   expect(within(workspace()).getByText(/simulated issue tracker/i)).toBeInTheDocument()
+})
+
+/* ── the run record (interaction roadmap S3) ── */
+
+test("running a tool twice keeps both answers, each labelled by its arguments", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool search_issues" }))
+  const field = screen.getByLabelText(/^query/)
+
+  await userEvent.type(field, "graph")
+  await userEvent.click(screen.getByRole("button", { name: /run search_issues/i }))
+  expect(await within(workspace()).findByText(/1 issue matched/)).toBeInTheDocument()
+
+  await userEvent.clear(field)
+  await userEvent.type(field, "issue")
+  await userEvent.click(screen.getByRole("button", { name: /run search_issues/i }))
+  expect(await within(workspace()).findByText(/0 issues matched/)).toBeInTheDocument()
+
+  // The earlier answer is still reachable, named by the arguments that made it.
+  const runs = within(workspace()).getAllByRole("button", { name: /query: / })
+  expect(runs).toHaveLength(2)
+  expect(runs[0]).toHaveTextContent("query: issue")
+  expect(runs[1]).toHaveTextContent("query: graph")
+
+  await userEvent.click(runs[1])
+  expect(within(workspace()).getByText(/1 issue matched/)).toBeInTheDocument()
+  expect(within(workspace()).queryByText(/0 issues matched/)).not.toBeInTheDocument()
+})
+
+test("restoring a past run refills the form that produced it", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool search_issues" }))
+  const field = screen.getByLabelText(/^query/)
+
+  await userEvent.type(field, "graph")
+  await userEvent.click(screen.getByRole("button", { name: /run search_issues/i }))
+  await within(workspace()).findByText(/1 issue matched/)
+  await userEvent.clear(field)
+  await userEvent.type(field, "issue")
+  await userEvent.click(screen.getByRole("button", { name: /run search_issues/i }))
+  await within(workspace()).findByText(/0 issues matched/)
+
+  expect(screen.getByLabelText(/^query/)).toHaveValue("issue")
+  await userEvent.click(within(workspace()).getByRole("button", { name: /query: graph/ }))
+  expect(screen.getByLabelText(/^query/)).toHaveValue("graph")
+})
+
+test("a single run shows no history list — a list of one is noise", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+  await within(workspace()).findByText(/mcp-explore demo/)
+  expect(within(workspace()).queryByText("RUNS")).not.toBeInTheDocument()
+})
+
+test("a failed run joins the history beside the successes", async () => {
+  const spy = vi.spyOn(conn.client, "callTool")
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+  await within(workspace()).findByText(/mcp-explore demo/)
+
+  spy.mockRejectedValueOnce(new Error("transport went away"))
+  await userEvent.click(screen.getByRole("button", { name: /run again/i }))
+  expect(await within(workspace()).findByText(/transport went away/)).toBeInTheDocument()
+
+  const runs = within(workspace()).getAllByRole("button", { name: /no arguments/ })
+  expect(runs).toHaveLength(2)
+  expect(runs[0]).toHaveTextContent("failed")
+  await userEvent.click(runs[1])
+  expect(within(workspace()).getByText(/mcp-explore demo/)).toBeInTheDocument()
+})
+
+test("a run in flight reports elapsed time rather than a static Running…", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+  try {
+    let release: (() => void) | undefined
+    vi.spyOn(conn.client, "callTool").mockReturnValueOnce(
+      new Promise((resolve) => {
+        release = () => resolve({ content: [{ type: "text", text: "done at last" }] })
+      }) as ReturnType<typeof conn.client.callTool>,
+    )
+    renderDeck()
+    await userEvent.click(screen.getByRole("button", { name: "tool project_pulse" }))
+    expect(within(workspace()).getByText(/Running…/, { selector: "p" })).toHaveTextContent("0.0s")
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2500)
+    })
+    expect(within(workspace()).getByText(/Running…/, { selector: "p" })).toHaveTextContent("2.5s")
+
+    await act(async () => {
+      release?.()
+    })
+    expect(await within(workspace()).findByText(/done at last/)).toBeInTheDocument()
+  } finally {
+    vi.useRealTimers()
+  }
 })
