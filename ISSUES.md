@@ -30,3 +30,12 @@ Each entry has a stable ID (`ISSUE-N`) that is never reused. Entries record: **D
 - **Description**: The panel slid in over the rail column, fully covering the Resources/Prompts lists it was opened from and swallowing their pointer events.
 - **Root cause**: Panel and rail shared the same right-hand region: the panel is an absolutely-positioned right-side `<aside>` while the rail was the rightmost flex column, so any selection overlaid the list that produced it. A symptom of resources/prompts being routed through the tools' deep-dive surface at all.
 - **Fix**: Rail moved to the left flank and became self-contained (in-place unfold, no panel involvement); the panel is tools-only and now slides over the grid's right edge, never the rail. See `docs/specs/2026-08-27-rail-browser-redesign.md`.
+
+### ISSUE-4: Required `string | string[]` arguments demanded hand-written JSON
+
+- **Discovered**: 2026-08-29 — live QA of the new input forms against `https://mcp.deepwiki.com/mcp`, before the work shipped.
+- **Status**: Closed — fixed 2026-08-29 (same session, in `fix: live-QA fix wave`).
+- **Severity**: Medium (a popular server's main tool was effectively unusable from the form).
+- **Description**: `ask_question.repoName` on deepwiki is a **required** argument declared `anyOf: [string, string[]]`. The form rendered it as the raw-JSON fallback textarea, so running the tool meant typing `"owner/repo"` *with quotes* — anything else failed JSON parsing and blocked Run. The field users think of as "owner/repo" asked them to know JSON syntax.
+- **Root cause**: `schemaRows`' `typeName` only looked at `type`. A property whose type lives in an `anyOf`/`oneOf` branch list has no `type` key, so it fell through to `"any"`, which `argValues` maps to the JSON fallback. The fallback itself is correct design — the bug was never resolving unions in the first place. "One or many of X" is a common shape in real MCP servers, so this was not an exotic edge case.
+- **Fix**: `typeName` now resolves unions that have one honest answer — identical branches, `string | string[]` (the comma-separated list control satisfies the array branch), and `number | integer`. Mixed unions still get the JSON field, deliberately: better an explicit JSON box than a control that quietly drops a branch. Verified end to end against the live server — form filled in the browser, Run pressed, real answer returned.

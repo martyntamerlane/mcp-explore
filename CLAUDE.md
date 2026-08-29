@@ -4,7 +4,7 @@
 
 A public, shareable static web app: a user inputs the URL of their MCP server and the app connects **directly from the browser** (no backend, ever — see design spec) and displays its tools, resources, prompts, and capabilities as an interactive SVG graph with a slide-in detail panel.
 
-> **Status**: Designed, not yet built. The agreed design with full rationale is [`docs/specs/2026-08-24-initial-design.md`](docs/specs/2026-08-24-initial-design.md) — read it before making architectural decisions.
+> **Status**: Built and live at <https://martyntamerlane.github.io/mcp-explore/> (2026-08-29). The current design is the tool-first workspace — [`docs/specs/2026-08-29-tool-first-workspace.md`](docs/specs/2026-08-29-tool-first-workspace.md); it supersedes parts of the 2026-08-26/27 specs, which carry banners saying what still stands. The founding rationale (zero backend, browser-direct, no graph libraries) is still [`docs/specs/2026-08-24-initial-design.md`](docs/specs/2026-08-24-initial-design.md) — read both before making architectural decisions.
 
 For feature behaviour see [`docs/functional-description.md`](docs/functional-description.md). For system topology and project structure see [`docs/architecture-overview.md`](docs/architecture-overview.md).
 

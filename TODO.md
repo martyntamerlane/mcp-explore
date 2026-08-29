@@ -77,6 +77,24 @@ Decision on 2026-08-24: repo went public with **no license** (source-visible, al
 
 Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; ~~dedupe/suffix duplicate tool/prompt names and resource URIs~~ done 2026-08-26 in `buildDeckModel` (exact duplicates dropped, first wins); render non-string enum members via JSON.stringify and key chips by index; ~~Escape closes the detail panel~~ done 2026-08-27 (Esc closes the console drawer, disarm takes precedence — spec `2026-08-27-console-drawer-dark-mode.md`); ~~focus moves into/restores from the drawer on open/close~~ resolved 2026-08-29 by deleting the drawer — the workspace is permanent, selection does not move focus, and the region announces its subject via `aria-live`; ~~disarm an armed tool button on focus leaving its card (blur)~~ obsolete 2026-08-29 — arming is gone; aria-live announcements (run states are `aria-live`/`role=alert` since 2026-08-26; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
 
+### TODO-19: Landing-page priority pass
+
+**Complexity**: S
+
+The landing inverts its own priority: "Explore a live demo" carries the tinted wash, the lit hairline and the prism, while "Connect your server" — the app's actual purpose — is a plain box with a greyed-out Connect button. Diagnosed during the 2026-08-29 UX cohesion pass and deliberately left out of that work's scope (`docs/specs/2026-08-29-tool-first-workspace.md` §12). The connected view is now calm; this is the loudest remaining mismatch between what the app is for and what it emphasises.
+
+### TODO-20: Resolve the three visual picks
+
+**Complexity**: S
+
+Open since the 2026-08-26 visual-iteration checkpoint and still unresolved after going live: (1) **UI face** — Inter (current) vs Geist; `@fontsource-variable/geist` stays installed until the call, then `npm uninstall` the loser and fix the import in `src/main.tsx`; (2) **prism variant** A/B/C in `src/ui/deck/Prism.tsx` — the pick becomes the favicon, which `index.html` still lacks entirely (add `<link rel="icon" href="data:image/svg+xml,…">`, touching nothing else in that file — the dune script tag stays); (3) **grain** on light, currently dropped. All three resolve only from rendered pixels; comparison sets regenerate via the headless rig.
+
+### TODO-21: Structured editing for nested schema shapes
+
+**Complexity**: M
+
+The input forms (TODO-1) render nested objects, arrays of objects and mixed `anyOf`/`oneOf` unions as a raw JSON textarea labelled with the type — honest, but it asks the user to hand-write JSON. Simple unions already resolve to real controls (2026-08-29). Worth doing when a real server's important tool proves painful: object fields as nested field groups, arrays of objects as repeatable rows, and a variant picker for unions. `src/ui/form/argValues.ts` (`fieldSpecs`/`assembleArgs`) is the seam — it maps schema to `FieldSpec[]` and back to arguments, so richer kinds slot in without touching the views.
+
 ### TODO-13: Force separate Vite chunks for dune mode's entry
 
 **Complexity**: S
