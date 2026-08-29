@@ -49,8 +49,8 @@
    --code-bg is deliberately absent: theme-neutral by allowlist (see above). */
 :root[data-mode="dark"]:not([data-theme="dune"]) {
   --bg: #0f141c;
-  --glow-a: rgba(34, 211, 238, 0.06);
-  --glow-b: rgba(167, 139, 250, 0.05);
+  --glow-a: rgba(34, 211, 238, 0.14);
+  --glow-b: rgba(167, 139, 250, 0.1);
   --panel: rgba(21, 27, 38, 0.55);
   --panel-border: rgba(232, 235, 244, 0.12);
 

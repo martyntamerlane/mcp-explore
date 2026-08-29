@@ -126,7 +126,7 @@ Measured on the rendered mockups — smallest grey text against the most saturat
 | E, before the ink change | 4.05 |
 | **E** | **4.88** |
 
-Dark mode receives the same strengthening and must be re-measured, not assumed to transfer — `--ink-3` there is `#818899` on `#0f141c`. Entity accents, `--code-bg`, and the dune parity contract in `src/dune/theme.test.ts` are unchanged; `--ink-3` is not on that allowlist.
+Dark mode received the same strengthening — `--glow-a: rgba(34, 211, 238, 0.14)`, `--glow-b: rgba(167, 139, 250, 0.1)` — and was re-measured rather than assumed to transfer: `--ink-3` (`#818899`) against the most saturated dark canvas pixel measures **4.99:1**, so it keeps its value. Entity accents, `--code-bg`, and the dune parity contract in `src/dune/theme.test.ts` are unchanged; `--ink-3` is not on that allowlist.
 
 Motion: entrance choreography stays. The drawer's height animation goes with the drawer. Workspace content cross-fades on subject change (~160ms), instant under `prefers-reduced-motion`.
 
