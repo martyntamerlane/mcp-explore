@@ -1,5 +1,5 @@
 import type { ServerSnapshot } from "../mcp/types"
-import { parseSelection, resolveSelection, sameSelection, selectionSearch } from "./selectionUrl"
+import { parseSelection, readParams, resolveSelection, sameSelection, selectionParams } from "./selectionUrl"
 
 const snapshot = {
   serverInfo: { name: "s", version: "1" },
@@ -23,18 +23,56 @@ test("no kind, an empty kind, or two kinds at once all read as home", () => {
   expect(parseSelection("?tool=a&resource=b")).toBeNull()
 })
 
-test("the search string round-trips a selection", () => {
+test("the parameter string round-trips a selection", () => {
   const sel = { kind: "resource" as const, id: "hf://models/meta/Llama 3" }
-  const search = selectionSearch("https://huggingface.co/mcp", sel)
-  expect(search).toBe("?server=https%3A%2F%2Fhuggingface.co%2Fmcp&resource=hf%3A%2F%2Fmodels%2Fmeta%2FLlama%203")
-  expect(parseSelection(search)).toEqual(sel)
+  const params = selectionParams("https://huggingface.co/mcp", sel)
+  expect(params).toBe("server=https%3A%2F%2Fhuggingface.co%2Fmcp&resource=hf%3A%2F%2Fmodels%2Fmeta%2FLlama%203")
+  expect(parseSelection(params)).toEqual(sel)
 })
 
-test("the server-only and empty forms are unchanged from before selections existed", () => {
-  expect(selectionSearch("https://w.example/mcp", null)).toBe("?server=https%3A%2F%2Fw.example%2Fmcp")
-  expect(selectionSearch(undefined, null)).toBe("")
+test("the parameters carry no sigil — the caller picks # or ?", () => {
+  expect(selectionParams("https://w.example/mcp", null)).toBe("server=https%3A%2F%2Fw.example%2Fmcp")
+  expect(selectionParams(undefined, null)).toBe("")
   // The demo server has no URL, but a selection in it is still addressable.
-  expect(selectionSearch(undefined, { kind: "tool", id: "a" })).toBe("?tool=a")
+  expect(selectionParams(undefined, { kind: "tool", id: "a" })).toBe("tool=a")
+})
+
+/**
+ * The fragment is where selection lives now (TODO-31): a query string is sent to
+ * GitHub Pages in the request for the document itself, so a shared `?server=`
+ * link handed the address of someone's MCP server to our host. A fragment is
+ * never transmitted. `?server=` is still read, forever, for links already shared.
+ */
+test("the fragment wins when it names a selection, and comes back without its sigil", () => {
+  // Bare parameters, symmetric with selectionParams. `URLSearchParams` strips a
+  // leading `?` but *not* a leading `#`, so returning `#tool=t` would parse as a
+  // key literally named `#tool` — the sigil has to come off here.
+  expect(readParams({ hash: "#server=a&tool=t", search: "" })).toBe("server=a&tool=t")
+  // A demo-server selection has no `server` at all, and must still win.
+  expect(readParams({ hash: "#tool=t", search: "" })).toBe("tool=t")
+  expect(readParams({ hash: "#resource=r", search: "?server=stale" })).toBe("resource=r")
+})
+
+test("a legacy ?server= link still reads, and an in-page anchor never shadows it", () => {
+  expect(readParams({ hash: "", search: "?server=a&tool=t" })).toBe("server=a&tool=t")
+  // The result outline's hrefs are heading slugs (Outline.tsx). One of those in
+  // the address bar must not be mistaken for a selection that shadows the query.
+  expect(readParams({ hash: "#how-does-it-work", search: "?server=a" })).toBe("server=a")
+  // A slug that happens to be one of our own key names has no value, so it is
+  // not a selection either.
+  expect(readParams({ hash: "#server", search: "?server=a" })).toBe("server=a")
+  expect(readParams({ hash: "#tool=", search: "?server=a" })).toBe("server=a")
+})
+
+test("what readParams returns is what parseSelection accepts", () => {
+  expect(parseSelection(readParams({ hash: "#tool=t", search: "" }))).toEqual({ kind: "tool", id: "t" })
+  expect(parseSelection(readParams({ hash: "", search: "?prompt=p" }))).toEqual({ kind: "prompt", id: "p" })
+})
+
+test("nothing anywhere reads as nothing", () => {
+  expect(readParams({ hash: "", search: "" })).toBe("")
+  expect(readParams({ hash: "#", search: "" })).toBe("")
+  expect(readParams({ hash: "", search: "?" })).toBe("")
 })
 
 test("a selection the server does not expose resolves to home", () => {

@@ -12,7 +12,7 @@
          `script-src 'self'`, which means no injected markup could load or inline
          a script even if something downstream ever did emit HTML.
 
-         `'unsafe-eval'` is here under protest and should not stay (ISSUE-17).
+         `'unsafe-eval'` is here under protest and should not stay (ISSUE-18).
          The MCP SDK validates a tool's structured output against the server's
          own `outputSchema`, and its default validator is AJV, which compiles
          each schema into a function with `new Function`. Without it, connecting

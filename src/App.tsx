@@ -8,7 +8,7 @@ import { RawViewProvider } from "./ui/deck/rawView"
 import { ModeProvider } from "./ui/ModeContext"
 import { ReadProvider } from "./ui/run/ReadContext"
 import { RunProvider } from "./ui/run/RunContext"
-import { parseSelection, resolveSelection, sameSelection, selectionSearch } from "./ui/selectionUrl"
+import { parseSelection, readParams, resolveSelection, sameSelection, selectionParams } from "./ui/selectionUrl"
 import type { EntitySelection } from "./ui/stage"
 import styles from "./App.module.css"
 
@@ -20,7 +20,7 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
   const [serverUrl, setServerUrl] = useState<string | undefined>(undefined)
   const [query, setQuery] = useState("")
   const [autoTarget, setAutoTarget] = useState<string | undefined>(
-    () => new URLSearchParams(window.location.search).get("server") ?? undefined,
+    () => new URLSearchParams(readParams(window.location)).get("server") ?? undefined,
   )
   const filterRef = useRef<HTMLInputElement>(null)
 
@@ -29,20 +29,31 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
    * user-initiated selection — that is what gives Back/Forward a history to
    * walk — and `replaceState` for anything the app decided on its own, so
    * connecting never buries the page the visitor arrived from.
+   *
+   * Written to the **fragment** (TODO-31): a query string is sent to GitHub
+   * Pages in the request for the document itself, so a shared link handed the
+   * address of someone's MCP server to our host. A fragment never leaves the
+   * browser. `readParams` still reads `?server=` for links shared before this.
+   *
+   * The whole relative URL is rebuilt rather than passing a bare `"#…"`, which
+   * resolves against the current URL and would *keep* an existing query string —
+   * so a visitor arriving on a legacy `?server=` link would end up carrying both.
    */
   const writeUrl = (url: string | undefined, selection: EntitySelection | null, mode: "push" | "replace") => {
-    const search = selectionSearch(url, selection) || window.location.pathname
-    if (mode === "push") window.history.pushState(null, "", search)
-    else window.history.replaceState(null, "", search)
+    const params = selectionParams(url, selection)
+    const next = window.location.pathname + (params === "" ? "" : "#" + params)
+    if (mode === "push") window.history.pushState(null, "", next)
+    else window.history.replaceState(null, "", next)
   }
 
   function handleConnected(connection: Connection, source: { url?: string }) {
     // A deep link's selection only applies to the server it was written for,
     // and only if that server still exposes it.
-    const params = new URLSearchParams(window.location.search)
+    const arrived = readParams(window.location)
+    const params = new URLSearchParams(arrived)
     const linked =
       source.url !== undefined && params.get("server") === source.url
-        ? resolveSelection(parseSelection(window.location.search), connection.snapshot)
+        ? resolveSelection(parseSelection(arrived), connection.snapshot)
         : null
     writeUrl(source.url, linked, "replace")
     setServerUrl(source.url)
@@ -65,7 +76,7 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
   useEffect(() => {
     if (phase.status !== "connected") return
     const { snapshot } = phase.connection
-    const onPop = () => setSelected(resolveSelection(parseSelection(window.location.search), snapshot))
+    const onPop = () => setSelected(resolveSelection(parseSelection(readParams(window.location)), snapshot))
     window.addEventListener("popstate", onPop)
     return () => window.removeEventListener("popstate", onPop)
   }, [phase])
