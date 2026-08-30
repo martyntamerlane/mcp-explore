@@ -130,7 +130,7 @@ Verified 2026-08-30 before writing any of it, and the claim holds: no backend, t
 
 2026-08-30: **Session A shipped.** Selection now lives in `#server=…`, `?server=` is read forever for links already shared, and the address box, deep links, Back/Forward, folder-unfolding and the ISSUE-12 consent gate all behave as before. Verified in a real browser against the production build: the document request for a selected page carries **no query string and no trace of the server address**. Two things the plan had wrong turned up in the doing and are corrected in §4.1 — `URLSearchParams` strips a leading `?` but not a leading `#`, and "has a `server` key" is the wrong test for which half of the address bar wins, because a demo-server selection has no server in it at all.
 
-Session B (the panel) is new furniture on the hero and therefore behind the CLAUDE.md visual-approval gate — **that gate holds even under an instruction to implement the whole plan**. Its copy also has a new dependency: ISSUE-18 landed in PR #8, so the CSP now carries `'unsafe-eval'` and a server's `outputSchema` is compiled to a function in the visitor's browser. Either TODO-33 lands first and the claim gets stronger, or the panel discloses it.
+Session B (the panel) is new furniture on the hero and therefore behind the CLAUDE.md visual-approval gate — **that gate holds even under an instruction to implement the whole plan**. 2026-08-30: **TODO-33 landed first, deliberately** — describing the system made it obvious that "a schema your server sends is compiled into a function in your browser" was a sentence better deleted from the world than written well. The panel now describes an interpreting validator under a plain `script-src 'self'`.
 
 
 ---
@@ -155,22 +155,20 @@ scroll past the whole list to reach every result), or list-then-panel with a way
 back (much better to use, and the standard phone pattern, but it introduces a
 navigation step the desktop layout does not have and would need its own spec).
 
-### TODO-33: Stop compiling untrusted schemas, and drop `'unsafe-eval'` — S
-
-The CSP added 2026-08-30 carries `'unsafe-eval'` under protest, because the MCP
-SDK's default validator is AJV and AJV compiles each server-supplied
-`outputSchema` into a function with `new Function`. Two things follow: the policy
-is weaker than it should be, and a JSON Schema from an untrusted server becomes
-executable code in the visitor's browser — the one place in this app where
-untrusted input reaches a code generator. See ISSUE-18.
-
-The SDK accepts a `jsonSchemaValidator` of our own. Either `@cfworker/json-schema`
-(the SDK already ships a provider for it, and it interprets rather than
-generates) or a small validator written here. The first is a new dependency and
-needs sign-off; the second is more code but none. Either removes the code
-generation and lets `script-src` go back to plain `'self'`.
-
 ## Completed
+
+### TODO-33: Stop compiling untrusted schemas, and drop `'unsafe-eval'`
+
+**Complexity**: S — **Completed 2026-08-30**
+
+The CSP carried `'unsafe-eval'` under protest because the MCP SDK's default validator is AJV, which compiles each server-supplied `outputSchema` into a function with `new Function`. The weakened policy was the cheap half; the real one was that a JSON Schema from an untrusted server became executable code in the visitor's browser — the only place in this app where untrusted input reached a code generator (ISSUE-18).
+
+`src/mcp/validator.ts` now passes the SDK `CfWorkerJsonSchemaValidator`, which interprets the schema instead of generating code, and both `new Client(…)` call sites take it through a shared `CLIENT_OPTIONS` so a third connect path cannot quietly be added without it. `script-src` is back to plain `'self'`.
+
+**Dependency**: `@cfworker/json-schema` 4.1.1, the SDK's own optional peer — chosen over a hand-rolled validator because a validator is the wrong place to own a home-grown subset; its failure mode is silently accepting what it should reject. **Cost: bytes only, no paid resources.** +21.8 kB raw, **+5.8 kB gzipped** (790.9 → 812.7 kB). It is *added*, not substituted: AJV stays in the bundle because `client/index.js` imports it statically. It is never instantiated and never runs.
+
+Two things worth keeping. First, the regression test is a real discriminator rather than a ritual — `validator.test.ts` runs a validation with the global `Function` binding replaced by a throwing proxy, and that was checked **both ways** before being relied on: AJV throws under the trap (printing the function it had built from the schema), the interpreting validator passes. Second, jsdom could never have caught the original bug and cannot confirm this fix; it was verified in a real browser against `https://mcp.deepwiki.com/mcp` under the tightened policy — connect, list and a real `read_wiki_structure` call, with zero CSP violations and zero page errors.
+
 
 ### TODO-9: Connection-layer hardening
 

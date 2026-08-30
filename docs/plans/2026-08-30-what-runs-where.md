@@ -42,8 +42,8 @@ Swept `src/` for `fetch` / `XMLHttpRequest` / `sendBeacon` / `WebSocket` / `Even
 | **Tokens stay on the device.** Custom headers live in `localStorage` and are attached only to requests to the server URL they were saved against; they are never put in a URL. | `src/ui/recents.ts`; `src/mcp/connect.ts` `defaultFactories` |
 | **Server responses are never persisted.** Run history is in memory for the session only, deliberately. | `src/ui/run/runHistory.ts:16` |
 | **The demo server touches no network at all.** | `src/mcp/connect.ts` `connectDemo` over `InMemoryTransport` |
-| **It is enforced, not merely promised.** `script-src 'self' 'unsafe-eval'`, `object-src`/`frame-src`/`form-action`/`base-uri` `'none'`. `connect-src *` is the one open door and it is the product. | `index.html` (ISSUE-14) |
-| **⚠ `'unsafe-eval'` is a live caveat, not a footnote.** The SDK's default validator is AJV, which compiles each server-supplied `outputSchema` with `new Function` — so a JSON Schema from an untrusted server becomes executable code in the visitor's browser. `'self'` still blocks the classic vector (nothing external can be loaded or inlined as a script). | `index.html` CSP comment; ISSUE-18; [TODO-33](../../TODO.md) |
+| **What the page restricts.** `script-src 'self'` (no `'unsafe-eval'`), `object-src`/`frame-src`/`form-action`/`base-uri` `'none'`. `connect-src *` is the one open door and it is the product. | `index.html` (ISSUE-14) |
+| **Nothing a server sends becomes code.** The SDK is given an interpreting JSON Schema validator instead of its default, which compiled each `outputSchema` with `new Function`. | `src/mcp/validator.ts`; ISSUE-18; TODO-33, **done 2026-08-30** |
 
 **Re-verified 2026-08-30 after PR #8 merged.** Every other row above still holds; only the CSP row
 changed, and it changed in a direction the copy has to account for. Re-run the sweep in §2's first
@@ -248,22 +248,22 @@ Expanded — **What this page does with what a server sends**
 - Names, descriptions, and results are rendered as text. Nothing a server sends is inserted as HTML.
   *(verified: no `dangerouslySetInnerHTML` or `innerHTML` anywhere in `src/`; `Markdown.tsx:8` records
   the rule)*
-- If a tool declares an `outputSchema`, the MCP SDK compiles that schema into a JavaScript function to
-  check results against — the one place where something a server sent becomes code in your browser.
-  *(§2 row 10, ISSUE-18)*
+- If a tool declares an `outputSchema`, results are checked against it by a validator that reads the
+  schema. Nothing a server sends is turned into code. *(§2 row 10)*
 - A Content-Security-Policy in the page limits what can load: scripts from this origin only, no
-  plugins, no framing, no form submission. It allows `unsafe-eval`, which is what the schema
-  compilation above uses. *(§2 rows 9, 10)*
+  plugins, no framing, no form submission. *(§2 row 9)*
 - The source is public at `github.com/martyntamerlane/mcp-explore`. It has not been independently
   audited.
 
-Note what the last group does: it puts the schema compilation in front of the reader in the same plain
-voice as everything else. Under the old framing that was an awkward exception to a boast. Here it is
-simply another fact, and the reader can weigh it.
+Note what the last group still does, even with the compilation gone: it states the parts a claims
+framing would have had to manage as exceptions — that the source is public and has not been audited,
+that a CSP limits what can load without that being offered as a guarantee.
 
-**Sequencing, if [TODO-33](../../TODO.md) lands first**: the second and third bullets of that last group
-change to describe an interpreting validator and a `script-src 'self'` policy. They do not become a
-claim. Check `index.html` at the time of writing rather than trusting this plan.
+**[TODO-33](../../TODO.md) landed first (2026-08-30)**, which is why those two bullets read as they do.
+The reasoning is worth keeping: writing the description is what made it obvious that "a schema your
+server sends is compiled into a function in your browser" was a sentence better deleted from the world
+than written well. Describing a system honestly is a good way to find the parts you would rather not
+have to describe. Still check `index.html` at the time of writing rather than trusting this plan.
 
 ### 5.3 Tone
 

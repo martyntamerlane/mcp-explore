@@ -5,8 +5,19 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js"
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
 import { createDemoServer } from "./demo/demoServer"
 import type { Connection, ServerSnapshot, TransportKind } from "./types"
+import { jsonSchemaValidator } from "./validator"
 
 const CLIENT_INFO = { name: "mcp-explore", version: "0.1.0" }
+
+/**
+ * Every client is built with these. The validator is the point: the SDK's
+ * default compiles a server's `outputSchema` into a function with `new Function`
+ * (ISSUE-18), and this one interprets it instead — see `./validator`.
+ *
+ * Shared rather than repeated so that a third connect path cannot quietly be
+ * added without it; `validator.test.ts` pins that.
+ */
+export const CLIENT_OPTIONS = { jsonSchemaValidator }
 
 export interface TransportFactories {
   streamable(url: URL, headers: Record<string, string>): Transport
@@ -86,7 +97,7 @@ export async function snapshotClient(client: Client): Promise<ServerSnapshot> {
 export async function connectDemo(): Promise<Connection> {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   const server = createDemoServer()
-  const client = new Client(CLIENT_INFO)
+  const client = new Client(CLIENT_INFO, CLIENT_OPTIONS)
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)])
   const snapshot = await snapshotClient(client)
   return {
@@ -119,7 +130,7 @@ export async function connectUrl(
     { kind: "sse" as const, make: factories.sse },
   ]
   for (const { kind, make } of order) {
-    const client = new Client(CLIENT_INFO)
+    const client = new Client(CLIENT_INFO, CLIENT_OPTIONS)
     let phase: FailurePhase = "connect"
     try {
       await client.connect(make(url, headers))

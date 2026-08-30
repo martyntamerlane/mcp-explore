@@ -12,16 +12,15 @@
          `script-src 'self'`, which means no injected markup could load or inline
          a script even if something downstream ever did emit HTML.
 
-         `'unsafe-eval'` is here under protest and should not stay (ISSUE-18).
-         The MCP SDK validates a tool's structured output against the server's
-         own `outputSchema`, and its default validator is AJV, which compiles
-         each schema into a function with `new Function`. Without it, connecting
-         to any server declaring an `outputSchema` dies with "Error compiling
-         schema" — deepwiki among them. Note what that says beyond CSP: schemas
-         arrive from an untrusted server and become code in the visitor's
-         browser. The SDK takes a `jsonSchemaValidator` of our own, and a
-         non-generating one would drop this back to plain `'self'` and remove
-         the code generation with it.
+         `script-src 'self'` with no `'unsafe-eval'` (TODO-33, closing
+         ISSUE-18). It briefly carried `'unsafe-eval'` because the SDK's default
+         validator is AJV, which compiles each server-supplied `outputSchema`
+         into a function with `new Function` — untrusted input reaching a code
+         generator, which is a worse fact than the weakened policy that revealed
+         it. `src/mcp/validator.ts` now passes the SDK an interpreting validator
+         instead, so nothing generates code and the policy needs no exception.
+         `validator.test.ts` pins that by running validation with the global
+         `Function` binding trapped.
 
          `style-src` needs 'unsafe-inline' for React's style attributes (table
          alignment in the markdown renderer, the motion library's animations).
@@ -35,7 +34,7 @@
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self';
-               script-src 'self' 'unsafe-eval';
+               script-src 'self';
                style-src 'self' 'unsafe-inline';
                img-src 'self' data:;
                font-src 'self' data:;
