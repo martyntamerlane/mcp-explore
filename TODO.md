@@ -116,6 +116,23 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 
 ---
 
+### TODO-31: Say that it runs on your device — and make that true without an asterisk
+
+**Complexity**: S — **plan**: [`docs/plans/2026-08-30-local-execution-trust.md`](docs/plans/2026-08-30-local-execution-trust.md) — **Session A done 2026-08-30**
+
+The app's whole architecture is a privacy claim — zero backend, browser-direct, tokens never in URLs — and the landing page says none of it, while asking visitors to paste an internal server address and often a bearer token beside it. Add a permanent trust statement under the two doors: one sentence at rest, a **How this works** disclosure carrying the specifics *and* the honest edges (GitHub Pages sees the page request like any host; recents and remembered headers do sit in local storage, unencrypted; a failed connect sends one extra probe to the address you typed; the example chips contact third parties).
+
+Verified 2026-08-30 before writing any of it, and the claim holds: no backend, the only `fetch(` in the codebase is `probe.ts`'s reachability probe against the visitor's own URL, no analytics or third-party scripts, fonts bundled rather than fetched, tokens confined to `localStorage` and the server they were saved against, results never persisted, and `script-src 'self'` enforcing it. The evidence table is §2 of the plan — it is the durable half, since the next dependency added is what would quietly falsify a line of the copy.
+
+**One exception, which is why this is two sessions and not one.** Selection lives in the query string (TODO-25), so opening a shared link or reloading sends `?server=…` to GitHub Pages in the request for the document itself — the MCP server's address reaches GitHub's edge (never tokens, never arguments, never responses). Session A moves the canonical form to the **fragment** (`#server=…`), which is never transmitted, reading `?server=` forever for links already in the wild. It changes nothing on screen, is not blocked by the copy's design gate, and should ship first because it is what licenses the copy.
+
+2026-08-30: **Session A shipped.** Selection now lives in `#server=…`, `?server=` is read forever for links already shared, and the address box, deep links, Back/Forward, folder-unfolding and the ISSUE-12 consent gate all behave as before. Verified in a real browser against the production build: the document request for a selected page carries **no query string and no trace of the server address**. Two things the plan had wrong turned up in the doing and are corrected in §4.1 — `URLSearchParams` strips a leading `?` but not a leading `#`, and "has a `server` key" is the wrong test for which half of the address bar wins, because a demo-server selection has no server in it at all.
+
+Session B (the panel) is new furniture on the hero and therefore behind the CLAUDE.md visual-approval gate — **that gate holds even under an instruction to implement the whole plan**. Its copy also has a new dependency: ISSUE-18 landed in PR #8, so the CSP now carries `'unsafe-eval'` and a server's `outputSchema` is compiled to a function in the visitor's browser. Either TODO-33 lands first and the claim gets stronger, or the panel discloses it.
+
+
+---
+
 ### TODO-32: A mobile layout for the workspace — L
 
 The workspace has no mobile form. The browse column is a fixed 300px that never
