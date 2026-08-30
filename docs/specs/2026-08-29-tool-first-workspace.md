@@ -49,6 +49,8 @@ The inner boundary card (border, radius, backdrop blur, 20px margin) is removed 
 
 Separated from the column by a hairline, not a card. Holds exactly one subject: home, a tool, a resource, or a prompt. Switching subjects cross-fades content; the region itself never moves.
 
+> **Amended 2026-08-30** by [`2026-08-30-tool-legibility.md`](2026-08-30-tool-legibility.md). "No card, no frame" still holds for the work *surface*. It no longer holds for the **result region inside it**, which is now a hairline-bordered box on a faint fill — the one framed region in the workspace, and the only thing that answers where the tool's definition stops and the server's answer begins. §6's flat subject layout is superseded by that spec's three zones.
+
 ## 4. Click contract
 
 | Subject | One click does |

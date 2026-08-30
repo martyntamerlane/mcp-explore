@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
+import { useMode } from "../ModeContext"
 import { useReads } from "../run/ReadContext"
 import { useRuns } from "../run/RunContext"
-import { fieldSpecs, initialValues, type Values } from "../form/argValues"
+import { fieldSpecs, initialValues, valuesFromArgs, type Values } from "../form/argValues"
 import type { EntitySelection, StageProps } from "../stage"
 import BrowseColumn from "./BrowseColumn"
+import { availableCommands, runCommand, type Command } from "./commands"
+import { useRawView } from "./rawView"
 import { buildDeckModel } from "./deckModel"
 import Workspace from "./Workspace"
 import styles from "./DeckView.module.css"
@@ -18,28 +21,36 @@ const subjectKey = (selection: EntitySelection) => `${selection.kind}:${selectio
  * switching subject and coming back. They are session state only — nothing is
  * persisted, because arguments can carry anything the user typed.
  */
-export default function DeckView({ snapshot, transportKind, selection, onSelect, query }: StageProps) {
+export default function DeckView({
+  snapshot,
+  transportKind,
+  selection,
+  onSelect,
+  query,
+  onQuery,
+  onFocusFilter,
+  onCopyLink,
+  onDisconnect,
+}: StageProps) {
   const model = useMemo(() => buildDeckModel(snapshot), [snapshot])
   const { run } = useRuns()
   const { read } = useReads()
+  const { mode, toggle } = useMode()
+  const rawView = useRawView()
   const [valuesBySubject, setValuesBySubject] = useState<Record<string, Values>>({})
 
-  // Escape returns to home. Nothing else listens for it now that arming is gone.
-  useEffect(() => {
-    if (selection === null) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onSelect(null)
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [selection, onSelect])
+  // Keys are the browse column's job now (interaction roadmap S1) — Escape
+  // included, since it first clears the filter and only then returns home.
 
   const values = selection === null ? {} : (valuesBySubject[subjectKey(selection)] ?? {})
 
   const setValue = (name: string, value: string) => {
     if (selection === null) return
     const key = subjectKey(selection)
-    setValuesBySubject((all) => ({ ...all, [key]: { ...(all[key] ?? {}), [name]: value } }))
+    setValuesBySubject((all) => ({
+      ...all,
+      [key]: { ...(all[key] ?? {}), [name]: value },
+    }))
   }
 
   /**
@@ -62,9 +73,57 @@ export default function DeckView({ snapshot, transportKind, selection, onSelect,
     setValuesBySubject((all) => (key in all ? all : { ...all, [key]: initialValues(specs) }))
   }
 
+  /**
+   * Restoring a past run refills the form that produced it, so "edit and re-run"
+   * is one click (interaction roadmap S3). It replaces the whole value set
+   * rather than merging: a run is a complete set of arguments, and half-merging
+   * it with what is currently typed would produce a form matching neither.
+   */
+  const restoreArgs = (args: Record<string, unknown>) => {
+    if (selection === null || selection.kind !== "tool") return
+    const tool = snapshot.tools.find((t) => t.name === selection.id)
+    if (!tool) return
+    const restored = valuesFromArgs(fieldSpecs(tool.inputSchema), args)
+    setValuesBySubject((all) => ({
+      ...all,
+      [subjectKey(selection)]: restored,
+    }))
+  }
+
+  /**
+   * Command mode's list (interaction roadmap S2). Assembled here because this is
+   * the one place that can see all of it: the selection, the theme, and whether
+   * anything on screen is rendered markdown. Every entry is a second route to an
+   * action that already exists — no command adds a capability.
+   */
+  const commands = availableCommands({
+    hasSelection: selection !== null,
+    mode,
+    raw: rawView.raw,
+    hasRenderable: rawView.renderable > 0,
+  })
+
+  const dispatch = (command: Command) =>
+    runCommand(command.id, {
+      home: () => select(null),
+      copyLink: onCopyLink,
+      setRaw: rawView.setAll,
+      toggleTheme: toggle,
+      disconnect: onDisconnect,
+    })
+
   return (
     <div className={styles.stage}>
-      <BrowseColumn model={model} query={query} selection={selection} onSelect={select} />
+      <BrowseColumn
+        model={model}
+        query={query}
+        onQuery={onQuery}
+        onFocusFilter={onFocusFilter}
+        selection={selection}
+        onSelect={select}
+        commands={commands}
+        onRunCommand={dispatch}
+      />
       <Workspace
         snapshot={snapshot}
         transportKind={transportKind}
@@ -72,6 +131,7 @@ export default function DeckView({ snapshot, transportKind, selection, onSelect,
         values={values}
         onValueChange={setValue}
         onRun={run}
+        onRestoreArgs={restoreArgs}
         onGetPrompt={(name, args) => read("prompt", name, args)}
       />
     </div>

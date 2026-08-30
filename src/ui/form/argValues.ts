@@ -128,3 +128,31 @@ export function assembleArgs(specs: FieldSpec[], values: Values): Assembly {
 export function canSubmit(assembly: Assembly): boolean {
   return assembly.missing.length === 0 && Object.keys(assembly.errors).length === 0
 }
+
+/**
+ * The inverse of `assembleArgs`: a past run's arguments back into form strings,
+ * so restoring a run from the history refills the fields that produced it and
+ * "edit and re-run" is one click (interaction roadmap S3).
+ *
+ * Arguments come back out of a record the app itself wrote, but the record holds
+ * `unknown` — a JSON field can contain anything — so every branch is total.
+ */
+export function valuesFromArgs(specs: FieldSpec[], args: Record<string, unknown>): Values {
+  const asText = (v: unknown): string => (typeof v === "string" ? v : JSON.stringify(v) ?? String(v))
+  return Object.fromEntries(
+    specs.map((spec) => {
+      const value = args[spec.name]
+      if (value === undefined) return [spec.name, ""]
+      switch (spec.kind) {
+        case "stringList":
+          return [spec.name, Array.isArray(value) ? value.map(asText).join(", ") : asText(value)]
+        case "json":
+          return [spec.name, JSON.stringify(value, null, 2) ?? ""]
+        case "boolean":
+          return [spec.name, value === true ? "true" : "false"]
+        default:
+          return [spec.name, asText(value)]
+      }
+    }),
+  )
+}

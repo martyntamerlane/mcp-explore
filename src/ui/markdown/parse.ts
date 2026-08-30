@@ -35,7 +35,8 @@ export type Inline =
 export type Align = "left" | "center" | "right" | null
 
 export type Block =
-  | { type: "heading"; level: number; children: Inline[] }
+  /** `id` is stamped by parseDocument, not by parseBlocks — see below. */
+  | { type: "heading"; level: number; children: Inline[]; id?: string }
   | { type: "paragraph"; children: Inline[] }
   | { type: "code"; lang?: string; value: string }
   | { type: "list"; ordered: boolean; start: number; items: Block[][] }
@@ -508,5 +509,101 @@ export function parseInline(src: string, depth = 0): Inline[] {
   }
 
   flush()
+  return out
+}
+
+
+/* ── document headings (interaction roadmap S4 / TODO-29) ──
+   The result outline needs a stable anchor per heading, and the anchor in the
+   outline must be the anchor in the rendered document or clicking it goes
+   nowhere. Both come from `parseDocument`, so they agree by construction rather
+   than by two implementations happening to match. */
+
+export interface HeadingRef {
+  id: string
+  level: number
+  text: string
+}
+
+/** A heading's plain text, for slugging and for the outline's own label. */
+export function inlineText(nodes: Inline[]): string {
+  return nodes
+    .map((n) => {
+      switch (n.type) {
+        case "text":
+        case "code":
+          return n.value
+        case "image":
+          return n.alt
+        default:
+          return inlineText(n.children)
+      }
+    })
+    .join("")
+}
+
+/** Enough for an id; a heading longer than this is already unusable as a label. */
+const MAX_SLUG_CHARS = 60
+
+/**
+ * Headings come from an untrusted server, so this must be total: emoji-only,
+ * empty, punctuation-only and 500-character headings all have to produce a
+ * usable id. Anything that is not a letter or a number becomes a separator, and
+ * a heading that survives that as nothing at all is called "section".
+ */
+export function slugify(text: string): string {
+  const base = text
+    .toLowerCase()
+    .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, MAX_SLUG_CHARS)
+    .replace(/-+$/g, "")
+  return base === "" ? "section" : base
+}
+
+/**
+ * Parse, then stamp every heading with a unique id in document order.
+ *
+ * The prefix scopes ids to one block of a multi-block result: two blocks can
+ * each open with "## Overview", and two elements sharing a DOM id would send
+ * every outline link to the first one.
+ */
+export function parseDocument(text: string, idPrefix = ""): Block[] {
+  const blocks = parseBlocks(text)
+  const taken = new Map<string, number>()
+  const walk = (list: Block[]) => {
+    for (const block of list) {
+      if (block.type === "heading") {
+        const base = slugify(inlineText(block.children))
+        const seen = (taken.get(base) ?? 0) + 1
+        taken.set(base, seen)
+        const unique = seen === 1 ? base : `${base}-${seen}`
+        block.id = idPrefix === "" ? unique : `${idPrefix}-${unique}`
+      } else if (block.type === "quote") {
+        walk(block.children)
+      } else if (block.type === "list") {
+        block.items.forEach(walk)
+      }
+    }
+  }
+  walk(blocks)
+  return blocks
+}
+
+/** The headings of a parsed document, in order. Ids come from parseDocument. */
+export function documentHeadings(blocks: Block[]): HeadingRef[] {
+  const out: HeadingRef[] = []
+  const walk = (list: Block[]) => {
+    for (const block of list) {
+      if (block.type === "heading") {
+        if (block.id !== undefined) out.push({ id: block.id, level: block.level, text: inlineText(block.children) })
+      } else if (block.type === "quote") {
+        walk(block.children)
+      } else if (block.type === "list") {
+        block.items.forEach(walk)
+      }
+    }
+  }
+  walk(blocks)
   return out
 }

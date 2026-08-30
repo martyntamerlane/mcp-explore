@@ -126,6 +126,56 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 
 ## Completed
 
+### TODO-30: Tool legibility — three zones in the workspace
+
+**Complexity**: S — **Completed 2026-08-30**
+
+The subject pane was one flat stack of seven elements at one rhythm, so nothing said which of them belonged together and the Run button sat at the bottom of a form four arguments tall. Now three zones — what it is, what it wants, what it gave back — with `ARGUMENTS` renamed **INPUT REQUIRED** (or **INPUT** when nothing is required, which is true of every demo tool), Run on the label's line, optional arguments folded behind a disclosure when something is required to fold beneath, the description clamped to three lines, and the result **contained** in a hairline region so the server's answer is visibly not part of the definition. The selected browse segment now takes its own kind's accent. Audited across tools, resources and prompts per CLAUDE.md; specced in [`docs/specs/2026-08-30-tool-legibility.md`](docs/specs/2026-08-30-tool-legibility.md).
+
+### TODO-26: Keyboard navigation and command mode
+
+**Complexity**: M — **Completed 2026-08-30**
+
+The app has exactly one key binding (Esc → home). Make the **existing** filter input in the chrome band the keyboard surface: `/` focuses it, ↑↓ walk the filtered list, ⏎ selects, `>` switches it to command mode. Deliberately **not** a ⌘K overlay — every source points at one, and it is the archetypal arriving surface this project has twice rejected; the permanent filter box gets a second job instead. Includes shortcut legibility (keycap glyphs are a new visual pattern needing approval). Sessions **S1** (navigation) and **S2** (command mode) of the interaction roadmap.
+
+2026-08-29: **S1 shipped** — `/`, ↑↓ (a highlight, not a per-keystroke selection), ⏎, →←, and Escape's two-stage unwind, with the key model pure in `src/ui/deck/keynav.ts` (`docs/specs/2026-08-29-addressable-selection.md`).
+
+2026-08-30: **S2 shipped — this TODO is done.** `>` in the filter turns the browse column into the command list (six commands, all second routes to existing buttons), matching and dispatch pure in `src/ui/deck/commands.ts`, and shortcut legibility carried by an approved flat keycap — inside the filter (`/` at rest, `>` when focused) and as a legend under the command list. `--radius-xs` added for it. `docs/specs/2026-08-29-command-mode.md`.
+
+### TODO-29: Result outline in the right margin
+
+**Complexity**: S — **Completed 2026-08-29**
+
+A sticky **ON THIS PAGE** list built from the heading levels the parser already emits, making deepwiki's 76-heading `read_wiki_contents` navigable. It fills the margin the reading pass created — 780 content + 32 + 200 outline fits inside the existing 1080 subject cap — so it costs the reading measure nothing. Session **S4** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md), specced in [`docs/specs/2026-08-29-result-outline.md`](docs/specs/2026-08-29-result-outline.md).
+
+Resolved in-session: **three headings** is the threshold (checked against a short `ask_question` answer, `read_wiki_contents` and a Hugging Face `SKILL.md`); **1380px** is the width below which it simply is not there, with no mobile substitute; the home view's `instructions` are not outlined. Anchors and entries come from one function (`parseDocument`) so they cannot drift, and ids carry a per-block prefix so two blocks opening with the same heading do not collide.
+
+Recorded for the next component that measures the DOM: the first version returned `null` until it had measured, so it never had a node to measure from and never appeared — silently, on the live site only, with every unit test passing. It now stays mounted and marks itself `data-empty`.
+
+### TODO-27: Run history per tool
+
+**Complexity**: M — **Completed 2026-08-29**
+
+`RunContext` kept exactly one result per tool name, so running a tool again with different arguments discarded the previous answer — request history being the one feature every API client treats as core. A tool now keeps its last **ten** runs, newest first, each labelled by its arguments and restorable into the form so "edit and re-run" is one click. Failed runs join the list beside the successes. In memory only: persisting server responses has a token/PII surface that needs its own decision, and a single deepwiki result is ~1 MB. Session **S3** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md), specced in [`docs/specs/2026-08-29-run-record.md`](docs/specs/2026-08-29-run-record.md). The state shape is pure in `src/ui/run/runHistory.ts`; `valuesFromArgs` in `argValues.ts` is the restore path and round-trips against `assembleArgs`.
+
+Label budget resolved live: each argument value gets an **equal share**, not first-come truncation — deepwiki's long `repoName` otherwise ate the whole budget and left every run labelled `question: How does…`.
+
+### TODO-28: Honest progress during a run
+
+**Complexity**: S — **Completed 2026-08-29**
+
+A call in flight now shows a ticking elapsed time (`Running… 4.2s`) instead of a static word, for tool runs and for slow resource/prompt reads alike.
+
+The spike the plan required, answered 2026-08-29: the installed SDK **does** surface `notifications/progress` to a browser client (`callTool(..., { onprogress, resetTimeoutOnProgress })`), and **no real server sends any** — measured zero notifications from deepwiki `read_wiki_contents` (0.8 s), deepwiki `ask_question` (12.2 s) and Hugging Face `hub_repo_search`. `onprogress` is wired regardless and its report renders beside the counter, but elapsed time is what carries the common case. The plan's other fallback — a live character count as text arrives — is **not possible**: `tools/call` returns one JSON-RPC result, not a stream, so nothing arrives until everything does; claiming a count would have been the dishonest option.
+
+### TODO-25: Selection in the URL
+
+**Complexity**: S — **Completed 2026-08-29**
+
+`?server=…&tool=NAME` (and `&resource=`/`&prompt=`) so a link can address a specific subject, Back/Forward walk selection history, and reload holds your place. Before this, `App.tsx` put only the server in the URL and used `replaceState` for everything, so every share and every reload landed on Home — a hole in the app's core promise, since the whole pitch is "paste a URL and see inside a server". Session **S1** of [`docs/plans/2026-08-29-interaction-roadmap.md`](docs/plans/2026-08-29-interaction-roadmap.md), specced in [`docs/specs/2026-08-29-addressable-selection.md`](docs/specs/2026-08-29-addressable-selection.md).
+
+Decisions worth keeping: a user-made selection pushes, everything the app decides replaces, and `popstate` reads the URL without writing back. A subject the server does not expose — or an empty parameter, or two kinds at once — reads as home and is cleaned out of the URL rather than shown as an error. A selection applies only to the server its link named. **A deep link opens a zero-argument tool but does not run it**, unlike a click. Resource URIs stay URIs rather than becoming indices: measured against Hugging Face, a link to a resource three folders deep is 143 characters, and an index would break the moment the server reorders its list.
+
 ### TODO-20: Resolve the three visual picks
 
 **Complexity**: S — **Completed 2026-08-29**

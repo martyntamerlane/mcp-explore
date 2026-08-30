@@ -1,6 +1,16 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { ModeProvider } from "./ModeContext"
 import ModeToggle from "./ModeToggle"
+
+// The mode lives in a provider now (interaction roadmap S2): command mode is a
+// second route to it, and a second owner of the state would desync from this one.
+const renderToggle = () =>
+  render(
+    <ModeProvider>
+      <ModeToggle />
+    </ModeProvider>,
+  )
 
 afterEach(() => {
   localStorage.clear()
@@ -18,14 +28,14 @@ const stubMatchMedia = (dark: boolean) =>
 
 test("initialises from the system preference and stamps the root", () => {
   stubMatchMedia(true)
-  render(<ModeToggle />)
+  renderToggle()
   expect(document.documentElement.dataset.mode).toBe("dark")
   expect(screen.getByRole("button", { name: /switch to light mode/i })).toBeInTheDocument()
 })
 
 test("clicking toggles the mode and persists the explicit choice", async () => {
   stubMatchMedia(false)
-  render(<ModeToggle />)
+  renderToggle()
   expect(document.documentElement.dataset.mode).toBe("light")
   await userEvent.click(screen.getByRole("button", { name: /switch to dark mode/i }))
   expect(document.documentElement.dataset.mode).toBe("dark")
@@ -38,6 +48,6 @@ test("clicking toggles the mode and persists the explicit choice", async () => {
 test("a stored choice beats the system preference on mount", () => {
   stubMatchMedia(true)
   localStorage.setItem("mcp-explore:mode", "light")
-  render(<ModeToggle />)
+  renderToggle()
   expect(document.documentElement.dataset.mode).toBe("light")
 })

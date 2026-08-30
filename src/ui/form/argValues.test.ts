@@ -1,5 +1,5 @@
 import { expect, test } from "vitest"
-import { assembleArgs, fieldSpecs, initialValues } from "./argValues"
+import { assembleArgs, fieldSpecs, initialValues, valuesFromArgs } from "./argValues"
 
 const schema = {
   type: "object",
@@ -92,4 +92,54 @@ test("prompt arguments become required-aware text fields", () => {
       initial: "",
     },
   ])
+})
+
+/* ── restoring a past run into the form (interaction roadmap S3) ── */
+
+const restoreSpecs = fieldSpecs({
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    limit: { type: "number" },
+    draft: { type: "boolean" },
+    status: { type: "string", enum: ["open", "closed"] },
+    repoName: { anyOf: [{ type: "string" }, { type: "array", items: { type: "string" } }] },
+    payload: { type: "object", properties: { a: { type: "string" } } },
+  },
+})
+
+test("a past run's arguments round-trip back through the form", () => {
+  const args = {
+    title: "Graph mis-renders",
+    limit: 5,
+    draft: true,
+    status: "open",
+    repoName: ["owner/repo", "other/repo"],
+    payload: { a: "b" },
+  }
+  const values = valuesFromArgs(restoreSpecs, args)
+  expect(values.title).toBe("Graph mis-renders")
+  expect(values.limit).toBe("5")
+  expect(values.draft).toBe("true")
+  expect(values.status).toBe("open")
+  expect(values.repoName).toBe("owner/repo, other/repo")
+  expect(values.payload).toBe('{\n  "a": "b"\n}')
+  // The point of the inverse: re-running a restored form sends the same call.
+  expect(assembleArgs(restoreSpecs, values).args).toEqual(args)
+})
+
+test("an argument the run omitted comes back blank, so re-running sends the same call", () => {
+  const values = valuesFromArgs(restoreSpecs, { title: "only this" })
+  // Blank, not "false" — a boolean the run never sent must stay unsent, which is
+  // exactly what an empty optional field means everywhere else in the form.
+  expect(values.limit).toBe("")
+  expect(values.draft).toBe("")
+  expect(assembleArgs(restoreSpecs, values).args).toEqual({ title: "only this" })
+})
+
+test("restoring is total against values a JSON field could hold", () => {
+  const values = valuesFromArgs(restoreSpecs, { title: 42, repoName: "one/repo", payload: null })
+  expect(values.title).toBe("42")
+  expect(values.repoName).toBe("one/repo")
+  expect(values.payload).toBe("null")
 })

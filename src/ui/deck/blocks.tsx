@@ -1,8 +1,10 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { looksLikeMarkdown } from "../markdown/detect"
 import Markdown from "../markdown/Markdown"
 import type { ReadDisplay } from "../run/readResult"
+import { elapsedLabel } from "../run/runHistory"
 import { MAX_RESULT_CHARS } from "../run/runResult"
+import { useRawView } from "./rawView"
 import styles from "./Workspace.module.css"
 
 /**
@@ -18,18 +20,27 @@ import styles from "./Workspace.module.css"
  * it is always reversible: "Show raw" gives back the exact bytes the server
  * sent (spec 2026-08-29-markdown-rendering.md §4).
  */
-export function TextBlock({ text, mime }: { text: string; mime?: string }) {
+export function TextBlock({ text, mime, idPrefix }: { text: string; mime?: string; idPrefix?: string }) {
   const markdown = useMemo(() => looksLikeMarkdown(text, mime), [text, mime])
-  const [raw, setRaw] = useState(false)
+  const view = useRawView()
+  // A click speaks for this block; a command speaks for all of them, and ends
+  // this block's dissent by moving the epoch on (see rawView.tsx).
+  const [local, setLocal] = useState<{ epoch: number; raw: boolean } | null>(null)
+  const raw = local !== null && local.epoch === view.epoch ? local.raw : view.raw
+
+  // Only a rendered block has raw bytes to switch to, so only a rendered block
+  // makes the command worth offering.
+  const { register } = view
+  useEffect(() => (markdown ? register() : undefined), [markdown, register])
 
   if (!markdown) return <pre className={styles.code}>{text}</pre>
 
   return (
     <>
-      <button type="button" className={styles.ghostButton} onClick={() => setRaw((r) => !r)}>
+      <button type="button" className={styles.ghostButton} onClick={() => setLocal({ epoch: view.epoch, raw: !raw })}>
         {raw ? "Show rendered" : "Show raw"}
       </button>
-      {raw ? <pre className={styles.code}>{text}</pre> : <Markdown text={text} />}
+      {raw ? <pre className={styles.code}>{text}</pre> : <Markdown text={text} idPrefix={idPrefix} />}
     </>
   )
 }
@@ -51,7 +62,7 @@ export function ReadBlocks({ display }: { display: ReadDisplay }) {
       {display.blocks.map((b, i) => (
         <div key={i} className={styles.block}>
           {b.label && <p className={styles.microlabel}>{b.label.toUpperCase()}</p>}
-          {b.text !== undefined && <TextBlock text={b.text} mime={b.mime} />}
+          {b.text !== undefined && <TextBlock text={b.text} mime={b.mime} idPrefix={`b${i}`} />}
           {b.image && <img className={styles.image} src={b.image.src} alt={b.image.alt} />}
         </div>
       ))}
@@ -62,4 +73,25 @@ export function ReadBlocks({ display }: { display: ReadDisplay }) {
 
 export function Truncated() {
   return <p className={styles.quiet}>output capped at {MAX_RESULT_CHARS.toLocaleString("en-US")} characters</p>
+}
+
+/**
+ * A ticking counter while a call is in flight (interaction roadmap S3 / TODO-28).
+ * `read_wiki_contents` takes 10-15 seconds behind a static "Running…" that cannot
+ * distinguish working from hung — the one place this app failed its own claim to
+ * precision. A number that moves is the honest minimum; real progress arrives
+ * only if the server sends `notifications/progress`, and neither deepwiki nor
+ * Hugging Face does (spiked 2026-08-29).
+ *
+ * 100 ms, not 1 s: a counter that only ticks once a second looks frozen for its
+ * first second, which is the exact impression this exists to dispel.
+ */
+export function Elapsed({ since }: { since: number }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    setNow(Date.now())
+    const id = setInterval(() => setNow(Date.now()), 100)
+    return () => clearInterval(id)
+  }, [since])
+  return <>{elapsedLabel(now - since)}</>
 }

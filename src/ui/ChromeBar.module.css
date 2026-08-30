@@ -4,7 +4,7 @@
   align-items: center;
   gap: var(--sp-3);
   flex: none;
-  height: 58px;
+  height: var(--chrome-height);
   padding: 0 var(--sp-5);
   border-bottom: 1px solid var(--panel-border);
   background: var(--header-bg);
@@ -64,6 +64,29 @@
   gap: var(--sp-2);
 }
 
+/* The filter carries a keycap inside its right edge (interaction roadmap S2),
+   so the box reserves room for it rather than letting text slide underneath. */
+.filterWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.filterCap {
+  position: absolute;
+  right: var(--sp-2);
+  display: flex;
+  pointer-events: none;
+}
+
+/* In command mode the accent moves from tool-cyan to prompt-violet: the box is
+   no longer narrowing a list of tools, and the colour change is what says so
+   before a single command has been read. */
+.filterWrap[data-commanding] .filter {
+  border-color: color-mix(in srgb, var(--prompt) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--prompt) 14%, transparent);
+}
+
 .filter {
   width: 190px;
   padding: var(--sp-2) var(--sp-3);
@@ -83,6 +106,16 @@
 .filter:focus-visible {
   border-color: color-mix(in srgb, var(--tool) 55%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool) 14%, transparent);
+}
+
+/* Room for the cap, and for the mono face command mode types in. */
+.filterWrap .filter {
+  padding-right: var(--sp-6);
+}
+
+.filterWrap[data-commanding] .filter {
+  padding-right: var(--sp-3);
+  font-family: var(--mono);
 }
 
 .disconnect {

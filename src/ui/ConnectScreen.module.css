@@ -110,7 +110,9 @@
   max-width: var(--measure-prose);
 }
 
-.form { display: flex; gap: var(--sp-2); }
+/* The Connect door lost its sub-line (2026-08-30) — the form now sits directly
+   under the title and carries the air the sub used to provide. */
+.form { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
 .url {
   flex: 1;
   min-width: 0;
@@ -203,6 +205,36 @@
   text-align: left;
 }
 .recent:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ink) 30%, transparent); color: var(--ink); }
+
+/* Example servers reuse the recent chip's shape — same box, same hover — but
+   lead with a name rather than a URL, since the operator's name is what a
+   stranger recognises. The URL is the button's title. */
+.examples { margin-top: var(--sp-5); display: grid; gap: var(--sp-2); }
+.example {
+  /* A fixed name column, not flex — four operator names of very different
+     lengths left the notes starting at four different x positions. */
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-s);
+  border: 1px solid var(--panel-border);
+  background: color-mix(in srgb, var(--bg) 50%, transparent);
+  font-size: var(--fs-fine);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--ease-hover);
+}
+.example:hover:not(:disabled) { border-color: color-mix(in srgb, var(--ink) 30%, transparent); }
+.example:disabled { cursor: default; }
+.exampleName { font-weight: 500; color: var(--ink); }
+.exampleNote {
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* the secondary door's button — a plain control, no accent to spend */
 .demo {

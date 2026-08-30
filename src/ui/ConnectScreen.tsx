@@ -3,8 +3,10 @@ import { connectDemo as realConnectDemo, connectUrl as realConnectUrl } from "..
 import type { Connection } from "../mcp/types"
 import ConnectError from "./ConnectError"
 import Prism from "./deck/Prism"
+import { EXAMPLE_SERVERS } from "./examples"
 import ModeToggle from "./ModeToggle"
 import { loadRecents, saveRecent, type RecentServer } from "./recents"
+import { pickTagline } from "./taglines"
 import styles from "./ConnectScreen.module.css"
 
 export interface ConnectScreenProps {
@@ -31,6 +33,9 @@ export default function ConnectScreen({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [recents, setRecents] = useState<RecentServer[]>(() => loadRecents())
+  // Chosen once per mount, not per render — the headline must not change under
+  // the reader mid-visit.
+  const [tagline] = useState(pickTagline)
   const autoRan = useRef(false)
 
   const headersOf = (r: HeaderRow[]) =>
@@ -76,7 +81,7 @@ export default function ConnectScreen({
         <ModeToggle />
       </div>
       <p className={styles.kicker}>MCP EXPLORE</p>
-      <h1 className={styles.title}>See inside any MCP server.</h1>
+      <h1 className={styles.title}>{tagline}</h1>
       <p className={styles.sub}>Paste a server URL — get a living control deck of its tools, resources and prompts.</p>
       <p className={styles.gloss}>
         MCP is how apps hand tools and data to AI assistants — this shows you what a server offers.
@@ -86,9 +91,6 @@ export default function ConnectScreen({
         <section className={`${styles.door} ${styles.connectDoor}`} aria-label="Connect your server">
           <Prism className={styles.doorPrism} />
           <h2 className={styles.doorTitle}>Connect your server</h2>
-          <p className={styles.doorSub}>
-            Any CORS-enabled MCP server. It connects straight from this tab — no backend, nothing stored.
-          </p>
           <form
             className={styles.form}
             onSubmit={(e) => {
@@ -146,6 +148,23 @@ export default function ConnectScreen({
             </div>
           )}
 
+          <section className={styles.examples} aria-label="Example servers">
+            <p className={styles.microlabel}>TRY ONE</p>
+            {EXAMPLE_SERVERS.map((ex) => (
+              <button
+                key={ex.url}
+                type="button"
+                className={styles.example}
+                title={ex.url}
+                disabled={busy}
+                onClick={() => void connectTo(ex.url, {}, undefined)}
+              >
+                <span className={styles.exampleName}>{ex.name}</span>
+                <span className={styles.exampleNote}>{ex.note}</span>
+              </button>
+            ))}
+          </section>
+
           {recents.length > 0 && (
             <section className={styles.recents} aria-label="Recent servers">
               <p className={styles.microlabel}>RECENT</p>
@@ -164,9 +183,9 @@ export default function ConnectScreen({
           )}
         </section>
 
-        <section className={styles.door} aria-label="Explore a live demo">
-          <h2 className={styles.doorTitle}>Explore a live demo</h2>
-          <p className={styles.doorSub}>No setup — a demo server runs entirely in your browser tab.</p>
+        <section className={styles.door} aria-label="Explore an offline demo">
+          <h2 className={styles.doorTitle}>Explore an offline demo</h2>
+          <p className={styles.doorSub}>No setup, no network — a demo server runs entirely in your browser tab.</p>
           <button type="button" className={styles.demo} onClick={() => void handleDemo()} disabled={busy}>
             Explore the demo
           </button>

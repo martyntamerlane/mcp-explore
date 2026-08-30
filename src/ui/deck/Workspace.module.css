@@ -9,8 +9,61 @@
   border-left: 1px solid var(--panel-border);
 }
 
+/* Content column plus the outline's margin (interaction roadmap S4). Without an
+   outline this is exactly what it was: one column capped at --measure-read with
+   empty margin to its right. */
 .subject {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-6);
   max-width: var(--measure-subject);
+}
+
+.content {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: var(--measure-read);
+}
+
+/* ── zone 1: what this tool is (spec 2026-08-30-tool-legibility.md) ──
+   An identity strip rather than a bare heading: the same glyph the browse column
+   draws, the name, and the facts worth knowing before reading a word. */
+.subjectHead {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-2);
+}
+
+/* The glyph is lit in its own kind's accent, exactly as the selected row in the
+   browse column is — the workspace echoes where you came from. */
+.subjectHead svg[data-glyph] {
+  flex: none;
+  stroke: var(--tool);
+  fill: var(--tool);
+}
+
+.subjectHead[data-kind="resource"] svg[data-glyph] {
+  stroke: var(--resource);
+  fill: var(--resource);
+}
+
+.subjectHead[data-kind="prompt"] svg[data-glyph] {
+  stroke: var(--prompt);
+  fill: var(--prompt);
+}
+
+.headBadge {
+  flex: none;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: var(--sp-0) var(--sp-2);
+  white-space: nowrap;
 }
 
 .title {
@@ -19,6 +72,12 @@
   font-weight: 500;
   margin: 0 0 var(--sp-2);
   overflow-wrap: anywhere;
+}
+
+/* Inside the strip the row owns the spacing; alone (resources, prompts, home)
+   the heading keeps the margin it always had. */
+.subjectHead .title {
+  margin: 0;
 }
 
 .subtitle {
@@ -41,19 +100,6 @@
   font-size: var(--fs-fine);
   color: var(--ink-3);
   word-break: break-all;
-}
-
-.metaSide {
-  margin-left: var(--sp-3);
-  white-space: nowrap;
-}
-
-/* Same separator the home view's subtitle uses, so two mono facts on one line
-   read as a list rather than as an accidental double space. */
-.metaSide::before {
-  content: "·";
-  margin-right: var(--sp-3);
-  color: var(--ink-3);
 }
 
 /* ── home ── */
@@ -93,14 +139,23 @@
   color: var(--ink-2);
 }
 
-/* Six lines, then "Show more" (TODO-23). -webkit-line-clamp is the unprefixed
-   behaviour everywhere that matters; `line-clamp` is still not universal, so the
-   prefixed trio stays until it is. */
-.clamped {
+/* Clamp, then "Show more" (TODO-23 for the home view's instructions; the tool
+   description reuses it at three lines so the form clears the fold).
+   -webkit-line-clamp is the unprefixed behaviour everywhere that matters;
+   `line-clamp` is still not universal, so the prefixed pair stays until it is. */
+.clamped6 {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 6;
   line-clamp: 6;
+  overflow: hidden;
+}
+
+.clamped3 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
   overflow: hidden;
 }
 
@@ -125,21 +180,87 @@
   color: var(--ink-3);
 }
 
+/* ── zone 2: what it wants from you ──
+   The label and the Run button share one line. The button used to sit BELOW the
+   fields, which put the first thing anyone looks for at the bottom of a form
+   that can be four arguments tall; here it is at the top and still beside the
+   sentence saying why it is disabled. */
+.inputHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.inputHead .microlabel {
+  margin: 0;
+}
+
 .runRow {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   flex-wrap: wrap;
+}
+
+/* ── optional arguments, folded away ──
+   Borrows the browse column's folder language: a chevron, a count, and a
+   hairline rail down the left of what it holds. */
+.optional {
   margin-top: var(--sp-6);
 }
 
+.optionalToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) 0;
+  font-size: var(--fs-fine);
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--ease-hover);
+}
+
+.optionalToggle:hover {
+  color: var(--ink-2);
+}
+
+.chevron {
+  flex: none;
+  width: var(--sp-3);
+  font-size: var(--fs-micro);
+  transition: transform var(--ease-hover);
+}
+
+.chevron[data-open] {
+  transform: rotate(90deg);
+}
+
+.optionalFields {
+  margin-top: var(--sp-4);
+  padding-left: var(--sp-4);
+  border-left: 1px solid var(--panel-border);
+}
+
+/* The action button takes the accent of the subject it acts on. It was hard-wired
+   to the tool accent, which put a cyan "Get prompt" on an otherwise violet page
+   once the segment, the glyph and the selected row all started carrying their
+   own kind's colour (2026-08-30). */
 .run {
+  --accent: var(--tool);
+  --accent-bright: var(--tool-bright);
   padding: var(--sp-3) var(--sp-5);
   font-size: var(--fs-ui);
   font-weight: 500;
-  color: var(--tool-bright);
-  background: color-mix(in srgb, var(--tool) 10%, transparent);
-  border: 1px solid var(--tool);
+  color: var(--accent-bright);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid var(--accent);
   border-radius: var(--radius-s);
   cursor: pointer;
   transition: background var(--ease-hover), box-shadow var(--ease-hover), transform 80ms ease-out;
@@ -150,8 +271,13 @@
   font-family: var(--mono);
 }
 
+.run[data-kind="prompt"] {
+  --accent: var(--prompt);
+  --accent-bright: var(--prompt-bright);
+}
+
 .run:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--tool) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .run:active:not(:disabled) {
@@ -160,7 +286,7 @@
 
 .run:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool) 20%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 .run:disabled {
@@ -172,9 +298,41 @@
 
 /* ── output blocks ── */
 
+/* ── zone 3: what it gave back ──
+   Contained, not merely spaced. The result used to be a microlabel and some
+   blocks in the same flat column as the tool's own definition, so nothing said
+   where the definition stopped and the server's answer began. A hairline box on
+   a faint fill says it without a word. Deliberately the one framed region inside
+   the workspace (tool-first workspace spec §3.3 says the surface itself carries
+   no card) — approved 2026-08-30 as this pass's new pattern. */
 .resultArea {
   min-width: 0;
   margin-top: var(--sp-6);
+  padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  max-width: var(--measure-read);
+  background: color-mix(in srgb, var(--panel-solid) 45%, transparent);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-l);
+}
+
+.resultHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
+.resultHead .microlabel {
+  margin: 0;
+}
+
+.resultMeta {
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .block {
@@ -239,4 +397,89 @@
 .ghostButton:hover {
   color: var(--ink);
   border-color: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+/* ── run history (interaction roadmap S3) ──
+   Furniture inside the result region, not a drawer and not a panel: it sits
+   under the answer it belongs to and appears only once there is more than one
+   run to choose between. Rows borrow the browse column's row language —
+   hairline card, identifier face, accent earned by aria-current — so the two
+   lists in the app read as the same component family. */
+
+.history {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--panel-border);
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.historyRow {
+  --accent: var(--tool);
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--fs-fine);
+  text-align: left;
+  color: var(--ink-2);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+  transition: border-color var(--ease-hover), background var(--ease-hover), color var(--ease-hover);
+}
+
+.historyRow:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.historyRow:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.historyRow[aria-current] {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.historyTime {
+  flex: none;
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The label is the run's identity, so it takes the room and truncates last. */
+.historyLabel {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyStatus {
+  flex: none;
+  font-size: var(--fs-micro);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.historyStatus[data-failed] {
+  color: var(--danger);
 }

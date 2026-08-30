@@ -2,7 +2,9 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState, type
 import type { Connection } from "../../mcp/types"
 import { formatPromptMessages, formatReadError, formatResourceContents, type ReadDisplay } from "./readResult"
 
-export type ReadState = { status: "loading" } | { status: "done"; display: ReadDisplay }
+// `startedAt` so a slow read can show a ticking elapsed time rather than a
+// static "Loading…" (interaction roadmap S3 / TODO-28).
+export type ReadState = { status: "loading"; startedAt: number } | { status: "done"; display: ReadDisplay }
 
 export type ReadKind = "resource" | "prompt"
 
@@ -33,7 +35,7 @@ export function ReadProvider({ connection, children }: { connection: Connection;
       const guard = args === undefined ? key : `${key}|${JSON.stringify(args)}`
       if (started.current.has(guard)) return
       started.current.add(guard)
-      setReads((r) => ({ ...r, [key]: { status: "loading" } }))
+      setReads((r) => ({ ...r, [key]: { status: "loading", startedAt: Date.now() } }))
       const settle = (display: ReadDisplay) => {
         setReads((r) => ({ ...r, [key]: { status: "done", display } }))
       }

@@ -36,6 +36,8 @@ npm run build        # typecheck + production build
 - **These rules are living.** When Claude knows a better practice than one written here, it should say so and propose a change — never silently follow a rule it believes is wrong, and never silently deviate from one either.
 - **At the start of each session**, read and present `TODO.md` and `ISSUES.md` in the terminal. Ask the user whether they'd like to tackle any open items before starting new work.
 - **Always plan before implementing.** Discuss the approach before making significant changes, even for medium-sized tasks.
+- **Don't coin shorthand.** Only reuse a label that already exists in the repo (`TODO-26`, `ISSUE-7`, `S2`, a real spec section number). Never invent one mid-conversation — no "the two sign-offs", no "§3 (cordon)", no ad-hoc name for a process or a decision. Referring back to something by a term the user has never agreed to makes them reconstruct what was meant.
+- **Restate open decisions in full.** When ending a message with things awaiting the user's input, write out each one as a numbered question in its own words — not a back-reference to earlier prose. Repeat them verbatim each time they come up, however often that is.
 - Read and understand existing code before modifying it. Don't propose changes to code you haven't read.
 - Keep solutions simple and focused. Only make changes that are directly requested or clearly necessary.
 
