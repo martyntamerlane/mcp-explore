@@ -61,8 +61,10 @@ src/
       demoServer.ts   Built-in in-page McpServer (demo-issue-tracker), test fixture
       demoServer.test.ts  Tests for demoServer
   ui/
-    ConnectScreen.tsx      Two-door landing: connect door (URL/headers/recents), demo door
+    ConnectScreen.tsx      Two-door landing: connect door (URL/headers/examples/recents), offline-demo door
     ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
+    examples.ts            The four verified public MCP servers offered as one-click examples
+    taglines.ts            The five hero lines; one picked at random per page load
     recents.ts             localStorage recent-servers list (opt-in header persistence)
     stage.ts               StageProps / EntitySelection — the display-variant contract (null selection = home)
     selectionUrl.ts        Pure: query string <-> EntitySelection, resolve against a snapshot, compare

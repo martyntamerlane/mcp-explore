@@ -4,8 +4,10 @@ import userEvent from "@testing-library/user-event"
 import { connectDemo } from "../mcp/connect"
 import type { Connection } from "../mcp/types"
 import ConnectScreen from "./ConnectScreen"
+import { EXAMPLE_SERVERS } from "./examples"
 import { ModeProvider } from "./ModeContext"
 import { loadRecents, saveRecent } from "./recents"
+import { TAGLINES } from "./taglines"
 
 // The landing's mode toggle reads the app-level mode provider (App.tsx wraps
 // both phases in it), so the harness supplies one.
@@ -105,4 +107,21 @@ test("reconnecting via a recent preserves its stored headers", async () => {
   renderConnect(<ConnectScreen onConnected={vi.fn()} connectUrlFn={fn} />)
   await userEvent.click(screen.getByRole("button", { name: /old\.example/i }))
   await vi.waitFor(() => expect(loadRecents()[0].headers).toEqual({ "X-Key": "k" }))
+})
+
+test("the hero line is one of the taglines, and holds still across re-renders", () => {
+  const { rerender } = renderConnect(<ConnectScreen onConnected={vi.fn()} />)
+  const first = screen.getByRole("heading", { level: 1 }).textContent
+  expect(TAGLINES).toContain(first)
+  rerender(<ModeProvider><ConnectScreen onConnected={vi.fn()} /></ModeProvider>)
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(first!)
+})
+
+test("an example server connects to its own URL", async () => {
+  const { fn, calls } = demoBackedConnectUrl()
+  renderConnect(<ConnectScreen onConnected={vi.fn()} connectUrlFn={fn} />)
+  const deepwiki = EXAMPLE_SERVERS.find((e) => e.name === "DeepWiki")!
+  await userEvent.click(screen.getByRole("button", { name: new RegExp(deepwiki.name, "i") }))
+  await vi.waitFor(() => expect(calls).toHaveLength(1))
+  expect(calls[0]).toEqual({ url: deepwiki.url, headers: {} })
 })
