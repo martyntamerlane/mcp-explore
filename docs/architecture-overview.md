@@ -128,6 +128,8 @@ src/
     schema.ts               JSON Schema → schemaRows + friendlyType, under argValues and the views
     mode.ts                 Light/dark resolution: stored choice > system; data-mode stamping; live follow
     ModeContext.tsx         One owner for the mode — the toggle and the command are two routes to it
+    HowItWorks.tsx          The ⓘ and its panel: a description of what runs, what it
+                            connects to, and what is stored — no safety claims (TODO-31)
     ModeToggle.tsx          Sun/moon toggle (header + landing) persisting explicit choices
     Keycap.tsx              The flat keycap and the key legend (shortcut legibility)
     *.module.css            CSS modules for each ui/ component

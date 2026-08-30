@@ -1,8 +1,8 @@
 # Implementation plan — describing what runs where, and removing the one thing that made the description untrue
 
 **Date**: 2026-08-30
-**Status**: **§4 (Session A) done 2026-08-30** on `feat/what-runs-where`. §5 not started — it carries an
-unresolved design-approval gate.
+**Status**: **Done 2026-08-30** on `feat/what-runs-where` — §4 (Session A) and §5 (Session B) both shipped,
+along with TODO-33, which was sequenced ahead of §5 deliberately (see §5.2).
 **TODO**: [TODO-31](../../TODO.md)
 **Complexity**: S
 
@@ -166,9 +166,9 @@ Recorded for the next person driving this app headlessly: the workspace's region
 
 ## 5. Session B — a description of what runs, on the landing page
 
-> **APPROVAL GATE.** The expanded panel is new furniture on the hero, which CLAUDE.md's Visual
-> Consistency rule puts behind explicit user confirmation. **Do not build §5 without it**, even under an
-> instruction to implement this whole plan. §4 is unaffected and shipped regardless.
+> **APPROVAL GATE — passed 2026-08-30.** The user directed the shape: a small, subtle `ⓘ` opening a
+> "how this page works" popup, rather than the block-below-the-doors this section originally proposed.
+> Nothing was built before that.
 
 ### 5.0 The governing rule — read this before writing a single sentence
 
@@ -194,18 +194,38 @@ them is a boast. A description has no edges to manage, which is exactly why this
 "only ever", "completely", "entirely", "at all times". Each smuggles a promise into a sentence that
 could have stated a mechanism instead.
 
-### 5.1 Placement — recommendation
+### 5.1 Placement — **as built**
 
-A permanent block beneath the two doors in `ConnectScreen.tsx` (after the `</div>` closing `.doors`),
-carrying one descriptive line and a `▸ What runs where` disclosure that reuses the existing `.disclose`
-control already used by "Add headers" (`ConnectScreen.tsx:213`, `.module.css:164`).
+A small `ⓘ` immediately left of the sun/moon: inside `.modeCorner` on the landing (top right) and in the
+chrome band while connected. One component, both screens — the same "header + landing, never both at
+once" arrangement `ModeToggle` already documents for itself. The icon is a third instance of that
+button's shape, so it introduces no new visual vocabulary.
 
-Rationale, against the recorded taste for permanent furniture over surfaces that arrive: it must be
-readable *before* anyone types a token, so it cannot be a modal, a toast, or anything that appears on
-interaction. It sits below the doors rather than above them because it answers a question the doors
-provoke rather than announcing itself first.
+**Nothing else appears on the landing.** The icon is the only entry point; a line under the doors saying
+the same thing would be the same content twice.
 
-**Nothing is added post-connect.** The chrome band already carries server identity and transport.
+Why this beat the block-below-the-doors originally proposed here: that block would have said nothing to
+someone already connected and running tools, which is when the questions actually occur.
+
+**A centred panel, not a popover.** Four groups of statements is roughly 400 words; anchored under a
+top-right icon that becomes a tall strip against the screen edge with a bad measure.
+
+**Hand-rolled, not a native `<dialog>`.** jsdom implements no `showModal`, so a native dialog would have
+been verified against a shim rather than against itself — the ISSUE-10 lesson. Escape had to be
+intercepted by hand in any case.
+
+**Escape is caught in the capture phase on `window` and stopped there.** To the deck, Escape means
+"clear the filter, then go home" (`keynav.ts:154`), and home closes the connection. A bubble-phase
+handler would let one keypress close the panel *and* drop the visitor's server — the overlay-precedence
+problem the console drawer had in 2026-08-27, in a new place. Only Escape is intercepted; Tab still
+reaches the panel's own trap.
+
+**Focus** moves into the panel on open and back to the `ⓘ` on close, with a Tab trap, because
+`aria-modal="true"` would otherwise be true for a screen reader and false for the Tab key. Reintroducing
+an overlay reintroduces the obligation that deleting the drawer had retired (TODO-12).
+
+This is the app's first modal, at the user's direction, for content that genuinely is not part of the
+working surface.
 
 ### 5.2 The content — an inventory, not an argument
 

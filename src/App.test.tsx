@@ -44,6 +44,14 @@ test("full flow: demo → chrome band + workspace → tool subject → disconnec
   expect(await screen.findByLabelText(/server url/i)).toBeInTheDocument()
 })
 
+test("the chrome band offers the description while connected, not only on the landing", async () => {
+  render(<App />)
+  await userEvent.click(screen.getByRole("button", { name: /explore the demo/i }))
+  const bar = await screen.findByRole("banner")
+  await userEvent.click(within(bar).getByRole("button", { name: /how this page works/i }))
+  expect(screen.getByRole("heading", { name: "How this page works" })).toBeInTheDocument()
+})
+
 test("the filter in the chrome band narrows the browse column", async () => {
   render(<App />)
   await userEvent.click(screen.getByRole("button", { name: /explore the demo/i }))

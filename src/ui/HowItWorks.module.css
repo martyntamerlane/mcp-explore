@@ -1,0 +1,175 @@
+/* "How this page works" — the ⓘ and its panel.
+   The icon is a third instance of the small round glyph button the mode toggle
+   established; it deliberately introduces no new shape. */
+
+.icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-size: var(--fs-fine);
+  font-style: italic;
+  line-height: 1;
+  color: var(--ink-3);
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color var(--ease-hover), color var(--ease-hover);
+}
+.icon:hover {
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+.icon:focus-visible {
+  outline: none;
+  border-color: var(--tool);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool) 16%, transparent);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-5);
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+  backdrop-filter: blur(3px);
+  animation: fade var(--ease-panel);
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  /* The landing centres its hero, and that cascades in. This is prose. */
+  text-align: left;
+  /* Reading measure, not the viewport: the panel is prose. */
+  max-width: 620px;
+  max-height: min(80vh, 720px);
+  /* The title stays put and the statements scroll under it: the content is
+     taller than the panel on any laptop, and a heading that scrolls away takes
+     the reader's place in the document with it. */
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-l);
+  box-shadow: 0 24px 64px -24px color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+/* Without this the last line is guillotined by the panel edge, which reads as a
+   rendering fault rather than as "there is more below". */
+.panel::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 1px;
+  height: var(--sp-6);
+  border-radius: 0 0 var(--radius-l) var(--radius-l);
+  background: linear-gradient(transparent, var(--panel-solid));
+  pointer-events: none;
+}
+
+.panel:focus-visible {
+  outline: none;
+}
+.head {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.title {
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--fs-subhead);
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.close {
+  flex: none;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-fine);
+  line-height: 1;
+  color: var(--ink-3);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color var(--ease-hover), border-color var(--ease-hover);
+}
+.close:hover {
+  color: var(--ink);
+  border-color: var(--panel-border);
+}
+.close:focus-visible {
+  outline: none;
+  border-color: var(--tool);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tool) 16%, transparent);
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  gap: var(--sp-5);
+  /* Room for the fade above, so it never sits over a line of text. */
+  padding-bottom: var(--sp-4);
+}
+
+.group {
+  margin: 0 0 var(--sp-2);
+  font-family: var(--ui);
+  font-size: var(--fs-micro);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--sp-3);
+  font-size: var(--fs-fine);
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+/* A hairline rather than a bullet glyph: these are statements, not steps. */
+.list li {
+  padding-left: var(--sp-4);
+  border-left: 1px solid var(--panel-border);
+}
+
+.list code {
+  font-size: 0.95em;
+  color: var(--ink);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    animation: none;
+  }
+}

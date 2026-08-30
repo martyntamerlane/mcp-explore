@@ -240,3 +240,8 @@ test("an example server connects to its own URL", async () => {
   await vi.waitFor(() => expect(calls).toHaveLength(1))
   expect(calls[0]).toEqual({ url: deepwiki.url, headers: {} })
 })
+
+test("the landing offers the description of how the page works", () => {
+  renderConnect(<ConnectScreen onConnected={vi.fn()} />)
+  expect(screen.getByRole("button", { name: /how this page works/i })).toBeInTheDocument()
+})

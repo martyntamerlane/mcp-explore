@@ -268,4 +268,8 @@
   top: var(--sp-4);
   right: var(--sp-5);
   z-index: 2;
+  /* Two glyph buttons now: "How this page works", then the mode toggle. */
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
 }

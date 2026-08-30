@@ -116,25 +116,6 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 
 ---
 
-### TODO-31: Describe what runs where — and remove the one thing that made the description untrue
-
-**Complexity**: S — **plan**: [`docs/plans/2026-08-30-what-runs-where.md`](docs/plans/2026-08-30-what-runs-where.md) — **Session A done 2026-08-30**
-
-The app has an unusual architecture — zero backend, browser-direct, tokens never in URLs — and the landing page describes none of it, while asking visitors to paste an internal server address and often a bearer token beside it. Add a permanent block under the two doors: one descriptive line at rest, a **What runs where** disclosure holding an inventory grouped by question — where the code runs, what the page connects to, what is stored and where, and what the page does with what a server sends.
-
-**It makes no safety claims, by instruction (2026-08-30), and §5.0 of the plan forbids them.** No "safe", "secure", "private", "protected"; no "we never", "enforced", "guaranteed". Every line is an observable fact about mechanism and the reader draws their own conclusion. That rule is what lets the awkward facts sit in the same plain voice as the rest — unencrypted local storage, GitHub Pages seeing the page request, the post-failure probe, the third-party example servers, and the `outputSchema` a server sends being compiled into a function. Under a claims framing each of those was an exception to manage; here each is just another line.
-
-Verified 2026-08-30 before writing any of it, and the claim holds: no backend, the only `fetch(` in the codebase is `probe.ts`'s reachability probe against the visitor's own URL, no analytics or third-party scripts, fonts bundled rather than fetched, tokens confined to `localStorage` and the server they were saved against, results never persisted, and `script-src 'self'` enforcing it. The evidence table is §2 of the plan — it is the durable half, since the next dependency added is what would quietly falsify a line of the copy.
-
-**One exception, which is why this is two sessions and not one.** Selection lives in the query string (TODO-25), so opening a shared link or reloading sends `?server=…` to GitHub Pages in the request for the document itself — the MCP server's address reaches GitHub's edge (never tokens, never arguments, never responses). Session A moves the canonical form to the **fragment** (`#server=…`), which is never transmitted, reading `?server=` forever for links already in the wild. It changes nothing on screen, is not blocked by the copy's design gate, and should ship first because it is what licenses the copy.
-
-2026-08-30: **Session A shipped.** Selection now lives in `#server=…`, `?server=` is read forever for links already shared, and the address box, deep links, Back/Forward, folder-unfolding and the ISSUE-12 consent gate all behave as before. Verified in a real browser against the production build: the document request for a selected page carries **no query string and no trace of the server address**. Two things the plan had wrong turned up in the doing and are corrected in §4.1 — `URLSearchParams` strips a leading `?` but not a leading `#`, and "has a `server` key" is the wrong test for which half of the address bar wins, because a demo-server selection has no server in it at all.
-
-Session B (the panel) is new furniture on the hero and therefore behind the CLAUDE.md visual-approval gate — **that gate holds even under an instruction to implement the whole plan**. 2026-08-30: **TODO-33 landed first, deliberately** — describing the system made it obvious that "a schema your server sends is compiled into a function in your browser" was a sentence better deleted from the world than written well. The panel now describes an interpreting validator under a plain `script-src 'self'`.
-
-
----
-
 ### TODO-32: A mobile layout for the workspace — L
 
 The workspace has no mobile form. The browse column is a fixed 300px that never
@@ -156,6 +137,23 @@ back (much better to use, and the standard phone pattern, but it introduces a
 navigation step the desktop layout does not have and would need its own spec).
 
 ## Completed
+
+### TODO-31: Describe what runs where — and remove the one thing that made the description untrue
+
+**Complexity**: S — **Completed 2026-08-30** — plan: [`docs/plans/2026-08-30-what-runs-where.md`](docs/plans/2026-08-30-what-runs-where.md)
+
+The app has an unusual architecture — zero backend, browser-direct, tokens never in URLs — and the landing page described none of it, while asking visitors to paste an internal server address and often a bearer token beside it.
+
+**It makes no safety claims, by instruction.** No "safe", "secure", "private", "protected", "guaranteed", "trusted"; no "we never", "enforced". Every line is an observable fact about mechanism and the reader draws their own conclusion. That rule is what lets the awkward facts sit in the same plain voice as the rest — local storage being plain text and readable by this origin, GitHub Pages receiving the request for the page, the post-failure probe, the third-party example servers, the absence of any independent audit. Under a claims framing each of those was an exception to manage; here each is just another line, which made this the easier thing to write as well as the more honest one.
+
+Shipped in three parts:
+
+- **`#server=` instead of `?server=`** — a query string is sent to the host in the request for the document itself, so opening a shared link handed the address of the visitor's MCP server to GitHub Pages. `?server=` is read forever for links already shared. Verified in a browser: the document request for a selected page carries no query string at all. Two things the plan had wrong turned up in the doing and are corrected in its §4.1 — `URLSearchParams` strips a leading `?` but not a leading `#`, and "has a `server` key" is the wrong test for which half of the address bar wins, because a demo-server selection has no server in it.
+- **[TODO-33](#todo-33-stop-compiling-untrusted-schemas-and-drop-unsafe-eval)**, sequenced first and deliberately. Writing the description is what made it obvious that "a schema your server sends is compiled into a function in your browser" was a sentence better deleted from the world than written well. **Describing a system honestly is a good way to find the parts you would rather not have to describe.**
+- **The `ⓘ` and its panel** (`HowItWorks`) — a small glyph beside the sun/moon, on the landing and in the chrome band, opening "How this page works". The user chose that shape over the block-below-the-doors the plan proposed, and it is better: a landing block would have said nothing to someone already connected and running tools, which is when the questions occur. The app's first modal, hand-rolled rather than native because jsdom implements no `showModal` and the tests would have been exercising a shim. **Escape is caught in the capture phase and stopped there** — to the deck Escape means "clear the filter, then go home", and home disconnects.
+
+Two tests carry the stance rather than the prose: one fails on any of the banned vocabulary, the other fails if the awkward facts go missing — those being exactly what a well-meaning future edit tidies away for being off-message, which is the edit that would turn this back into a claim.
+
 
 ### TODO-33: Stop compiling untrusted schemas, and drop `'unsafe-eval'`
 
