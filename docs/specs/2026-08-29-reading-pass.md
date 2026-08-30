@@ -60,6 +60,12 @@ expressed in a font-relative unit.
 
 ### 3.1 One measure, stated in pixels
 
+> **Amended 2026-08-30** by
+> [`2026-08-30-outline-and-wide-blocks.md`](2026-08-30-outline-and-wide-blocks.md)
+> §3.3: framed blocks (the result panel, tables, code, the raw view) take a
+> second, wider edge when there is no outline in the margin. Running text
+> keeps this one — full width measures 209 characters a line at 1920.
+
 `--measure-read: 780px` is the single edge every block in the workspace shares:
 prose, `pre`, tables, rules, the argument form and the result blocks. Stated in
 px precisely because the failure being fixed was font-relative units diverging.
@@ -167,4 +173,5 @@ checkboxes) is untouched — no evidence a real server needs them. `--measure-re
 is a fixed px value and does not yet respond to viewport width; at 1180px the
 workspace is narrower than 780 and the cap simply stops applying, which is
 correct, but a genuinely wide 2560px display gains nothing from the extra room.
-Revisit if anyone reports it.
+Revisit if anyone reports it. **Reported 2026-08-30 and addressed** in
+[`2026-08-30-outline-and-wide-blocks.md`](2026-08-30-outline-and-wide-blocks.md).

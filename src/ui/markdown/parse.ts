@@ -300,6 +300,38 @@ const CODE_SPAN = /^(`+)([\s\S]*?[^`])\1(?!`)/
 const AUTOLINK = /^<((?:https?:\/\/|mailto:)[^>\s]+)>/i
 
 /**
+ * A scan budget, because the two scanners below are quadratic on hostile input
+ * (ISSUE-13).
+ *
+ * `closingIndex` and `matchLink` both run to the end of the string when there is
+ * nothing to find, and `parseInline` then advances a single character and asks
+ * again — so 50,000 unmatched `~~` markers cost 50,000 full scans. Measured
+ * before this existed: 4.9 s of blocked main thread at exactly the 50,000-char
+ * display cap, doubled because the result outline parses the same text again.
+ *
+ * A budget rather than a length cap, deliberately. A length cap would send long
+ * documents to a <pre>, and deepwiki's `read_wiki_contents` is exactly the long
+ * markdown this app exists to read. Real markdown scans about linearly: 50,000
+ * characters of prose, headings, tables, lists and matched emphasis parse in
+ * 17 ms and spend a small fraction of this. Hostile input exhausts it and the
+ * remaining markers stay literal text — the same graceful degradation an
+ * unmatched marker already gets, so nothing the server wrote is ever hidden.
+ *
+ * Sized per top-level `parseInline` call and proportional to that call's own
+ * input, with only a small flat term, so a document split into many short pieces
+ * (a table of thousands of cells) cannot add up to more than linear total work.
+ */
+const SCAN_BUDGET_PER_CHAR = 8
+const SCAN_BUDGET_FLOOR = 64
+
+/**
+ * Module-level because both scanners are leaves of one synchronous call tree and
+ * threading a counter through every frame would bury the parsing logic. Reset by
+ * the depth-0 `parseInline`; nested calls share what is left.
+ */
+let scanBudget = 0
+
+/**
  * Matches `[label](dest "title")` starting at the `[`. Scanned rather than
  * matched by regex because both halves nest: `[see [1]](…)` in the label, and
  * balanced parens in the destination — a regex that stops at the first `)`
@@ -310,6 +342,7 @@ function matchLink(src: string, from: number): { label: string; dest: string; en
   let depth = 1
   let label = ""
   while (i < src.length) {
+    if (scanBudget-- <= 0) return null
     const ch = src[i]
     if (ch === "\\" && i + 1 < src.length) {
       label += ch + src[i + 1]
@@ -333,6 +366,7 @@ function matchLink(src: string, from: number): { label: string; dest: string; en
   let dest = ""
   let parens = 0
   while (i < src.length) {
+    if (scanBudget-- <= 0) return null
     const ch = src[i]
     if (ch === "\\" && i + 1 < src.length) {
       dest += src[i + 1]
@@ -372,6 +406,7 @@ function underscoreAllowed(src: string, at: number): boolean {
 function closingIndex(src: string, from: number, marker: string): number {
   let i = from
   while (i < src.length) {
+    if (scanBudget-- <= 0) return -1
     if (src[i] === "\\") {
       i += 2
       continue
@@ -386,6 +421,8 @@ function closingIndex(src: string, from: number, marker: string): number {
 }
 
 export function parseInline(src: string, depth = 0): Inline[] {
+  // The outermost call owns the budget; nested emphasis shares what it left.
+  if (depth === 0) scanBudget = src.length * SCAN_BUDGET_PER_CHAR + SCAN_BUDGET_FLOOR
   const out: Inline[] = []
   let text = ""
   let i = 0

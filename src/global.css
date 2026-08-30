@@ -137,11 +137,26 @@
   --measure-prose: 66ch; /* the landing only: short, centred hero copy */
   --measure-read: 780px;
   --measure-form: 780px;
-  --measure-subject: 1080px;
-  /* The result outline's column (interaction roadmap S4). 780 + 32 + 200 = 1012,
-     which fits inside --measure-subject, so the outline spends only the margin
-     the reading pass already created and costs the measure nothing. */
-  --outline-width: 200px;
+  --measure-subject: 1092px;
+
+  /* The edge for blocks that are not running text — the result's framed panel,
+     tables and code (2026-08-30 wide-block pass). Normally the reading measure,
+     so the workspace keeps the single shared edge the reading pass established.
+     It widens only when the outline is absent, and only for these blocks:
+     measured on a real deepwiki result, prose at the full width of a 1920px
+     screen runs 209 characters a line and 263 at 2560, against a 66–75 comfort
+     band, so running text never takes this. Tables and code have no such limit
+     and genuinely gain — the reading pass capped them at 780 to stop four ragged
+     edges, and one deliberate second edge on framed blocks is not that defect. */
+  --measure-block: var(--measure-read);
+  --measure-block-wide: 1200px;
+
+  /* The result outline's column (interaction roadmap S4). 780 + 32 + 280 = 1092,
+     which is --measure-subject, so the outline spends only the margin the
+     reading pass already created and costs the measure nothing. Was 200px until
+     2026-08-30: at 200 nearly half the entries wrapped onto two lines (22 of 49
+     on a deepwiki result) while several hundred pixels sat empty beside them. */
+  --outline-width: 280px;
   /* The chrome band's height, so the sticky outline can size itself to what is
      actually on screen below it rather than to the whole viewport. */
   --chrome-height: 58px;

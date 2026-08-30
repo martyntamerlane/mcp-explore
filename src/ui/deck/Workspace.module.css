@@ -22,7 +22,29 @@
 .content {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: var(--measure-read);
+  /* --measure-block is the reading measure until the outline is absent, at which
+     point the framed result panel inside this column is allowed to widen. Prose
+     keeps its own cap regardless — see the token's note in global.css. */
+  max-width: var(--measure-block);
+}
+
+/* Above the outline's own breakpoint the reading column stops shrinking: any
+   shortfall comes out of the outline (down to its 200px floor) rather than out
+   of the measure. Below it there is no outline to take the hit. */
+@media (min-width: 1380px) {
+  .content {
+    flex-shrink: 0;
+  }
+}
+
+/* No outline in the margin, so the blocks that gain from width take it. Set on
+   the row rather than the column so it reaches the markdown renderer's tables
+   and code through the cascade, which no prop-drilling could do as cleanly. */
+.subject[data-wide-blocks] {
+  --measure-block: min(100%, var(--measure-block-wide));
+  /* The row itself is sized to hold measure + outline; with no outline to hold
+     it would otherwise cap the widened panel below its own limit. */
+  max-width: var(--measure-block-wide);
 }
 
 /* ── zone 1: what this tool is (spec 2026-08-30-tool-legibility.md) ──
@@ -309,7 +331,10 @@
   min-width: 0;
   margin-top: var(--sp-6);
   padding: var(--sp-4) var(--sp-5) var(--sp-5);
-  max-width: var(--measure-read);
+  /* The framed panel is what grows when the outline is away — a bordered surface
+     filling the space reads as composed, where the same space beside bare prose
+     reads as abandoned. Its running text stays at the measure inside it. */
+  max-width: var(--measure-block);
   background: color-mix(in srgb, var(--panel-solid) 45%, transparent);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-l);
@@ -351,8 +376,11 @@
   overflow-wrap: anywhere;
   /* The same edge as everything else in the workspace. This was 90ch, which at
      12px mono resolved to 650px while prose beside it sat at 594 and a table at
-     810 — see --measure-read. */
-  max-width: var(--measure-read);
+     810 — see --measure-read. Follows --measure-block since 2026-08-30: this is
+     code, not running text, and leaving it at 780 inside a widened panel put an
+     empty half-panel to its right, which looked worse than the margin it was
+     meant to fill. */
+  max-width: var(--measure-block);
   max-height: 60vh;
   overflow: auto;
 }

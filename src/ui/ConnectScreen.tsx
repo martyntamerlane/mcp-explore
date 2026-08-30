@@ -49,6 +49,9 @@ export default function ConnectScreen({
   // the reader mid-visit.
   const [tagline] = useState(pickTagline)
   const autoRan = useRef(false)
+  // A `?server=` link naming a server this device has never connected to. The
+  // URL is filled in and waiting; the visitor presses Connect. See the effect.
+  const [linkAwaitingConsent, setLinkAwaitingConsent] = useState(false)
 
   const headersOf = (r: HeaderRow[]) =>
     Object.fromEntries(r.filter((h) => h.name.trim() !== "").map((h) => [h.name.trim(), h.value]))
@@ -57,6 +60,7 @@ export default function ConnectScreen({
     setBusy(true)
     setError(null)
     setDiagnosis(null)
+    setLinkAwaitingConsent(false)
     setFailedUrl(target)
     // Held rather than returned from the catch, because the probe below must
     // run after the form has been re-enabled — a `return` there would skip it.
@@ -112,20 +116,36 @@ export default function ConnectScreen({
     values[seeded === -1 ? values.length - 1 : seeded]?.focus()
   }, [seedingAuth, showHeaders])
 
+  /**
+   * A `?server=` link, on arrival.
+   *
+   * Connecting to a *known* server on sight is the point of a shared link, and
+   * the headers saved for it come with it: connecting anonymously made every
+   * shared link fail on an auth'd server that works from the recents list
+   * (TODO-12). The rows are seeded too, so a failure leaves something to correct
+   * rather than an empty box.
+   *
+   * A server this device has never connected to is a different thing, and it
+   * waits for a click (ISSUE-12). A link can name any host, and connecting on
+   * arrival meant a link from anywhere could make this page fetch from a host
+   * the visitor never chose and then render whatever came back — server name,
+   * instructions, tool descriptions, all of it attacker-authored prose on an
+   * origin the visitor trusts. Requiring the press costs a share one click and
+   * takes that away entirely.
+   */
   useEffect(() => {
-    if (autoConnect && initialUrl && !autoRan.current) {
-      autoRan.current = true
-      // A `?server=` link is the same server the visitor may have saved headers
-      // for; connecting anonymously made every shared link fail on an auth'd
-      // server that works from the recents list (TODO-12). The rows are seeded
-      // too, so a failure leaves something to correct rather than an empty box.
-      const remembered = loadRecents().find((r) => r.url === initialUrl)?.headers
-      if (remembered) {
-        setRows(Object.entries(remembered).map(([name, value]) => ({ name, value })))
-        setRemember(true)
-      }
-      void connectTo(initialUrl, remembered ?? {}, remembered)
+    if (!autoConnect || !initialUrl || autoRan.current) return
+    autoRan.current = true
+    const remembered = loadRecents().find((r) => r.url === initialUrl)
+    if (remembered === undefined) {
+      setLinkAwaitingConsent(true)
+      return
     }
+    if (remembered.headers) {
+      setRows(Object.entries(remembered.headers).map(([name, value]) => ({ name, value })))
+      setRemember(true)
+    }
+    void connectTo(initialUrl, remembered.headers ?? {}, remembered.headers)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -183,6 +203,12 @@ export default function ConnectScreen({
               {busy ? "Connecting…" : "Connect"}
             </button>
           </form>
+
+          {linkAwaitingConsent && (
+            <p className={styles.linkNotice}>
+              This link names a server you haven't connected to before. Check the address, then press Connect.
+            </p>
+          )}
 
           <button type="button" className={styles.disclose} onClick={() => setShowHeaders((s) => !s)}>
             {showHeaders ? "▾" : "▸"} Add headers

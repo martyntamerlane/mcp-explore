@@ -3,6 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Defence in depth for a page whose whole job is rendering untrusted input
+         (ISSUE-14). GitHub Pages sends no security headers of its own, so this
+         meta tag is the only place a policy can live.
+
+         `connect-src *` is not a lapse: reaching a visitor's own MCP server at
+         any address is the product. Everything else is shut — in particular
+         `script-src 'self'`, which means no injected markup could load or inline
+         a script even if something downstream ever did emit HTML.
+
+         `'unsafe-eval'` is here under protest and should not stay (ISSUE-17).
+         The MCP SDK validates a tool's structured output against the server's
+         own `outputSchema`, and its default validator is AJV, which compiles
+         each schema into a function with `new Function`. Without it, connecting
+         to any server declaring an `outputSchema` dies with "Error compiling
+         schema" — deepwiki among them. Note what that says beyond CSP: schemas
+         arrive from an untrusted server and become code in the visitor's
+         browser. The SDK takes a `jsonSchemaValidator` of our own, and a
+         non-generating one would drop this back to plain `'self'` and remove
+         the code generation with it.
+
+         `style-src` needs 'unsafe-inline' for React's style attributes (table
+         alignment in the markdown renderer, the motion library's animations).
+         `font-src` needs `data:` because Vite inlines font subsets under its
+         asset limit — verified against a real build, where 'self' alone blocked
+         one of the woff2 faces.  `img-src data:` carries the favicon and the
+         image resources a server can return as base64 blobs.
+         `frame-ancestors` is deliberately absent: it is ignored in a meta tag,
+         and Pages cannot send the header — so clickjacking stays unaddressed
+         here rather than appearing to be handled. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-eval';
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data:;
+               font-src 'self' data:;
+               connect-src *;
+               object-src 'none';
+               base-uri 'none';
+               form-action 'none';
+               frame-src 'none'"
+    />
     <title>mcp-explore</title>
     <!-- The prism mark (Prism.tsx variant "b"), inline so the tab needs no
          extra request. Both strokes swap for dark tab strips. -->

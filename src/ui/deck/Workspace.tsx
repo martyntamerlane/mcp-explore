@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useRef } from "react"
 import { motion, useReducedMotion } from "motion/react"
 import type { ServerSnapshot, TransportKind } from "../../mcp/types"
 import type { Values } from "../form/argValues"
@@ -8,6 +8,7 @@ import { viewedRecord } from "../run/runHistory"
 import type { EntitySelection } from "../stage"
 import Outline from "./Outline"
 import { outlineOf, worthShowing, type OutlineSource } from "./resultOutline"
+import { useOverflowing } from "./useOverflowing"
 import HomeView from "./HomeView"
 import PromptView from "./PromptView"
 import ResourceView from "./ResourceView"
@@ -75,13 +76,33 @@ export default function Workspace({
       : NO_BLOCKS
   const entries = useMemo(() => outlineOf(blocks), [blocks])
 
+  /**
+   * The outline needs somewhere to take you *and* something to save you from.
+   * `worthShowing` is the first (three headings); this is the second — a result
+   * you can see all of at once is navigated by looking at it, and a column of
+   * links beside it is furniture with nothing to do. Below the outline's own
+   * breakpoint the margin does not exist and none of this is reached anyway.
+   */
+  const scroller = useRef<HTMLElement>(null)
+  const overflowing = useOverflowing(scroller, subjectKey(selection))
+  const showOutline = worthShowing(entries) && overflowing
+
   return (
-    <section className={styles.workspace} aria-label="Workspace" aria-live="polite" data-scroller="">
+    <section
+      className={styles.workspace}
+      aria-label="Workspace"
+      aria-live="polite"
+      data-scroller=""
+      ref={scroller}
+    >
       {/* Keyed, not wrapped in AnimatePresence: the outgoing subject has nothing
           to say once it is gone, and waiting on its exit would delay the new one. */}
       <motion.div
         key={subjectKey(selection)}
         className={styles.subject}
+        // No outline in the margin means the result's panel, its tables and its
+        // code may use that width instead of leaving it empty.
+        data-wide-blocks={showOutline ? undefined : ""}
         initial={reduced ? false : { opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.16, ease: "easeOut" }}
@@ -108,7 +129,7 @@ export default function Workspace({
           )}
           {gone && <p className={styles.quiet}>That {selection.kind} is no longer present on this server.</p>}
         </div>
-        {worthShowing(entries) && <Outline entries={entries} />}
+        {showOutline && <Outline entries={entries} />}
       </motion.div>
     </section>
   )

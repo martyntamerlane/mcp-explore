@@ -197,3 +197,59 @@ test("tags with attributes are still recognised", () => {
   expect(parseBlocks('<div class="x">')).toEqual([])
   expect(parseBlocks("<br />")).toEqual([])
 })
+
+/* ── the scan budget (ISSUE-13) ── */
+
+/**
+ * `closingIndex` and `matchLink` scan to the end of the string when there is
+ * nothing to find, and the caller then advances one character and asks again.
+ * At the 50,000-character display cap that measured 4.9 s of blocked main
+ * thread. These assert the ceiling, not a stopwatch reading: the threshold is
+ * loose enough to survive a slow CI box and still fail by two orders of
+ * magnitude if the quadratic behaviour ever comes back.
+ */
+const HOSTILE_BUDGET_MS = 500
+
+test.each([
+  ["unmatched strikethrough markers", "~~ "],
+  ["unmatched emphasis markers", "** "],
+  ["unopened link labels", "["],
+])("50,000 characters of %s parse promptly", (_label, unit) => {
+  const text = ("# Report\n\n" + unit.repeat(60000)).slice(0, 50_000)
+  const started = performance.now()
+  parseBlocks(text)
+  expect(performance.now() - started).toBeLessThan(HOSTILE_BUDGET_MS)
+})
+
+test("real markdown is unaffected by the budget", () => {
+  // The budget is proportional to the input, so a long legitimate document has
+  // to keep parsing normally — a length cap would have sent this to a <pre>.
+  const para = "Some **bold** and *italic* and `code` and a [link](https://example.test/a).\n"
+  let doc = "# Title\n\n"
+  for (let i = 0; doc.length < 50_000; i++) doc += `## Section ${i}\n\n${para.repeat(6)}\n- one\n- two\n\n`
+  const blocks = parseBlocks(doc.slice(0, 50_000))
+
+  const headings = blocks.filter((b) => b.type === "heading")
+  expect(headings.length).toBeGreaterThan(20)
+  // Emphasis and links still resolve rather than degrading to literal text.
+  const paragraph = blocks.find((b) => b.type === "paragraph") as Extract<Block, { type: "paragraph" }>
+  expect(paragraph.children.some((n) => n.type === "strong")).toBe(true)
+  expect(paragraph.children.some((n) => n.type === "link")).toBe(true)
+})
+
+test("exhausting the budget degrades to text, never to markup", () => {
+  // The failure mode must stay "the marker was literal", which is what an
+  // unmatched marker already renders as. Nothing is dropped or invented.
+  const text = "~~ ".repeat(20000)
+  const blocks = parseBlocks(text)
+  const flat = JSON.stringify(blocks)
+  expect(flat).not.toContain('"type":"del"')
+  expect(blocks.every((b) => b.type === "paragraph")).toBe(true)
+})
+
+test("the budget resets per document, so one hostile block cannot starve the next", () => {
+  parseBlocks("[".repeat(20000))
+  const blocks = parseBlocks("a [link](https://example.test/x) here")
+  const paragraph = blocks[0] as Extract<Block, { type: "paragraph" }>
+  expect(paragraph.children.some((n) => n.type === "link")).toBe(true)
+})

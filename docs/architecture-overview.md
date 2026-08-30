@@ -31,7 +31,8 @@ The app has **no overlay surfaces and no tooltips** in the connected view. Light
 - App state: React Context + hooks. No external state libraries.
 - Run history: in memory only, ten runs per tool, cleared on disconnect/reload — never localStorage (results can be megabytes and carry whatever the server chose to return).
 - localStorage: recent servers; optionally their headers (user can decline storing tokens).
-- URL query string: `?server=…` plus at most one of `&tool=`/`&resource=`/`&prompt=` — never headers/tokens.
+- URL query string: `?server=…` plus at most one of `&tool=`/`&resource=`/`&prompt=` — never headers/tokens. A `?server=` value connects on arrival only if it is already in this device's recents; anything else waits for the visitor to press Connect (ISSUE-12).
+- Content-Security-Policy: a `<meta http-equiv>` in `index.html`, because GitHub Pages sends no security headers and cannot be configured to. `script-src 'self' 'unsafe-eval'` — the `unsafe-eval` is present only because the MCP SDK's default validator (AJV) compiles each server's `outputSchema` into a function with `new Function`; see ISSUE-18 and TODO-33 for removing it. Also `object-src`/`frame-src`/`form-action` `'none'`, `base-uri 'none'`, `img-src`/`font-src` `'self' data:`, `style-src 'self' 'unsafe-inline'`, and `connect-src *` — the wildcard is the product, since reaching a visitor's own server at any address is what the app does. `frame-ancestors` is absent by necessity (meta tags ignore it, Pages cannot send the header), so clickjacking is unmitigated (ISSUE-14).
 
 ## Project structure
 

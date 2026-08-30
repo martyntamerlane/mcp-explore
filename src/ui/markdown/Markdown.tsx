@@ -1,4 +1,4 @@
-import { createElement, Fragment, type ReactNode } from "react"
+import { createElement, Fragment, useMemo, type ReactNode } from "react"
 import { parseDocument, type Block, type Inline } from "./parse"
 import styles from "./Markdown.module.css"
 
@@ -132,5 +132,11 @@ function renderBlocks(blocks: Block[]): ReactNode {
 }
 
 export default function Markdown({ text, idPrefix = "" }: { text: string; idPrefix?: string }) {
-  return <div className={styles.md}>{renderBlocks(parseDocument(text, idPrefix))}</div>
+  // Memoised because parsing is the expensive half and the text almost never
+  // changes: a run's result is immutable once it settles, while the workspace
+  // around it re-renders on every elapsed-time tick and every selection move.
+  // Re-parsing there multiplied the cost of a hostile document by the render
+  // count (ISSUE-13).
+  const blocks = useMemo(() => parseDocument(text, idPrefix), [text, idPrefix])
+  return <div className={styles.md}>{renderBlocks(blocks)}</div>
 }

@@ -116,6 +116,41 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 
 ---
 
+### TODO-32: A mobile layout for the workspace — L
+
+The workspace has no mobile form. The browse column is a fixed 300px that never
+yields, so on a 390px phone the workspace beside it is **90px**: a tool name
+renders one character per line straight down the screen, the description clips
+mid-word, and the argument form is off-screen entirely. Measured 2026-08-30 at
+390 / 430 / 768 / 1024 — see ISSUE-17 for the numbers and the diagnosis.
+Deferred by decision the same day, in favour of the desktop width work.
+
+The landing page needs nothing: it already stacks and reflows well, with two
+small nits worth folding in when this happens — the URL box is squeezed to about
+24 characters by the Connect button beside it, and the longest example note
+truncates ("search Microsoft and Azure d…").
+
+The decision to make first is what the two columns become below roughly 900px:
+stacking them into one scrolling page (simple, no new navigation ideas, but you
+scroll past the whole list to reach every result), or list-then-panel with a way
+back (much better to use, and the standard phone pattern, but it introduces a
+navigation step the desktop layout does not have and would need its own spec).
+
+### TODO-33: Stop compiling untrusted schemas, and drop `'unsafe-eval'` — S
+
+The CSP added 2026-08-30 carries `'unsafe-eval'` under protest, because the MCP
+SDK's default validator is AJV and AJV compiles each server-supplied
+`outputSchema` into a function with `new Function`. Two things follow: the policy
+is weaker than it should be, and a JSON Schema from an untrusted server becomes
+executable code in the visitor's browser — the one place in this app where
+untrusted input reaches a code generator. See ISSUE-18.
+
+The SDK accepts a `jsonSchemaValidator` of our own. Either `@cfworker/json-schema`
+(the SDK already ships a provider for it, and it interprets rather than
+generates) or a small validator written here. The first is a new dependency and
+needs sign-off; the second is more code but none. Either removes the code
+generation and lets `script-src` go back to plain `'self'`.
+
 ## Completed
 
 ### TODO-9: Connection-layer hardening

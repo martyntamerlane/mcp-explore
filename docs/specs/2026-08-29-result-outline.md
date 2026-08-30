@@ -4,6 +4,11 @@
 [`docs/plans/2026-08-29-interaction-roadmap.md`](../plans/2026-08-29-interaction-roadmap.md)
 · Closes **TODO-29**.
 
+> **Amended 2026-08-30** by
+> [`2026-08-30-outline-and-wide-blocks.md`](2026-08-30-outline-and-wide-blocks.md):
+> the column flexes 200–280px instead of a fixed 200, and now also requires
+> the result to run at least half a screen past the fold — three headings
+> alone put an outline beside output you could already see all of.
 A 50,000-character wiki page was a scroll with no map. `read_wiki_contents` on
 `modelcontextprotocol/typescript-sdk` renders **76 headings**; finding one meant
 scrolling past the other 75.

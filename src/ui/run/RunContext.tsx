@@ -20,6 +20,9 @@ interface RunContextValue {
 
 const RunContext = createContext<RunContextValue | null>(null)
 
+/** The hard ceiling on one `tools/call`, however much progress a server reports. */
+export const MAX_TOOL_CALL_MS = 10 * 60 * 1000
+
 // Run state lives beside the connection in App (not in the stage) so both the
 // stage's tool buttons and the workspace see the same per-tool state without
 // widening the StageProps contract. Since 2026-08-29 it is a capped history per
@@ -52,6 +55,13 @@ export function RunProvider({ connection, children }: { connection: Connection; 
           // point of a server bothering to send it.
           onprogress: (p: RunProgress) => setRuns((r) => progressRun(r, toolName, id, p)),
           resetTimeoutOnProgress: true,
+          // The ceiling `resetTimeoutOnProgress` needs (ISSUE-15). On its own it
+          // means a progress notification buys another full timeout, without
+          // limit — an untrusted server that emits one periodically keeps the
+          // call pending forever, and `inFlight` then refuses to run that tool
+          // again for the rest of the session. Ten minutes is far beyond any
+          // real tool and still terminates.
+          maxTotalTimeout: MAX_TOOL_CALL_MS,
         })
         .then((result) => settle(formatCallResult(result)))
         .catch((error: unknown) => settle(formatRunError(error)))
