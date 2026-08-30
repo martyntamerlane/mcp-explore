@@ -357,6 +357,7 @@ export default function BrowseColumn({
             key={kind}
             type="button"
             className={styles.segment}
+            data-kind={kind}
             aria-pressed={segment === kind}
             tabIndex={commanding ? -1 : undefined}
             onClick={() => {

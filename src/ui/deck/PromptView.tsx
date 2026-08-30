@@ -4,6 +4,8 @@ import ArgsForm from "../form/ArgsForm"
 import type { FieldSpec, Values } from "../form/argValues"
 import { readKey, useReads } from "../run/ReadContext"
 import { Elapsed, ReadBlocks } from "./blocks"
+import ClampedText from "./ClampedText"
+import Glyph from "./Glyph"
 import styles from "./Workspace.module.css"
 
 /**
@@ -48,29 +50,42 @@ export default function PromptView({ prompt, values, onChange, onGet }: PromptVi
 
   return (
     <>
-      <h2 className={styles.title}>{prompt.name}</h2>
-      {prompt.description && <p className={styles.description}>{prompt.description}</p>}
+      {/* Same three zones as a tool (spec 2026-08-30-tool-legibility.md) — a
+          prompt asks for input and gives something back in exactly the same
+          shape, so it must not read as a different application. */}
+      <div className={styles.subjectHead} data-kind="prompt">
+        <Glyph kind="prompt" />
+        <h2 className={styles.title}>{prompt.name}</h2>
+        {specs.length > 0 && (
+          <span className={styles.headBadge}>
+            {specs.length} {specs.length === 1 ? "argument" : "arguments"}
+          </span>
+        )}
+      </div>
+      {prompt.description && <ClampedText text={prompt.description} lines={3} className={styles.description} />}
 
       {specs.length > 0 && (
         <div className={styles.form}>
-          <p className={styles.microlabel}>ARGUMENTS</p>
-          <ArgsForm
-            specs={specs}
-            values={values}
-            onChange={onChange}
-            errors={{}}
-            idPrefix={`prompt-${prompt.name}`}
-          />
-          <div className={styles.runRow}>
-            <button type="button" className={styles.run} disabled={missing.length > 0} onClick={() => onGet(args)}>
-              Get prompt
-            </button>
-            {missing.length > 0 && <span className={styles.quiet}>fill {missing.join(", ")} to fetch</span>}
+          <div className={styles.inputHead}>
+            <p className={styles.microlabel}>{specs.some((s) => s.required) ? "INPUT REQUIRED" : "INPUT"}</p>
+            <div className={styles.runRow}>
+              {missing.length > 0 && <span className={styles.quiet}>fill {missing.join(", ")} to fetch</span>}
+              <button
+                type="button"
+                className={styles.run}
+                data-kind="prompt"
+                disabled={missing.length > 0}
+                onClick={() => onGet(args)}
+              >
+                Get prompt
+              </button>
+            </div>
           </div>
+          <ArgsForm specs={specs} values={values} onChange={onChange} errors={{}} idPrefix={`prompt-${prompt.name}`} />
         </div>
       )}
 
-      <div className={styles.resultArea} aria-live="polite">
+      <section className={styles.resultArea} aria-live="polite" aria-label="Messages">
         <p className={styles.microlabel}>MESSAGES</p>
         {state === undefined ? (
           <p className={styles.quiet}>Fill the arguments and fetch to see the messages.</p>
@@ -81,7 +96,7 @@ export default function PromptView({ prompt, values, onChange, onGet }: PromptVi
         ) : (
           <ReadBlocks display={state.display} />
         )}
-      </div>
+      </section>
     </>
   )
 }

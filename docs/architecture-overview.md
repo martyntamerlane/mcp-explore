@@ -87,9 +87,11 @@ src/
       resultOutline.ts     Pure: display blocks → heading refs, reusing the renderer's own markdown
                            test, parse and id prefixes so entry and anchor cannot disagree
       HomeView.tsx         Server identity, counts and the server's own `instructions`
-      ToolView.tsx         Description, args form, Run, result, raw-JSON disclosure
-      ResourceView.tsx     Metadata + contents, loaded on selection
-      PromptView.tsx       Description, args form, Get prompt, returned messages
+      ClampedText.tsx      Measured line clamp + Show more, shared by instructions and descriptions
+      ToolView.tsx         Three zones: identity strip, INPUT REQUIRED + Run + fields (optional ones
+                           folded when something is required), contained RESULT region, raw JSON
+      ResourceView.tsx     Same three zones: identity strip + mime badge, URI, contained CONTENTS
+      PromptView.tsx       Same three zones: identity strip, INPUT REQUIRED + Get prompt, MESSAGES
       blocks.tsx           Shared render for sanitized read/run block lists
       Glyph.tsx            Entity shape coding (circle/square/diamond), colourless — the row decides
       Prism.tsx            The brand mark (hairline prism, 3 variants)

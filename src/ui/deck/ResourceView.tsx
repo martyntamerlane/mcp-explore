@@ -2,6 +2,8 @@ import { useEffect } from "react"
 import type { Resource } from "@modelcontextprotocol/sdk/types.js"
 import { readKey, useReads } from "../run/ReadContext"
 import { Elapsed, ReadBlocks } from "./blocks"
+import ClampedText from "./ClampedText"
+import Glyph from "./Glyph"
 import styles from "./Workspace.module.css"
 
 /**
@@ -18,14 +20,17 @@ export default function ResourceView({ resource }: { resource: Resource }) {
 
   return (
     <>
-      <h2 className={styles.title}>{resource.name}</h2>
-      {resource.description && <p className={styles.description}>{resource.description}</p>}
+      <div className={styles.subjectHead} data-kind="resource">
+        <Glyph kind="resource" />
+        <h2 className={styles.title}>{resource.name}</h2>
+        {typeof resource.mimeType === "string" && <span className={styles.headBadge}>{resource.mimeType}</span>}
+      </div>
+      {resource.description && <ClampedText text={resource.description} lines={3} className={styles.description} />}
       <p className={styles.meta}>
         <code>{uri}</code>
-        {typeof resource.mimeType === "string" && <span className={styles.metaSide}>{resource.mimeType}</span>}
       </p>
 
-      <div className={styles.resultArea} aria-live="polite">
+      <section className={styles.resultArea} aria-live="polite" aria-label="Contents">
         <p className={styles.microlabel}>CONTENTS</p>
         {state === undefined ? (
           <p className={styles.quiet}>Loading…</p>
@@ -36,7 +41,7 @@ export default function ResourceView({ resource }: { resource: Resource }) {
         ) : (
           <ReadBlocks display={state.display} />
         )}
-      </div>
+      </section>
     </>
   )
 }

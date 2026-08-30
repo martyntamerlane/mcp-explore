@@ -126,6 +126,12 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 
 ## Completed
 
+### TODO-30: Tool legibility — three zones in the workspace
+
+**Complexity**: S — **Completed 2026-08-30**
+
+The subject pane was one flat stack of seven elements at one rhythm, so nothing said which of them belonged together and the Run button sat at the bottom of a form four arguments tall. Now three zones — what it is, what it wants, what it gave back — with `ARGUMENTS` renamed **INPUT REQUIRED** (or **INPUT** when nothing is required, which is true of every demo tool), Run on the label's line, optional arguments folded behind a disclosure when something is required to fold beneath, the description clamped to three lines, and the result **contained** in a hairline region so the server's answer is visibly not part of the definition. The selected browse segment now takes its own kind's accent. Audited across tools, resources and prompts per CLAUDE.md; specced in [`docs/specs/2026-08-30-tool-legibility.md`](docs/specs/2026-08-30-tool-legibility.md).
+
 ### TODO-26: Keyboard navigation and command mode
 
 **Complexity**: M — **Completed 2026-08-30**

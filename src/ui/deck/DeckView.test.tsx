@@ -631,3 +631,78 @@ test("show raw is offered only once something on screen is rendered markdown", a
   update({ query: ">" })
   expect(screen.getByRole("option", { name: /show raw/i })).toBeInTheDocument()
 })
+
+/* ── tool legibility (spec 2026-08-30-tool-legibility.md) ── */
+
+const mixedTool = [
+  {
+    name: "mixed_args",
+    description: "One required argument and three optional ones.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        who: { type: "string", description: "Who to greet" },
+        loudly: { type: "boolean" },
+        times: { type: "number" },
+        note: { type: "string" },
+      },
+      required: ["who"],
+    },
+  },
+]
+
+test("optional arguments fold away beneath the required one", async () => {
+  renderDeck({ snapshot: { ...conn.snapshot, tools: mixedTool } })
+  await userEvent.click(screen.getByRole("button", { name: "tool mixed_args" }))
+
+  expect(screen.getByText("INPUT REQUIRED")).toBeInTheDocument()
+  expect(screen.getByLabelText(/^who/)).toBeInTheDocument()
+  expect(screen.queryByLabelText(/^note/)).not.toBeInTheDocument()
+
+  await userEvent.click(screen.getByRole("button", { name: /3 optional arguments/i }))
+  expect(screen.getByLabelText(/^note/)).toBeInTheDocument()
+})
+
+test("a form with nothing required shows every field — there is nothing to demote", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  // The demo server is zero-required throughout; folding the whole form behind a
+  // chevron would be worse than the wall the fold exists to fix.
+  expect(screen.getByText("INPUT")).toBeInTheDocument()
+  expect(screen.queryByRole("button", { name: /optional argument/i })).not.toBeInTheDocument()
+  expect(screen.getByLabelText(/^title/)).toBeInTheDocument()
+  expect(screen.getByLabelText(/^priority/)).toBeInTheDocument()
+})
+
+test("the fold opens itself rather than hiding a value or an error", async () => {
+  const withDefault = [
+    {
+      ...mixedTool[0],
+      inputSchema: {
+        ...mixedTool[0].inputSchema,
+        properties: { ...mixedTool[0].inputSchema.properties, note: { type: "string", default: "seeded" } },
+      },
+    },
+  ]
+  renderDeck({ snapshot: { ...conn.snapshot, tools: withDefault } })
+  await userEvent.click(screen.getByRole("button", { name: "tool mixed_args" }))
+  expect(screen.getByLabelText(/^note/)).toHaveValue("seeded")
+})
+
+test("the tool's identity strip carries its shape before a word is read", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool search_issues" }))
+  const head = within(workspace()).getByRole("heading", { name: "search_issues" }).parentElement!
+  expect(within(head).getByText("read only")).toBeInTheDocument()
+  expect(within(head).getByText(/arguments?$/)).toBeInTheDocument()
+})
+
+test("the result is its own region, labelled and separate from the definition", async () => {
+  renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  const result = screen.getByRole("region", { name: "Result" })
+  expect(within(result).getByText("RESULT")).toBeInTheDocument()
+  expect(within(result).getByText(/run the tool to see its result/i)).toBeInTheDocument()
+  // The description belongs to the definition, not to the answer.
+  expect(within(result).queryByText(/create a new issue/i)).not.toBeInTheDocument()
+})

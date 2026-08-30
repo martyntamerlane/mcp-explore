@@ -2,7 +2,7 @@ import { useState } from "react"
 import { motion } from "motion/react"
 import type { Tool } from "@modelcontextprotocol/sdk/types.js"
 import ArgsForm from "../form/ArgsForm"
-import { assembleArgs, canSubmit, fieldSpecs, type Values } from "../form/argValues"
+import { assembleArgs, canSubmit, fieldSpecs, type FieldSpec, type Values } from "../form/argValues"
 import { useRuns } from "../run/RunContext"
 import {
   elapsedLabel,
@@ -14,6 +14,8 @@ import {
   type RunRecord,
 } from "../run/runHistory"
 import { Elapsed, TextBlock, Truncated } from "./blocks"
+import ClampedText from "./ClampedText"
+import Glyph from "./Glyph"
 import styles from "./Workspace.module.css"
 
 /**
@@ -24,6 +26,14 @@ import styles from "./Workspace.module.css"
  * Since 2026-08-29 a tool keeps a capped history of runs (interaction roadmap S3):
  * the result region shows one run and lists the rest beneath it, and picking one
  * restores both its answer and the arguments that produced it.
+ *
+ * Laid out in three zones since 2026-08-30 (spec 2026-08-30-tool-legibility.md).
+ * It used to be one flat stack of seven elements at one rhythm — identity,
+ * description, label, fields, button, label, result — so nothing said which of
+ * them belonged together and the whole page had to be read to find any of it.
+ * Now: what the tool IS, what it WANTS from you, and what it GAVE BACK, with the
+ * Run button at the top of the middle zone and the answer visibly cordoned off
+ * from the definition.
  */
 export interface ToolViewProps {
   tool: Tool
@@ -44,7 +54,11 @@ function RawJson({ value }: { value: unknown }) {
       <summary>Raw JSON</summary>
       {open && (
         <>
-          <button type="button" className={styles.ghostButton} onClick={() => void navigator.clipboard?.writeText(json)}>
+          <button
+            type="button"
+            className={styles.ghostButton}
+            onClick={() => void navigator.clipboard?.writeText(json)}
+          >
             Copy
           </button>
           <pre className={styles.code}>{json}</pre>
@@ -140,6 +154,49 @@ function History({
   )
 }
 
+/**
+ * The optional arguments, behind a disclosure.
+ *
+ * Most MCP tools are one required argument and several optional ones, and
+ * showing all of them at once is what made "Arguments" a wall to read rather
+ * than a thing to fill in. It opens by itself when any optional field already
+ * carries a value — a restored run, or a schema default — or when one of them
+ * has an error, because a validation message nobody can see is worse than no
+ * disclosure at all.
+ */
+function OptionalArgs({
+  specs,
+  values,
+  onChange,
+  errors,
+  idPrefix,
+}: {
+  specs: FieldSpec[]
+  values: Values
+  onChange: (name: string, value: string) => void
+  errors: Record<string, string>
+  idPrefix: string
+}) {
+  const forced = specs.some((s) => (values[s.name] ?? "") !== "" || errors[s.name] !== undefined)
+  const [open, setOpen] = useState(false)
+  const shown = open || forced
+  return (
+    <div className={styles.optional}>
+      <button type="button" className={styles.optionalToggle} aria-expanded={shown} onClick={() => setOpen((o) => !o)}>
+        <span className={styles.chevron} data-open={shown || undefined} aria-hidden="true">
+          ▸
+        </span>
+        {specs.length} optional {specs.length === 1 ? "argument" : "arguments"}
+      </button>
+      {shown && (
+        <div className={styles.optionalFields}>
+          <ArgsForm specs={specs} values={values} onChange={onChange} errors={errors} idPrefix={idPrefix} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ToolView({ tool, values, onChange, onRun, onRestore }: ToolViewProps) {
   const { runs, view } = useRuns()
   const specs = fieldSpecs(tool.inputSchema)
@@ -149,58 +206,103 @@ export default function ToolView({ tool, values, onChange, onRun, onRestore }: T
   const viewed = viewedRecord(runs, tool.name)
   const running = isRunning(runs, tool.name)
 
+  const required = specs.filter((s) => s.required)
+  const optional = specs.filter((s) => !s.required)
+  // The disclosure exists to demote the secondary fields BENEATH the primary
+  // ones. With no required argument there is no primary, so there is nothing to
+  // demote and folding the whole form away would be strictly worse than the wall
+  // it was meant to fix — every tool on the demo server is zero-required, and
+  // plenty of real ones are too.
+  const fold = required.length > 0 && optional.length > 0
+  // "INPUT REQUIRED" is a lie over a form where nothing is required, and a tool
+  // whose arguments are all optional is common enough to be worth telling the
+  // truth about.
+  const inputLabel = required.length > 0 ? "INPUT REQUIRED" : "INPUT"
+
   const reason = !ready
     ? assembly.missing.length > 0
       ? `fill ${assembly.missing.join(", ")} to run`
-      : "fix the field errors above to run"
+      : "fix the field errors below to run"
     : specs.length === 0
       ? "takes no arguments"
       : undefined
 
+  const runButton = (
+    <button type="button" className={styles.run} disabled={!ready || running} onClick={() => onRun(assembly.args)}>
+      {running ? (
+        "Running…"
+      ) : specs.length === 0 ? (
+        "Run again"
+      ) : (
+        <>
+          Run <span className={styles.runName}>{tool.name}</span>
+        </>
+      )}
+    </button>
+  )
+
   return (
     <>
-      <h2 className={styles.title}>{tool.name}</h2>
-      {tool.description && <p className={styles.description}>{tool.description}</p>}
+      {/* Zone 1 — what this tool is. An identity strip rather than a bare
+          heading: the same glyph the column draws, the name, and the two facts
+          worth knowing before reading a word of the description. */}
+      <div className={styles.subjectHead}>
+        <Glyph kind="tool" />
+        <h2 className={styles.title}>{tool.name}</h2>
+        {tool.annotations?.readOnlyHint === true && <span className={styles.headBadge}>read only</span>}
+        <span className={styles.headBadge}>
+          {specs.length === 0 ? "no arguments" : `${specs.length} ${specs.length === 1 ? "argument" : "arguments"}`}
+        </span>
+      </div>
+      {tool.description && <ClampedText text={tool.description} lines={3} className={styles.description} />}
 
+      {/* Zone 2 — what it wants from you. The Run button sits on the label's
+          line, at the top of the form rather than under it: it is the first
+          thing you look for, and putting it here keeps it beside the reason it
+          is disabled. */}
       <div className={styles.form}>
-        {specs.length > 0 && (
-          <>
-            <p className={styles.microlabel}>ARGUMENTS</p>
-            <ArgsForm
-              specs={specs}
-              values={values}
-              onChange={onChange}
-              errors={assembly.errors}
-              idPrefix={`tool-${tool.name}`}
-            />
-          </>
-        )}
-
-        <div className={styles.runRow}>
-          <button
-            type="button"
-            className={styles.run}
-            disabled={!ready || running}
-            onClick={() => onRun(assembly.args)}
-          >
-            {running ? (
-              "Running…"
-            ) : specs.length === 0 ? (
-              "Run again"
-            ) : (
-              <>
-                Run <span className={styles.runName}>{tool.name}</span>
-              </>
-            )}
-          </button>
-          {reason && <span className={styles.quiet}>{reason}</span>}
+        <div className={styles.inputHead}>
+          <p className={styles.microlabel}>{specs.length === 0 ? "INPUT" : inputLabel}</p>
+          <div className={styles.runRow}>
+            {reason && <span className={styles.quiet}>{reason}</span>}
+            {runButton}
+          </div>
         </div>
+
+        {(fold ? required : specs).length > 0 && (
+          <ArgsForm
+            specs={fold ? required : specs}
+            values={values}
+            onChange={onChange}
+            errors={assembly.errors}
+            idPrefix={`tool-${tool.name}`}
+          />
+        )}
+        {fold && (
+          <OptionalArgs
+            specs={optional}
+            values={values}
+            onChange={onChange}
+            errors={assembly.errors}
+            idPrefix={`tool-${tool.name}`}
+          />
+        )}
       </div>
 
-      {/* The aria-live container persists across states so screen readers hear
+      {/* Zone 3 — what it gave back. Contained rather than merely spaced, so it
+          reads as the server's answer and not as more of the tool's definition.
+          The aria-live container persists across states so screen readers hear
           content change inside it rather than a region appearing. */}
-      <div className={styles.resultArea} aria-live="polite">
-        <p className={styles.microlabel}>RESULT</p>
+      <section className={styles.resultArea} aria-live="polite" aria-label="Result">
+        <header className={styles.resultHead}>
+          <p className={styles.microlabel}>RESULT</p>
+          {viewed !== null && (
+            <span className={styles.resultMeta}>
+              {clockTime(viewed.startedAt)}
+              {viewed.endedAt !== undefined && ` · ${elapsedLabel(viewed.endedAt - viewed.startedAt)}`}
+            </span>
+          )}
+        </header>
         {viewed === null ? (
           <p className={styles.quiet}>Run the tool to see its result here.</p>
         ) : (
@@ -216,7 +318,7 @@ export default function ToolView({ tool, values, onChange, onRun, onRestore }: T
             }}
           />
         )}
-      </div>
+      </section>
       <RawJson value={tool} />
     </>
   )
