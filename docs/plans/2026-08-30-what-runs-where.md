@@ -1,7 +1,7 @@
-# Implementation plan — "it runs on your device": the trust statement, and the one thing that isn't true yet
+# Implementation plan — describing what runs where, and removing the one thing that made the description untrue
 
 **Date**: 2026-08-30
-**Status**: **§4 (Session A) done 2026-08-30** on `feat/local-execution-trust`. §5 not started — it carries an
+**Status**: **§4 (Session A) done 2026-08-30** on `feat/what-runs-where`. §5 not started — it carries an
 unresolved design-approval gate.
 **TODO**: [TODO-31](../../TODO.md)
 **Complexity**: S
@@ -10,16 +10,19 @@ unresolved design-approval gate.
 
 ## 1. Why
 
-The app's whole architecture is a privacy claim — zero backend, browser-direct, tokens never in URLs
+The app has an unusual architecture — zero backend, browser-direct, tokens never in URLs
 ([initial design](../specs/2026-08-24-initial-design.md) decisions #1 and #9) — and the landing page
-says none of it. A visitor is asked to paste the address of an internal MCP server, and often a bearer
-token beside it, into a page hosted at `martyntamerlane.github.io` with nothing on screen explaining
-where any of that goes.
+describes none of it. A visitor is asked to paste the address of an internal MCP server, and often a
+bearer token beside it, into a page hosted at `martyntamerlane.github.io`, with nothing on screen
+saying what happens to either.
 
-The user asked for two things: copy that explains it, and confirmation that the claim is actually true.
+**This plan does not add a safety claim, and §5.0 forbids one.** It adds a description of what runs,
+what connects to what, and what is stored where, so that a reader can assess it themselves. That is a
+user instruction from 2026-08-30 and it governs every sentence of Session B.
 
-The verification is in §2. It is true, with **one exception** (§3) which this plan closes, because a
-trust statement carrying an asterisk is worse than no trust statement.
+§2 is the verification behind the description — what is actually true, checked rather than assumed.
+§3 is the one thing that was *not* true, which Session A (§4) has since fixed: a description whose
+first line needs an asterisk is not a description, it is a claim with a disclaimer.
 
 ---
 
@@ -67,8 +70,8 @@ Scope of the exposure, precisely:
 Severity is low. It matters here only because it is the single sentence that would make the copy in §5
 dishonest, and it costs about an hour to remove.
 
-**Fix**: move the canonical form to the **fragment** — `#server=…&tool=NAME`. Fragments are never sent
-to the origin server and never appear in a `Referer`. Detail in §4.
+**Fix**: move the canonical form to the **fragment** — `#server=…&tool=NAME`. Fragments are not sent
+to the origin server and do not appear in a `Referer`. Detail in §4. **Done 2026-08-30.**
 
 ---
 
@@ -161,115 +164,141 @@ Recorded for the next person driving this app headlessly: the workspace's region
 
 ---
 
-## 5. Session B — the trust statement on the landing page
+## 5. Session B — a description of what runs, on the landing page
 
 > **APPROVAL GATE.** The expanded panel is new furniture on the hero, which CLAUDE.md's Visual
 > Consistency rule puts behind explicit user confirmation. **Do not build §5 without it**, even under an
-> instruction to implement this whole plan. §4 is unaffected and should ship regardless.
+> instruction to implement this whole plan. §4 is unaffected and shipped regardless.
+
+### 5.0 The governing rule — read this before writing a single sentence
+
+**No safety claims. Ever.** Not "safe", not "secure", not "private", not "protected", not "trusted", and
+no reassurance framing — no "so you can trust it", no "nothing to worry about", no "don't worry, …".
+The panel's job is to **describe what runs, what connects to what, and what is stored where**, and then
+stop. The reader decides what that means for them; we do not decide it for them.
+
+This is a user instruction (2026-08-30), and it supersedes the earlier framing of this section, which
+was a claims table and was wrong.
+
+The working test for any sentence: **is it an observable fact about mechanism, or is it a conclusion
+about how the reader should feel?** "Requests go from this tab to the address you type" is the first.
+"Your data never leaves your device" is the second wearing the first's clothes — it is a promise, it
+needs a footnote about the page request itself, and the footnote is the tell.
+
+The corollary that makes this rule *easier*, not harder: the awkward facts go in **in the same voice as
+the flattering ones**, with no hedging and no apology. Unencrypted local storage, the schema
+compilation, the host seeing the page request — these stop being admissions the moment nothing around
+them is a boast. A description has no edges to manage, which is exactly why this is the better design.
+
+**Vocabulary to avoid**, beyond the obvious: "enforced", "guaranteed", "we never", "we can't",
+"only ever", "completely", "entirely", "at all times". Each smuggles a promise into a sentence that
+could have stated a mechanism instead.
 
 ### 5.1 Placement — recommendation
 
-A permanent line beneath the two doors in `ConnectScreen.tsx` (after the `</div>` closing `.doors`,
-line 289), carrying one sentence and a `▸ How this works` disclosure that reuses the existing
-`.disclose` control already used by "Add headers" (`ConnectScreen.tsx:213`, `.module.css:164`).
+A permanent block beneath the two doors in `ConnectScreen.tsx` (after the `</div>` closing `.doors`),
+carrying one descriptive line and a `▸ What runs where` disclosure that reuses the existing `.disclose`
+control already used by "Add headers" (`ConnectScreen.tsx:213`, `.module.css:164`).
 
-Rationale, against the recorded taste for permanent furniture over surfaces that arrive: the statement
-must be readable *before* anyone types a token, so it cannot be a modal, a toast, or anything that
-appears on interaction. It sits below the doors rather than above them because it answers a question
-the doors provoke.
+Rationale, against the recorded taste for permanent furniture over surfaces that arrive: it must be
+readable *before* anyone types a token, so it cannot be a modal, a toast, or anything that appears on
+interaction. It sits below the doors rather than above them because it answers a question the doors
+provoke rather than announcing itself first.
 
-**Nothing is added post-connect.** The chrome band already carries server identity and transport; a
-trust badge there would be furniture with no job, and repeating a promise once it has been acted on
-reads as anxiety.
+**Nothing is added post-connect.** The chrome band already carries server identity and transport.
 
-### 5.2 The claims, and what licenses each
+### 5.2 The content — an inventory, not an argument
 
-Every line below is licensed by a row of §2. **If a claim's evidence is not in that table, the claim
-does not ship.**
+Grouped by question, because that is how someone assessing it will read. Every line is licensed by a
+row of §2; **if a line's evidence is not in that table, it does not ship.** Wording below is the
+intended register, not final copy.
 
-At rest (one sentence, always visible):
+At rest (always visible, one line):
 
-> Runs entirely in your browser. Your tokens and everything your server returns stay on this device.
+> This page is static files running in your browser. It connects to the MCP server address you enter.
 
-Expanded (`How this works`):
+Expanded — **Where the code runs**
 
-- **This page is a set of static files.** There is no server of ours behind it, so there is nothing for
-  it to send anything to. *(§2 row 1)*
-- **Your browser talks to your MCP server directly.** The requests come from this tab, on your network,
-  with your headers. *(§2 rows 2, 6)*
-- **No analytics, no trackers, no third-party scripts.** *(§2 rows 3, 5)*
-- **Tokens are stored only on this device**, in this browser's local storage, and are sent only to the
-  server you saved them against. They are never put in a link. *(§2 row 6)*
-- **Nothing your server returns is stored or transmitted anywhere.** Results live in the tab until you
-  close it. *(§2 row 7)*
-- **The demo server runs inside this tab** and makes no network requests at all. *(§2 row 8)*
-- **The browser enforces this, not just us**: a Content-Security-Policy in the page stops it loading
-  code from anywhere but this origin. *(§2 row 9)*
+- The page is a set of static files served by GitHub Pages. There is no application server behind it.
+  *(§2 row 1)*
+- Everything after the page loads happens in this browser tab: connecting, parsing, rendering. *(§2 rows 2, 8)*
 
-Note the wording: *loading code from anywhere but this origin*. Do **not** write "no code from your
-server can run here" — §5.3's last item is why.
+Expanded — **What this page connects to**
 
-### 5.3 What must not be claimed — the honest edges
+- Requests to an MCP server go from this tab to the address in the box, with any headers you add. *(§2 rows 2, 6)*
+- After a connection fails, one further request goes to that same address, to tell a blocked
+  cross-origin response apart from a host that never answered. *(§2 row 2; `src/mcp/probe.ts`)*
+- The example buttons connect to servers run by DeepWiki, TripGo, Exa, Hugging Face and Microsoft
+  Learn, under their terms. *(§2 row 4)*
+- GitHub Pages serves the files, so it receives the request for the page — your IP address and browser
+  — as any web host does.
+- No analytics, telemetry or third-party scripts are loaded. Fonts are served from this origin. *(§2 rows 3, 5)*
 
-These belong in the expanded panel too. A trust statement that omits its own limits is marketing.
+Expanded — **What is stored, and where**
 
-- **"We can't see anything" is false.** GitHub Pages serves the files, so GitHub sees the request for
-  the page — your IP address and browser — exactly as any website's host does. It never sees what you
-  do with the page. Say this; do not let a reader discover it.
-- **Something *is* stored on the device**: recent server URLs, any headers explicitly saved with
-  "Remember headers on this device", the light/dark choice, and the dune-mode flag. Name local storage
-  and say clearing site data removes it. Do not write "nothing is stored".
-- **A failed connection sends one extra request** to the address you typed — the `no-cors` reachability
-  probe (`src/mcp/probe.ts`) that distinguishes "CORS blocked it" from "the host never answered". It
-  goes to your server, not to us, and only after a failure.
-- **The example chips contact third parties.** Clicking DeepWiki, TripGo, Exa, Hugging Face or
-  Microsoft Learn connects your browser to that operator, under their terms, not ours.
-- **Tokens are not encrypted at rest.** Local storage is plain text and is readable by anything else
-  running on this origin. This is why "Remember headers" is opt-out by default (`remember` initialises
-  `false`, `ConnectScreen.tsx:37`) and it should stay that way.
-- **Do not claim any audit, certification, or that the code has been reviewed by anyone.** The security
-  review behind ISSUE-11 → ISSUE-15 was self-conducted; saying "audited" would be the one dishonest
-  sentence on a page about honesty.
-- **One piece of what your server sends is compiled, not just displayed** (ISSUE-18, added after this
-  plan was first written). If a tool declares an `outputSchema`, the MCP SDK's validator turns that
-  schema into a JavaScript function to check results against — the only place in the app where
-  something a server sent reaches a code generator. It is a schema, not a script, and AJV 8 is hardened
-  against it, but it is real and it is why the policy carries `'unsafe-eval'`. **[TODO-33](../../TODO.md)
-  removes it** by swapping in a validator that interprets rather than generates.
+- In this browser's local storage: recent server addresses, headers you chose to remember, and your
+  light/dark setting. Stored as plain text, readable by anything else running on this origin. Clearing
+  site data removes it. *(§2 row 6)*
+- In memory, for this tab only: everything a server returns. Closing the tab discards it. *(§2 row 7)*
+- In the address bar: the server address and the selected item, in the `#` fragment — which browsers do
+  not send to the host. Headers and tokens are never put in a URL. *(§4, §2 row 6)*
 
-  **Sequencing call**: if TODO-33 lands before Session B, this item is deleted and the §5.2 bullet
-  becomes the stronger "nothing your server sends is ever run as code". If it has not, the item ships as
-  written. Do not ship Session B claiming the stronger version against the weaker CSP — check
-  `index.html` at the time of writing, not this plan.
+Expanded — **What this page does with what a server sends**
 
-### 5.4 Tone
+- Names, descriptions, and results are rendered as text. Nothing a server sends is inserted as HTML.
+  *(verified: no `dangerouslySetInnerHTML` or `innerHTML` anywhere in `src/`; `Markdown.tsx:8` records
+  the rule)*
+- If a tool declares an `outputSchema`, the MCP SDK compiles that schema into a JavaScript function to
+  check results against — the one place where something a server sent becomes code in your browser.
+  *(§2 row 10, ISSUE-18)*
+- A Content-Security-Policy in the page limits what can load: scripts from this origin only, no
+  plugins, no framing, no form submission. It allows `unsafe-eval`, which is what the schema
+  compilation above uses. *(§2 rows 9, 10)*
+- The source is public at `github.com/martyntamerlane/mcp-explore`. It has not been independently
+  audited.
 
-Sentences a non-technical visitor can act on, per the recorded preference for describing behaviour in
-terms someone can point at. "Your browser talks to your server directly" — not "browser-direct
-architecture with no proxy layer". No shield iconography, no padlocks, no green ticks: the visual system
-has no security-signalling vocabulary and inventing one to say "trust us" is the wrong instinct anyway.
+Note what the last group does: it puts the schema compilation in front of the reader in the same plain
+voice as everything else. Under the old framing that was an awkward exception to a boast. Here it is
+simply another fact, and the reader can weigh it.
 
-### 5.5 Tests (Tier 2)
+**Sequencing, if [TODO-33](../../TODO.md) lands first**: the second and third bullets of that last group
+change to describe an interpreting validator and a `script-src 'self'` policy. They do not become a
+claim. Check `index.html` at the time of writing rather than trusting this plan.
 
-`ConnectScreen.test.tsx`: the at-rest sentence renders on first paint; the disclosure opens and closes;
-the honest-edges items are present in the expanded panel. Deliberately **not** asserting the copy
-word-for-word beyond one anchoring phrase per claim — a test that pins prose gets deleted the first time
-someone edits a comma.
+### 5.3 Tone
 
-**Declined**: a guard test that greps the source for new `fetch` calls to keep the claims true. It
-would be brittle (the SDK's own transports are indistinguishable from a rogue call at that level) and
-redundant with the CSP, which is the actual enforcement and is declarative. If the claims and the code
-ever drift, the CSP is the thing that will notice.
+Short declarative sentences about mechanism, in terms a reader can point at — per the recorded
+preference for describing behaviour by what is on screen rather than by class names. "Requests go from
+this tab to the address in the box", not "browser-direct architecture with no proxy layer".
 
----
+No shield iconography, no padlocks, no green ticks, no colour used to signal reassurance. The visual
+system has no security-signalling vocabulary; inventing one would be making a claim in pictures after
+carefully not making one in words. The block should look like every other quiet, factual part of the
+page — because that is what it is.
+
+### 5.4 Tests (Tier 2)
+
+`ConnectScreen.test.tsx`: the at-rest line renders on first paint; the disclosure opens and closes; and
+the four groups are present when open. Assert one anchoring phrase per group rather than the prose
+word-for-word — a test that pins copy gets deleted the first time someone edits a comma.
+
+Worth one test that would otherwise never be written: **assert the panel contains the awkward facts** —
+local storage, the post-failure probe, the third-party example servers, the schema compilation. Those
+are the lines a future well-meaning edit would tidy away for being off-message, and that edit is exactly
+what turns this back into a claim.
+
+**Declined**: a guard test that greps the source for new `fetch` calls. It would be brittle (the SDK's
+own transports are indistinguishable from a rogue call at that level) and redundant with the CSP, which
+is declarative and is what would actually notice.
 
 ## 6. Documentation to update — in the same change, not after
 
-- `docs/functional-description.md` — the landing page's trust statement and what it says; and, from §4,
-  that shareable links now use `#`.
+- `docs/functional-description.md` — what the landing page's description block says; and, from §4,
+  that shareable links now use `#`. *(§4's half done.)*
 - `docs/architecture-overview.md` — the URL contract (`#server=`, with `?server=` read for
-  compatibility), and a short "what leaves the device" section carrying §2's table. That table is the
-  durable artefact here: the next person to add a dependency needs to know a claim depends on it.
+  compatibility), and a "what leaves the device" section carrying §2's table. That table is the durable
+  artefact here: the next person to add a dependency needs to know that a line of on-screen text
+  describes it. *(Both done 2026-08-30.)*
 - `docs/specs/` — a dated spec for the copy if §5's design gate produces anything beyond what §5.2
   already fixes. If it does not, this plan is the record and no spec is needed.
 - `DEPLOYMENTS.md` on release, per CLAUDE.md.
@@ -284,15 +313,17 @@ ever drift, the CSP is the thing that will notice.
    `src/App.test.tsx`, `docs/functional-description.md` and `docs/architecture-overview.md` are all
    **both** modified there and touched here. Confirm with the user whether that work has landed before
    starting; do not rebase or restage another session's files.
-2. **The §5 approval gate** (§5's banner) must be answered before any of Session B is built.
+2. **The §5 approval gate** (§5's banner) must be answered before any of Session B is built, and
+   **§5.0's no-claims rule read first** — it is the constraint the section exists under, not a style note.
 3. Read [`docs/specs/2026-08-24-initial-design.md`](../specs/2026-08-24-initial-design.md) decisions #1
    and #9, and [`docs/specs/2026-08-29-addressable-selection.md`](../specs/2026-08-29-addressable-selection.md)
    before touching the URL contract.
 
 ## 8. Out of scope
 
-- A privacy-policy page. The panel is the statement; a second document would only drift from it.
+- A privacy-policy page. A policy is a set of promises; §5.0 rules those out, and a second document
+  would drift from the panel besides.
 - Anything that would reduce what is stored locally (recents, remembered headers). The storage is a
-  feature the visitor opted into and §5.3 discloses it.
+  feature the visitor opted into, and §5.2 describes it rather than defending it.
 - [TODO-7](../../TODO.md)'s CORS proxy, which would invalidate half of §2 and was declined on 2026-08-30
   for separate reasons.

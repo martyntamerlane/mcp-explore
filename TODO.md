@@ -116,11 +116,13 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 
 ---
 
-### TODO-31: Say that it runs on your device — and make that true without an asterisk
+### TODO-31: Describe what runs where — and remove the one thing that made the description untrue
 
-**Complexity**: S — **plan**: [`docs/plans/2026-08-30-local-execution-trust.md`](docs/plans/2026-08-30-local-execution-trust.md) — **Session A done 2026-08-30**
+**Complexity**: S — **plan**: [`docs/plans/2026-08-30-what-runs-where.md`](docs/plans/2026-08-30-what-runs-where.md) — **Session A done 2026-08-30**
 
-The app's whole architecture is a privacy claim — zero backend, browser-direct, tokens never in URLs — and the landing page says none of it, while asking visitors to paste an internal server address and often a bearer token beside it. Add a permanent trust statement under the two doors: one sentence at rest, a **How this works** disclosure carrying the specifics *and* the honest edges (GitHub Pages sees the page request like any host; recents and remembered headers do sit in local storage, unencrypted; a failed connect sends one extra probe to the address you typed; the example chips contact third parties).
+The app has an unusual architecture — zero backend, browser-direct, tokens never in URLs — and the landing page describes none of it, while asking visitors to paste an internal server address and often a bearer token beside it. Add a permanent block under the two doors: one descriptive line at rest, a **What runs where** disclosure holding an inventory grouped by question — where the code runs, what the page connects to, what is stored and where, and what the page does with what a server sends.
+
+**It makes no safety claims, by instruction (2026-08-30), and §5.0 of the plan forbids them.** No "safe", "secure", "private", "protected"; no "we never", "enforced", "guaranteed". Every line is an observable fact about mechanism and the reader draws their own conclusion. That rule is what lets the awkward facts sit in the same plain voice as the rest — unencrypted local storage, GitHub Pages seeing the page request, the post-failure probe, the third-party example servers, and the `outputSchema` a server sends being compiled into a function. Under a claims framing each of those was an exception to manage; here each is just another line.
 
 Verified 2026-08-30 before writing any of it, and the claim holds: no backend, the only `fetch(` in the codebase is `probe.ts`'s reachability probe against the visitor's own URL, no analytics or third-party scripts, fonts bundled rather than fetched, tokens confined to `localStorage` and the server they were saved against, results never persisted, and `script-src 'self'` enforcing it. The evidence table is §2 of the plan — it is the durable half, since the next dependency added is what would quietly falsify a line of the copy.
 
