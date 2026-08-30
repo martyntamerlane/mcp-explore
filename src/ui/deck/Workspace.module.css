@@ -19,6 +19,25 @@
   max-width: var(--measure-subject);
 }
 
+/**
+ * With an outline the row is a *pair*, and a pair reads as composed only when
+ * its margins match. Left-anchored, the column sat 32px from the reading text
+ * and 495px from the edge of a 1920 screen — the fix for ISSUE-16 made the list
+ * legible and left it looking stranded, which is what was still off after it
+ * shipped.
+ *
+ * A no-op where nothing is wrong: at 1380 and 1440 the pair already fills the
+ * workspace (32px either side measured), so this only does anything once the row
+ * hits its cap and stops growing, which is exactly where the imbalance starts.
+ *
+ * Deliberately not applied without an outline. There the single column has
+ * already widened to take the space, and centring it would only unmoor the
+ * reading text from the browse column it belongs to.
+ */
+.subject:not([data-wide-blocks]) {
+  margin-inline: auto;
+}
+
 .content {
   flex: 1 1 auto;
   min-width: 0;

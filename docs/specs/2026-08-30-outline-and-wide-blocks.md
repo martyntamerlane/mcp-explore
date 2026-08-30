@@ -108,6 +108,28 @@ the raw code block inside it at 780 put an empty half-panel to its right, which
 looked worse than the margin it replaced. The block follows `--measure-block`
 too.
 
+### 3.4 The pair is centred; the lone column is not
+
+Added the same day, after §3.1 shipped and the report came back as *"the
+rightmost pane still looks off"* (ISSUE-19). Making the outline legible had not
+made it look placed: at 1920 it sat 32px from the text it indexes and 495px from
+the edge of the screen.
+
+With an outline the row is a **pair**, and a pair reads as composed only when its
+margins match, so the row centres itself. It is a no-op where nothing was wrong —
+at 1380 and 1440 the pair already fills the workspace (33/32 measured) — and acts
+only above the width where the cap starts binding: 265/264 at 1920, 585/584 at
+2560, 1025/1024 at 3440.
+
+Without an outline the row stays left-anchored. The single column has already
+widened to take the space (§3.3), and centring it as well would unmoor the
+reading text from the browse column it belongs to.
+
+Rejected, by rendering all four against the live result rather than arguing them:
+pushing the outline to the right edge (495px hole in the middle of the page) and
+letting the gap grow to a cap (440px hole, same defect smaller). Both trade an
+uneven margin for a gap between the index and what it indexes, which is worse.
+
 ## 4. Verified
 
 Against the production build (`vite preview`), deepwiki and the in-page demo, at
