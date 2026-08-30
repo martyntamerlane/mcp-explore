@@ -76,12 +76,22 @@ export function flattenNav(nodes: NavNode[], opts: FlattenOptions): NavRow[] {
   return rows
 }
 
+/** All movement needs of a row: what to call it, and whether the filter hid it. */
+export interface MovableRow {
+  key: string
+  receded: boolean
+}
+
 /**
  * The next highlight key, clamped at both ends. Deliberately no wrapping: in a
  * 155-row list, wrapping from the last row to the first reads as a glitch, not
  * as a feature. An unknown or filtered-away key restarts from the near end.
+ *
+ * Takes `MovableRow` rather than `NavRow` so command mode's rows move by the
+ * same function (interaction roadmap S2) — the column's key model does not
+ * change when its contents do.
  */
-export function moveActive(rows: NavRow[], activeKey: string | null, delta: 1 | -1): string | null {
+export function moveActive(rows: readonly MovableRow[], activeKey: string | null, delta: 1 | -1): string | null {
   const live = rows.filter((r) => !r.receded)
   if (live.length === 0) return null
   const at = live.findIndex((r) => r.key === activeKey)

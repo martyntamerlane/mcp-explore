@@ -113,14 +113,6 @@ The differentiating idea (2026-08-25 flow-view grill session): connect to severa
 
 The flow view introduced `StageProps` (`src/ui/stage.ts`) as the display-variant contract; the Dune scene predates it and runs via its own overlay/entry mechanism. Rendering it as a stage would unify variant switching. Coordinate with (or leave to) the session that owns `src/dune/` — see the isolation rationale in `docs/architecture-overview.md`.
 
-### TODO-26: Keyboard navigation and command mode
-
-**Complexity**: M — **navigation half done 2026-08-29**
-
-The app has exactly one key binding (Esc → home). Make the **existing** filter input in the chrome band the keyboard surface: `/` focuses it, ↑↓ walk the filtered list, ⏎ selects, `>` switches it to command mode. Deliberately **not** a ⌘K overlay — every source points at one, and it is the archetypal arriving surface this project has twice rejected; the permanent filter box gets a second job instead. Includes shortcut legibility (keycap glyphs are a new visual pattern needing approval). Sessions **S1** (navigation) and **S2** (command mode) of the interaction roadmap.
-
-2026-08-29: **S1 shipped** — `/`, ↑↓ (a highlight, not a per-keystroke selection), ⏎, →←, and Escape's two-stage unwind, with the key model pure in `src/ui/deck/keynav.ts` (`docs/specs/2026-08-29-addressable-selection.md`). Still open, and the whole of **S2**: `>` command mode, and shortcut legibility — `/` is advertised only as `aria-keyshortcuts` today, and the keycap glyphs remain an unapproved visual pattern.
-
 ### TODO-24: Markdown subset gaps
 
 **Complexity**: S
@@ -133,6 +125,16 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 ---
 
 ## Completed
+
+### TODO-26: Keyboard navigation and command mode
+
+**Complexity**: M — **Completed 2026-08-30**
+
+The app has exactly one key binding (Esc → home). Make the **existing** filter input in the chrome band the keyboard surface: `/` focuses it, ↑↓ walk the filtered list, ⏎ selects, `>` switches it to command mode. Deliberately **not** a ⌘K overlay — every source points at one, and it is the archetypal arriving surface this project has twice rejected; the permanent filter box gets a second job instead. Includes shortcut legibility (keycap glyphs are a new visual pattern needing approval). Sessions **S1** (navigation) and **S2** (command mode) of the interaction roadmap.
+
+2026-08-29: **S1 shipped** — `/`, ↑↓ (a highlight, not a per-keystroke selection), ⏎, →←, and Escape's two-stage unwind, with the key model pure in `src/ui/deck/keynav.ts` (`docs/specs/2026-08-29-addressable-selection.md`).
+
+2026-08-30: **S2 shipped — this TODO is done.** `>` in the filter turns the browse column into the command list (six commands, all second routes to existing buttons), matching and dispatch pure in `src/ui/deck/commands.ts`, and shortcut legibility carried by an approved flat keycap — inside the filter (`/` at rest, `>` when focused) and as a legend under the command list. `--radius-xs` added for it. `docs/specs/2026-08-29-command-mode.md`.
 
 ### TODO-29: Result outline in the right margin
 

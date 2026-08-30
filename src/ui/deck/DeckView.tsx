@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react"
+import { useMode } from "../ModeContext"
 import { useReads } from "../run/ReadContext"
 import { useRuns } from "../run/RunContext"
 import { fieldSpecs, initialValues, valuesFromArgs, type Values } from "../form/argValues"
 import type { EntitySelection, StageProps } from "../stage"
 import BrowseColumn from "./BrowseColumn"
+import { availableCommands, runCommand, type Command } from "./commands"
+import { useRawView } from "./rawView"
 import { buildDeckModel } from "./deckModel"
 import Workspace from "./Workspace"
 import styles from "./DeckView.module.css"
@@ -26,10 +29,14 @@ export default function DeckView({
   query,
   onQuery,
   onFocusFilter,
+  onCopyLink,
+  onDisconnect,
 }: StageProps) {
   const model = useMemo(() => buildDeckModel(snapshot), [snapshot])
   const { run } = useRuns()
   const { read } = useReads()
+  const { mode, toggle } = useMode()
+  const rawView = useRawView()
   const [valuesBySubject, setValuesBySubject] = useState<Record<string, Values>>({})
 
   // Keys are the browse column's job now (interaction roadmap S1) — Escape
@@ -40,7 +47,10 @@ export default function DeckView({
   const setValue = (name: string, value: string) => {
     if (selection === null) return
     const key = subjectKey(selection)
-    setValuesBySubject((all) => ({ ...all, [key]: { ...(all[key] ?? {}), [name]: value } }))
+    setValuesBySubject((all) => ({
+      ...all,
+      [key]: { ...(all[key] ?? {}), [name]: value },
+    }))
   }
 
   /**
@@ -74,8 +84,33 @@ export default function DeckView({
     const tool = snapshot.tools.find((t) => t.name === selection.id)
     if (!tool) return
     const restored = valuesFromArgs(fieldSpecs(tool.inputSchema), args)
-    setValuesBySubject((all) => ({ ...all, [subjectKey(selection)]: restored }))
+    setValuesBySubject((all) => ({
+      ...all,
+      [subjectKey(selection)]: restored,
+    }))
   }
+
+  /**
+   * Command mode's list (interaction roadmap S2). Assembled here because this is
+   * the one place that can see all of it: the selection, the theme, and whether
+   * anything on screen is rendered markdown. Every entry is a second route to an
+   * action that already exists — no command adds a capability.
+   */
+  const commands = availableCommands({
+    hasSelection: selection !== null,
+    mode,
+    raw: rawView.raw,
+    hasRenderable: rawView.renderable > 0,
+  })
+
+  const dispatch = (command: Command) =>
+    runCommand(command.id, {
+      home: () => select(null),
+      copyLink: onCopyLink,
+      setRaw: rawView.setAll,
+      toggleTheme: toggle,
+      disconnect: onDisconnect,
+    })
 
   return (
     <div className={styles.stage}>
@@ -86,6 +121,8 @@ export default function DeckView({
         onFocusFilter={onFocusFilter}
         selection={selection}
         onSelect={select}
+        commands={commands}
+        onRunCommand={dispatch}
       />
       <Workspace
         snapshot={snapshot}

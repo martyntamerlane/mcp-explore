@@ -4,6 +4,7 @@ import Markdown from "../markdown/Markdown"
 import type { ReadDisplay } from "../run/readResult"
 import { elapsedLabel } from "../run/runHistory"
 import { MAX_RESULT_CHARS } from "../run/runResult"
+import { useRawView } from "./rawView"
 import styles from "./Workspace.module.css"
 
 /**
@@ -21,13 +22,22 @@ import styles from "./Workspace.module.css"
  */
 export function TextBlock({ text, mime, idPrefix }: { text: string; mime?: string; idPrefix?: string }) {
   const markdown = useMemo(() => looksLikeMarkdown(text, mime), [text, mime])
-  const [raw, setRaw] = useState(false)
+  const view = useRawView()
+  // A click speaks for this block; a command speaks for all of them, and ends
+  // this block's dissent by moving the epoch on (see rawView.tsx).
+  const [local, setLocal] = useState<{ epoch: number; raw: boolean } | null>(null)
+  const raw = local !== null && local.epoch === view.epoch ? local.raw : view.raw
+
+  // Only a rendered block has raw bytes to switch to, so only a rendered block
+  // makes the command worth offering.
+  const { register } = view
+  useEffect(() => (markdown ? register() : undefined), [markdown, register])
 
   if (!markdown) return <pre className={styles.code}>{text}</pre>
 
   return (
     <>
-      <button type="button" className={styles.ghostButton} onClick={() => setRaw((r) => !r)}>
+      <button type="button" className={styles.ghostButton} onClick={() => setLocal({ epoch: view.epoch, raw: !raw })}>
         {raw ? "Show rendered" : "Show raw"}
       </button>
       {raw ? <pre className={styles.code}>{text}</pre> : <Markdown text={text} idPrefix={idPrefix} />}

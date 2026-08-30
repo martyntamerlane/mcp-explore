@@ -1,0 +1,51 @@
+/* The flat keycap (interaction roadmap S2, approved 2026-08-30).
+   Raycast treats keycaps as the one place depth decoration is allowed — a
+   gradient fill and a bottom edge that presses. This app is strictly flat and
+   hairline everywhere, so the cap wears the same 1px border every chip, badge
+   and row already wears, and earns its identity from SHAPE instead of depth:
+   a 4px corner where every other small container in the app is a 999px pill,
+   and one fixed box so ⏎, / and esc line up optically rather than each being as
+   wide as its own glyph. No gradient, no shadow, no press transform. */
+.cap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 var(--sp-1);
+  font-family: var(--mono);
+  font-size: var(--fs-micro);
+  line-height: 1;
+  color: var(--ink-3);
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+
+/* On the row the highlight is sitting on, the cap follows the text up one step
+   rather than lighting a colour of its own — it is a label, not a control. */
+.cap[data-strong] {
+  color: var(--ink-2);
+  border-color: color-mix(in srgb, var(--ink) 22%, transparent);
+}
+
+/* A legend is a run of caps with their meanings beside them. */
+.legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--panel-border);
+}
+
+.pair {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--fs-micro);
+  color: var(--ink-3);
+}

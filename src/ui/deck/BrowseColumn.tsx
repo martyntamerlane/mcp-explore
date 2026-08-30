@@ -14,7 +14,9 @@ import {
   type NavNode,
   type NavRow,
 } from "./keynav"
+import { commandKey, isCommandQuery, commandQuery, matchCommands, type Command } from "./commands"
 import type { EntityKind, EntitySelection } from "../stage"
+import { KeyLegend } from "../Keycap"
 import Glyph from "./Glyph"
 import styles from "./BrowseColumn.module.css"
 
@@ -27,6 +29,12 @@ import styles from "./BrowseColumn.module.css"
  * the filter, ↑↓ move a highlight through the visible rows, ⏎ commits it, ←→
  * fold and unfold folders, Esc unwinds. The key model itself is pure and lives
  * in `keynav.ts`; this component only binds it to events and paints the result.
+ *
+ * And it is where command mode renders (interaction roadmap S2). While the
+ * filter's text begins with `>`, this list shows commands instead of entities:
+ * the furniture changes contents, nothing arrives over the top of it. The key
+ * model is untouched by that — ↑↓ move, ⏎ commits, Esc unwinds — because the
+ * rows moving through it only ever needed a key and a receded flag.
  */
 export interface BrowseColumnProps {
   model: DeckModel
@@ -35,10 +43,17 @@ export interface BrowseColumnProps {
   onFocusFilter: () => void
   selection: EntitySelection | null
   onSelect: (selection: EntitySelection | null) => void
+  /** The commands that apply right now, already narrowed by context (S2). */
+  commands: Command[]
+  onRunCommand: (command: Command) => void
 }
 
 const SEGMENTS: EntityKind[] = ["tool", "resource", "prompt"]
-const SEGMENT_LABEL: Record<EntityKind, string> = { tool: "Tools", resource: "Resources", prompt: "Prompts" }
+const SEGMENT_LABEL: Record<EntityKind, string> = {
+  tool: "Tools",
+  resource: "Resources",
+  prompt: "Prompts",
+}
 
 const nodeKey = (n: BrowseNode) => (n.type === "folder" ? folderKey(n.path) : leafKey(n.item.kind, n.item.id))
 
@@ -117,6 +132,8 @@ export default function BrowseColumn({
   onFocusFilter,
   selection,
   onSelect,
+  commands,
+  onRunCommand,
 }: BrowseColumnProps) {
   // Tools first, except when the app opened on something else: a link to a
   // resource that landed on the Tools list would show its subject in the
@@ -129,9 +146,15 @@ export default function BrowseColumn({
   // Power-on cascade, one shot per connect; reduced motion renders it instantly.
   const reduced = useReducedMotion()
 
-  const q = query.trim().toLowerCase()
-  const queryActive = q !== ""
-  const matches = (label: string) => !queryActive || label.toLowerCase().includes(q)
+  // The filter has two jobs (interaction roadmap S2). While its text begins with
+  // `>` it is a command line, so it is NOT narrowing the browse list — the rows
+  // it would have receded are not even on screen. Escape still has to unwind it
+  // first, which is why the key model is told the box is busy either way.
+  const commanding = isCommandQuery(query)
+  const q = commanding ? "" : query.trim().toLowerCase()
+  const filterActive = q !== ""
+  const queryActive = filterActive || commanding
+  const matches = (label: string) => !filterActive || label.toLowerCase().includes(q)
 
   const resourceGroup = model.groups.find((g) => g.kind === "resource")
   const promptGroup = model.groups.find((g) => g.kind === "prompt")
@@ -144,9 +167,7 @@ export default function BrowseColumn({
   const [openFolders, setOpenFolders] = useState<ReadonlySet<string>>(
     () =>
       new Set(
-        selection?.kind === "resource"
-          ? foldersTo(resourceNodes as NavNode[], leafKey("resource", selection.id))
-          : [],
+        selection?.kind === "resource" ? foldersTo(resourceNodes as NavNode[], leafKey("resource", selection.id)) : [],
       ),
   )
 
@@ -173,7 +194,7 @@ export default function BrowseColumn({
 
   const ctx: RowCtx = {
     matches,
-    queryActive,
+    queryActive: filterActive,
     selection,
     activeKey,
     onSelect,
@@ -185,17 +206,60 @@ export default function BrowseColumn({
   // as the eye sees it. Tools and prompts are flat, so they enter as bare leaves.
   const navNodes: NavNode[] =
     segment === "tool"
-      ? model.tools.map((t) => ({ type: "leaf", item: { kind: "tool", id: t.id, label: t.label } }))
+      ? model.tools.map((t) => ({
+          type: "leaf",
+          item: { kind: "tool", id: t.id, label: t.label },
+        }))
       : segment === "resource"
         ? (resourceNodes as NavNode[])
-        : (promptGroup?.items ?? []).map((i) => ({ type: "leaf", item: { kind: i.kind, id: i.id, label: i.label } }))
+        : (promptGroup?.items ?? []).map((i) => ({
+            type: "leaf",
+            item: { kind: i.kind, id: i.id, label: i.label },
+          }))
 
   const navRows: NavRow[] = flattenNav(navNodes, {
     isOpen: (path) => openFolders.has(path),
     matches,
-    queryActive,
+    queryActive: filterActive,
   })
   const activeRow = navRows.find((r) => r.key === activeKey) ?? null
+
+  // ── command mode ──
+  const shown = commanding ? matchCommands(commands, commandQuery(query)) : []
+  const commandRows = shown.map((c) => ({
+    key: commandKey(c.id),
+    receded: false,
+  }))
+  // Unlike the browse list, the command list always has a highlight: it is
+  // reached by typing, and a list you typed your way into should run on ⏎
+  // without a preparatory ↓. Derived rather than stored, so narrowing the list
+  // moves the highlight to the new best match instead of stranding it.
+  const activeCommandKey = commandRows.some((r) => r.key === activeKey) ? activeKey : (commandRows[0]?.key ?? null)
+  const activeCommand = shown.find((c) => commandKey(c.id) === activeCommandKey) ?? null
+
+  // A command whose effect you cannot see says so in its own row before the
+  // column goes back to browsing — copy-link is the only one (see commands.ts).
+  const [receipt, setReceipt] = useState<{ id: string; text: string } | null>(null)
+
+  const runCommandRow = (command: Command) => {
+    onRunCommand(command)
+    if (command.receipt === undefined) {
+      onQuery("")
+      return
+    }
+    setReceipt({ id: command.id, text: command.receipt })
+  }
+
+  useEffect(() => {
+    if (receipt === null) return
+    const id = setTimeout(() => {
+      setReceipt(null)
+      onQuery("")
+    }, 1500)
+    return () => clearTimeout(id)
+    // onQuery is a fresh closure each render; the receipt is what gates this.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [receipt])
 
   // Pointing at something is also a way of saying "I am here", so a click or a
   // deep link moves the highlight to match; otherwise ↑ from a mouse-made
@@ -209,14 +273,15 @@ export default function BrowseColumn({
   // for us — 155 Hugging Face resources make that the difference between
   // navigable and not.
   useEffect(() => {
-    if (activeKey === null || listRef.current === null) return
+    const key = commanding ? activeCommandKey : activeKey
+    if (key === null || listRef.current === null) return
     for (const el of listRef.current.querySelectorAll<HTMLElement>("[data-navkey]")) {
-      if (el.dataset.navkey === activeKey) {
+      if (el.dataset.navkey === key) {
         el.scrollIntoView({ block: "nearest" })
         return
       }
     }
-  }, [activeKey])
+  }, [activeKey, activeCommandKey, commanding])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -237,9 +302,15 @@ export default function BrowseColumn({
           onFocusFilter()
           return
         case "move":
-          setActiveKey(moveActive(navRows, activeKey, action.delta))
+          setActiveKey(
+            moveActive(commanding ? commandRows : navRows, commanding ? activeCommandKey : activeKey, action.delta),
+          )
           return
         case "commit":
+          if (commanding) {
+            if (activeCommand !== null) runCommandRow(activeCommand)
+            return
+          }
           if (activeRow === null) return
           if (activeRow.type === "leaf") onSelect(activeRow.selection)
           else toggleFolder(activeRow.path)
@@ -276,13 +347,18 @@ export default function BrowseColumn({
         Home
       </button>
 
-      <div className={styles.segments} role="group" aria-label="Kind">
+      {/* The segments stay in place while command mode is on rather than being
+          removed: the column's silhouette must not jump, because "nothing
+          arrives and nothing leaves" is the whole reason this is not an overlay.
+          They recede using the same idiom the list uses for filtered-out rows. */}
+      <div className={styles.segments} role="group" aria-label="Kind" data-receded={commanding || undefined}>
         {SEGMENTS.map((kind) => (
           <button
             key={kind}
             type="button"
             className={styles.segment}
             aria-pressed={segment === kind}
+            tabIndex={commanding ? -1 : undefined}
             onClick={() => {
               // A different list is a different place; the highlight does not
               // carry over. This lives on the click rather than in an effect on
@@ -292,7 +368,7 @@ export default function BrowseColumn({
               setActiveKey(null)
             }}
           >
-            {SEGMENT_LABEL[kind]} <span className={styles.count}>{queryActive ? hits[kind] : counts[kind]}</span>
+            {SEGMENT_LABEL[kind]} <span className={styles.count}>{filterActive ? hits[kind] : counts[kind]}</span>
           </button>
         ))}
       </div>
@@ -304,7 +380,45 @@ export default function BrowseColumn({
         initial={reduced ? false : "hidden"}
         animate="show"
       >
-        {segment === "tool" &&
+        {commanding && (
+          <div className={styles.commands} role="listbox" aria-label="Commands">
+            {shown.length === 0 ? (
+              <p className={styles.none}>No command matches that.</p>
+            ) : (
+              shown.map((command) => (
+                <button
+                  key={command.id}
+                  type="button"
+                  role="option"
+                  className={styles.commandRow}
+                  data-navkey={commandKey(command.id)}
+                  data-active={activeCommandKey === commandKey(command.id) || undefined}
+                  aria-selected={activeCommandKey === commandKey(command.id)}
+                  onClick={() => runCommandRow(command)}
+                >
+                  <span className={styles.commandLabel}>{command.label}</span>
+                  {receipt?.id === command.id ? (
+                    <span className={styles.commandReceipt}>{receipt.text}</span>
+                  ) : (
+                    command.hint && <span className={styles.commandHint}>{command.hint}</span>
+                  )}
+                </button>
+              ))
+            )}
+            {/* The keys are taught where and when they are live, inside furniture
+                that is already on screen — the other half of S2's goal. */}
+            <KeyLegend
+              pairs={[
+                { keys: ["↑", "↓"], means: "move" },
+                { keys: ["⏎"], means: "run" },
+                { keys: ["esc"], means: "back to filter" },
+              ]}
+            />
+          </div>
+        )}
+
+        {!commanding &&
+          segment === "tool" &&
           (model.tools.length === 0 ? (
             <p className={styles.none}>This server exposes no tools.</p>
           ) : (
@@ -333,7 +447,8 @@ export default function BrowseColumn({
             })
           ))}
 
-        {segment === "resource" &&
+        {!commanding &&
+          segment === "resource" &&
           (resourceNodes.length === 0 ? (
             <p className={styles.none}>This server exposes no resources.</p>
           ) : (
@@ -344,7 +459,8 @@ export default function BrowseColumn({
             ))
           ))}
 
-        {segment === "prompt" &&
+        {!commanding &&
+          segment === "prompt" &&
           ((promptGroup?.items.length ?? 0) === 0 ? (
             <p className={styles.none}>This server exposes no prompts.</p>
           ) : (

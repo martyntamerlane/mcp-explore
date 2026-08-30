@@ -3,6 +3,8 @@ import { act, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "../../mcp/connect"
 import type { Connection, ServerSnapshot, TransportKind } from "../../mcp/types"
+import { ModeProvider } from "../ModeContext"
+import { RawViewProvider } from "./rawView"
 import { ReadProvider } from "../run/ReadContext"
 import { RunProvider } from "../run/RunContext"
 import type { EntitySelection } from "../stage"
@@ -28,9 +30,20 @@ interface HarnessProps {
   onSelect: (next: EntitySelection | null) => void
   onQuery: (q: string) => void
   onFocusFilter: () => void
+  onCopyLink: () => void
+  onDisconnect: () => void
 }
 
-function Harness({ snapshot, transportKind, query, onSelect, onQuery, onFocusFilter }: HarnessProps) {
+function Harness({
+  snapshot,
+  transportKind,
+  query,
+  onSelect,
+  onQuery,
+  onFocusFilter,
+  onCopyLink,
+  onDisconnect,
+}: HarnessProps) {
   const [selection, setSelection] = useState<EntitySelection | null>(null)
   return (
     <DeckView
@@ -44,37 +57,52 @@ function Harness({ snapshot, transportKind, query, onSelect, onQuery, onFocusFil
       query={query}
       onQuery={onQuery}
       onFocusFilter={onFocusFilter}
+      onCopyLink={onCopyLink}
+      onDisconnect={onDisconnect}
     />
   )
 }
 
-function renderDeck({
-  transportKind = "in-memory" as TransportKind,
-  snapshot = conn.snapshot,
-  query = "",
-} = {}) {
+function renderDeck({ transportKind = "in-memory" as TransportKind, snapshot = conn.snapshot, query = "" } = {}) {
   const onSelect = vi.fn()
   const onQuery = vi.fn()
   const onFocusFilter = vi.fn()
+  const onCopyLink = vi.fn()
+  const onDisconnect = vi.fn()
+  // Mode and raw-view are app-level providers in the real tree (App.tsx); the
+  // stage reads both to build its command list (interaction roadmap S2).
   const tree = (props: Partial<HarnessProps>) => (
-    <RunProvider connection={conn}>
-      <ReadProvider connection={conn}>
-        <Harness
-          snapshot={snapshot}
-          transportKind={transportKind}
-          query={query}
-          onSelect={onSelect}
-          onQuery={onQuery}
-          onFocusFilter={onFocusFilter}
-          {...props}
-        />
-      </ReadProvider>
-    </RunProvider>
+    <ModeProvider>
+      <RunProvider connection={conn}>
+        <ReadProvider connection={conn}>
+          <RawViewProvider>
+            <Harness
+              snapshot={snapshot}
+              transportKind={transportKind}
+              query={query}
+              onSelect={onSelect}
+              onQuery={onQuery}
+              onFocusFilter={onFocusFilter}
+              onCopyLink={onCopyLink}
+              onDisconnect={onDisconnect}
+              {...props}
+            />
+          </RawViewProvider>
+        </ReadProvider>
+      </RunProvider>
+    </ModeProvider>
   )
   const utils = render(tree({}))
   // Re-rendering the same Harness in place keeps its selection state, which is
   // how App behaves when only the filter or the snapshot changes.
-  return { onSelect, onQuery, onFocusFilter, update: (props: Partial<HarnessProps>) => utils.rerender(tree(props)) }
+  return {
+    onSelect,
+    onQuery,
+    onFocusFilter,
+    onCopyLink,
+    onDisconnect,
+    update: (props: Partial<HarnessProps>) => utils.rerender(tree(props)),
+  }
 }
 
 afterEach(() => {
@@ -515,4 +543,91 @@ test("a run in flight reports elapsed time rather than a static Running…", asy
   } finally {
     vi.useRealTimers()
   }
+})
+
+/* ── command mode (interaction roadmap S2) ── */
+
+test("`>` turns the column into the command list without anything arriving", async () => {
+  const { update } = renderDeck()
+  expect(screen.getByRole("button", { name: "tool create_issue" })).toBeInTheDocument()
+
+  update({ query: ">" })
+  // The entities are gone from the column, the commands are in their place, and
+  // the segmented control is still standing where it was.
+  expect(screen.queryByRole("button", { name: "tool create_issue" })).not.toBeInTheDocument()
+  expect(screen.getByRole("listbox", { name: "Commands" })).toBeInTheDocument()
+  expect(screen.getByRole("group", { name: "Kind" })).toBeInTheDocument()
+  expect(screen.getByRole("option", { name: /disconnect/i })).toBeInTheDocument()
+})
+
+test("the command list narrows as you type, and the best match is already highlighted", async () => {
+  const { update } = renderDeck()
+  update({ query: ">dis" })
+  const options = screen.getAllByRole("option")
+  expect(options).toHaveLength(1)
+  expect(options[0]).toHaveTextContent("Disconnect")
+  // Reached by typing, so ⏎ works without a preparatory ↓.
+  expect(options[0]).toHaveAttribute("aria-selected", "true")
+})
+
+test("⏎ runs the highlighted command; ↓ moves the highlight first", async () => {
+  const { update, onDisconnect } = renderDeck()
+  update({ query: ">" })
+  // Nothing is selected, so the list opens on Switch to … mode, then Disconnect.
+  await userEvent.keyboard("{ArrowDown}")
+  expect(screen.getByRole("option", { name: /disconnect/i })).toHaveAttribute("aria-selected", "true")
+  await userEvent.keyboard("{Enter}")
+  expect(onDisconnect).toHaveBeenCalled()
+})
+
+test("running a command clears the filter, so the column goes back to browsing", async () => {
+  const { update, onQuery, onSelect } = renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  update({ query: ">home" })
+  await userEvent.click(screen.getByRole("option", { name: /home/i }))
+  expect(onSelect).toHaveBeenLastCalledWith(null)
+  expect(onQuery).toHaveBeenLastCalledWith("")
+})
+
+test("copy link confirms in its own row rather than vanishing silently", async () => {
+  const writeText = vi.fn()
+  vi.stubGlobal("navigator", { ...navigator, clipboard: { writeText } })
+  const { update, onCopyLink } = renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  update({ query: ">copy" })
+  await userEvent.click(screen.getByRole("option", { name: /copy link/i }))
+  expect(onCopyLink).toHaveBeenCalled()
+  // The row says so; the filter is not cleared out from under the confirmation.
+  expect(screen.getByRole("option", { name: /link copied/i })).toBeInTheDocument()
+  vi.unstubAllGlobals()
+})
+
+test("home and copy link are absent when there is no selection to act on", async () => {
+  const { update } = renderDeck()
+  update({ query: ">" })
+  expect(screen.queryByRole("option", { name: /^home/i })).not.toBeInTheDocument()
+  expect(screen.queryByRole("option", { name: /copy link/i })).not.toBeInTheDocument()
+})
+
+test("Escape leaves command mode by clearing the filter, not by going home", async () => {
+  const { update, onQuery, onSelect } = renderDeck()
+  await userEvent.click(screen.getByRole("button", { name: "tool create_issue" }))
+  onSelect.mockClear()
+  update({ query: ">" })
+  await userEvent.keyboard("{Escape}")
+  expect(onQuery).toHaveBeenLastCalledWith("")
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+test("show raw is offered only once something on screen is rendered markdown", async () => {
+  const { update } = renderDeck()
+  update({ query: ">" })
+  expect(screen.queryByRole("option", { name: /show raw/i })).not.toBeInTheDocument()
+
+  update({ query: "" })
+  await userEvent.click(screen.getByRole("button", { name: /^Resources/ }))
+  await userEvent.click(screen.getByRole("button", { name: "resource readme" }))
+  await within(workspace()).findByRole("button", { name: "Show raw" })
+  update({ query: ">" })
+  expect(screen.getByRole("option", { name: /show raw/i })).toBeInTheDocument()
 })

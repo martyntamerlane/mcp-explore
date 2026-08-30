@@ -1,12 +1,13 @@
 # Interaction roadmap — four sessions
 
-**Date**: 2026-08-29 · **Status**: S1, S3 and S4 built — see
+**Date**: 2026-08-29 · **Status**: **all four built** — see
 [`2026-08-29-addressable-selection.md`](../specs/2026-08-29-addressable-selection.md),
+[`2026-08-29-command-mode.md`](../specs/2026-08-29-command-mode.md),
 [`2026-08-29-run-record.md`](../specs/2026-08-29-run-record.md),
 [`2026-08-29-result-outline.md`](../specs/2026-08-29-result-outline.md).
-**S2 is the one still open**, and it is held deliberately: it carries a design
-approval gate (keycap glyphs are a new visual pattern) that needs the user, not
-a decision made in flight · **Source**: the five
+S2 was held back for a session while its design approval gate (keycap glyphs are
+a new visual pattern) went to the user; approved and built 2026-08-30 ·
+**Source**: the five
 UI/interactivity suggestions from the 2026-08-29 research pass, all accepted.
 
 Each session below is sized to finish at **~35% of a context window** and must
@@ -94,7 +95,7 @@ expand/collapse to the key model). Ship tools and prompts, note the gap.
 
 ---
 
-## S2 · Command mode and shortcut legibility
+## S2 · Command mode and shortcut legibility — **built 2026-08-30**
 
 The rest of suggestion **#1**.
 
@@ -116,23 +117,43 @@ a plumbing session.
   theme, show raw / show rendered, home. All already exist as UI actions —
   command mode adds no new capability, only a second route.
 
-### Open — decide in-session
+### Open — resolved by approval, 2026-08-30
 
-- **New visual pattern, needs approval before building:** keycap glyphs
-  (`⏎`, `/`, `Esc`) rendered next to the actions they trigger. Raycast treats
-  these as the one place depth decoration is allowed; this app has a strictly
-  flat, hairline visual system, so a gradient-filled key would be a genuine
-  departure. Propose a flat variant first.
-- Where the command list renders. It cannot be a popover over the column
-  (rejected pattern). Candidate: the column itself becomes the command list
-  while `>` is active — the furniture changes contents, nothing arrives.
-- Whether `>` is discoverable at all without a hint, and where that hint lives.
+- **Keycap glyphs: approved as a flat variant.** Hairline border, no fill, no
+  shadow, no press transform — the cap earns its identity from *shape*: a 4px
+  corner where every other small container in the app is a 999px pill, and one
+  fixed 18px box so `⏎`, `/` and `esc` line up optically. `--radius-xs` had to be
+  added; at `--radius-s` an 18px square renders as a circle, which is the exact
+  pill it must not be mistaken for.
+- **The column becomes the command list**, as the candidate proposed. The
+  segmented control stays in place and recedes rather than being removed, so the
+  silhouette never jumps. Command labels wear the UI face while every entity name
+  above them wears mono — that one substitution is what says the list changed job.
+- **`>` is discoverable from the filter itself.** A keycap inside its right edge
+  reads `/` at rest and `>` once the caret is inside, so the second job announces
+  itself exactly when you are in a position to use it. A legend under the command
+  list carries `↑↓ ⏎ esc`.
+
+### Not anticipated, found while building
+
+- **`connect` and `disconnect` are one code path.** `App.disconnect()` lands on
+  the connect screen, which *is* where a server is chosen, so the "settled" list
+  of six commands ships as five rows plus a keyword: two rows for one outcome
+  would be furniture that lies about having two.
+- **Two pieces of state had to be lifted**, both single-owner problems rather
+  than plumbing: the theme (`ModeContext`) and "show raw" (`rawView`, reconciled
+  by an epoch so a per-block click still means that block). `blocks.tsx` was not
+  in the file list below; it is now.
+- Found in the first screenshot round: labels beside their hints truncated to
+  `Copy li…` and `Disconn…` — the two are stacked now.
 
 ### Files
 
 `src/ui/ChromeBar.tsx`, `src/ui/deck/BrowseColumn.tsx`, a new
 `src/ui/deck/commands.ts` (pure: the command list, filtering, and what each one
-dispatches — keep it testable and free of React).
+dispatches — keep it testable and free of React). Added while building: a new
+`src/ui/Keycap.tsx`, `src/ui/ModeContext.tsx` and `src/ui/deck/rawView.tsx`, plus
+`src/ui/deck/blocks.tsx` and one widened signature in `keynav.ts`.
 
 ### Verification
 
@@ -144,6 +165,8 @@ three most important shortcuts are visible on screen without documentation.
 
 **Drop first if long:** the keycap glyphs. Command mode without them still
 works; shortcuts without command mode do not.
+— Not needed; the caps shipped, and two screenshot rounds were enough rather
+than three.
 
 **Budget:** ~30%. Small code, several visual rounds, one design approval gate.
 

@@ -35,6 +35,10 @@
   --code-bg: rgba(102, 108, 130, 0.12);
   --panel-solid: rgba(252, 253, 255, 0.92);
   --header-bg: rgba(238, 244, 251, 0.72);
+  /* 4px, for the one container smaller than everything else in the app: the
+     keycap (interaction roadmap S2). At 18px square, --radius-s renders a
+     circle, which is exactly the pill shape the cap must not be mistaken for. */
+  --radius-xs: 4px;
   --radius-s: 8px;
   --radius-m: 12px;
   --radius-l: 16px;

@@ -4,6 +4,8 @@ import type { Connection } from "./mcp/types"
 import ChromeBar from "./ui/ChromeBar"
 import ConnectScreen from "./ui/ConnectScreen"
 import DeckView from "./ui/deck/DeckView"
+import { RawViewProvider } from "./ui/deck/rawView"
+import { ModeProvider } from "./ui/ModeContext"
 import { ReadProvider } from "./ui/run/ReadContext"
 import { RunProvider } from "./ui/run/RunContext"
 import { parseSelection, resolveSelection, sameSelection, selectionSearch } from "./ui/selectionUrl"
@@ -78,14 +80,25 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
     setPhase({ status: "idle" })
   }
 
+  /**
+   * The link to the current selection is the address bar, verbatim: S1 already
+   * keeps the URL in step with what is on screen, so there is nothing to
+   * rebuild here and no way for the copied link to disagree with the page.
+   */
+  function copyLink() {
+    void navigator.clipboard?.writeText(window.location.href)
+  }
+
   if (phase.status === "idle") {
     return (
-      <ConnectScreen
-        onConnected={handleConnected}
-        initialUrl={autoTarget}
-        autoConnect={autoTarget !== undefined}
-        connectUrlFn={connectUrlFn}
-      />
+      <ModeProvider>
+        <ConnectScreen
+          onConnected={handleConnected}
+          initialUrl={autoTarget}
+          autoConnect={autoTarget !== undefined}
+          connectUrlFn={connectUrlFn}
+        />
+      </ModeProvider>
     )
   }
 
@@ -93,33 +106,39 @@ export default function App({ connectUrlFn = realConnectUrl }: { connectUrlFn?: 
   // below it is nothing but browse column + workspace (spec §3.1).
   const { snapshot, transportKind } = phase.connection
   return (
-    <div className={styles.app}>
-      <ChromeBar
-        snapshot={snapshot}
-        transportKind={transportKind}
-        query={query}
-        onQuery={setQuery}
-        filterRef={filterRef}
-        onDisconnect={() => void disconnect()}
-      />
-      <main className={styles.main}>
-        <RunProvider connection={phase.connection}>
-          <ReadProvider connection={phase.connection}>
-            <DeckView
-              snapshot={snapshot}
-              transportKind={transportKind}
-              selection={selected}
-              onSelect={select}
-              query={query}
-              onQuery={setQuery}
-              onFocusFilter={() => {
-                filterRef.current?.focus()
-                filterRef.current?.select()
-              }}
-            />
-          </ReadProvider>
-        </RunProvider>
-      </main>
-    </div>
+    <ModeProvider>
+      <div className={styles.app}>
+        <ChromeBar
+          snapshot={snapshot}
+          transportKind={transportKind}
+          query={query}
+          onQuery={setQuery}
+          filterRef={filterRef}
+          onDisconnect={() => void disconnect()}
+        />
+        <main className={styles.main}>
+          <RunProvider connection={phase.connection}>
+            <ReadProvider connection={phase.connection}>
+              <RawViewProvider>
+                <DeckView
+                  snapshot={snapshot}
+                  transportKind={transportKind}
+                  selection={selected}
+                  onSelect={select}
+                  query={query}
+                  onQuery={setQuery}
+                  onFocusFilter={() => {
+                    filterRef.current?.focus()
+                    filterRef.current?.select()
+                  }}
+                  onCopyLink={copyLink}
+                  onDisconnect={() => void disconnect()}
+                />
+              </RawViewProvider>
+            </ReadProvider>
+          </RunProvider>
+        </main>
+      </div>
+    </ModeProvider>
   )
 }

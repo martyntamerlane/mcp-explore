@@ -1,6 +1,7 @@
-import type { RefObject } from "react"
+import { useState, type RefObject } from "react"
 import type { ServerSnapshot, TransportKind } from "../mcp/types"
 import Prism from "./deck/Prism"
+import { Keycap } from "./Keycap"
 import ModeToggle from "./ModeToggle"
 import styles from "./ChromeBar.module.css"
 
@@ -30,6 +31,9 @@ export default function ChromeBar({
   filterRef,
   onDisconnect,
 }: ChromeBarProps) {
+  const [focused, setFocused] = useState(false)
+  const commanding = query.startsWith(">")
+
   return (
     <header className={styles.bar}>
       <Prism className={styles.mark} />
@@ -39,17 +43,32 @@ export default function ChromeBar({
       <span className={styles.chip}>v{snapshot.serverInfo.version}</span>
       <span className={styles.chip}>{transportKind}</span>
       <div className={styles.actions}>
-        <input
-          ref={filterRef}
-          aria-label="Filter items"
-          aria-keyshortcuts="/"
-          data-filter=""
-          className={styles.filter}
-          placeholder="filter…"
-          value={query}
-          onChange={(e) => onQuery(e.target.value)}
-          spellCheck={false}
-        />
+        {/* The filter's two jobs, taught by one keycap (interaction roadmap S2).
+            At rest it advertises the key that reaches the box; with the caret
+            inside it — where `/` would just type a slash — it advertises the
+            character that turns the box into a command line instead. The cap is
+            permanent furniture inside a control that was always here, which is
+            the whole reason command mode is not an overlay. */}
+        <div className={styles.filterWrap} data-commanding={commanding || undefined}>
+          <input
+            ref={filterRef}
+            aria-label={commanding ? "Run a command" : "Filter items"}
+            aria-keyshortcuts="/"
+            data-filter=""
+            className={styles.filter}
+            placeholder={commanding ? "command…" : "filter…"}
+            value={query}
+            onChange={(e) => onQuery(e.target.value)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            spellCheck={false}
+          />
+          {!commanding && (
+            <span className={styles.filterCap}>
+              <Keycap strong={focused}>{focused ? ">" : "/"}</Keycap>
+            </span>
+          )}
+        </div>
         <ModeToggle />
         <button type="button" className={styles.disconnect} onClick={onDisconnect}>
           Disconnect

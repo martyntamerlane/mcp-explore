@@ -22,6 +22,7 @@ const duneCss = readFileSync(join(here, "./theme.css"), "utf-8")
 // deliberately excluded (edges/node marks/code background read the same regardless
 // of theme).
 const ALLOWLIST = new Set([
+  "--radius-xs",
   "--radius-s",
   "--radius-m",
   "--radius-l",

@@ -22,7 +22,7 @@ React 19 + Vite + TypeScript, CSS Modules, `@modelcontextprotocol/sdk` (browser 
 
 `ServerSnapshot` is the canonical model of a connected server; there is deliberately **no intermediate "scene language"**. Every display variant is a *stage*: a component implementing the `StageProps` contract in `src/ui/stage.ts` (`snapshot`, `transportKind`, `selection`, `onSelect`, `query`, `onQuery`, `onFocusFilter` — the last two so a stage can clear and focus the band's filter from its own key model). `App` owns connection, selection, the filter query, run state (via `RunProvider`), read state (via `ReadProvider`), and the chrome band; stages are interchangeable. `DeckView` is the default stage — a browse column plus a workspace, nothing else; themed scenes (Dune today via its own overlay mechanism) become alternate stages behind the same contract (TODO-17).
 
-**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home — and since 2026-08-29 it is also **addressable**, living in the query string as one of `tool`/`resource`/`prompt` beside `server` (spec [`2026-08-29-addressable-selection.md`](specs/2026-08-29-addressable-selection.md)). `App` owns every History call: `pushState` for a user-initiated selection, `replaceState` for anything the app decided, plus a `popstate` listener that reads the URL back without writing to it, so the two can never chase each other. `src/ui/selectionUrl.ts` is the pure counterpart — what the strings mean, and whether a snapshot still contains them. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only. Run state is a **capped per-tool history** rather than one result (`src/ui/run/runHistory.ts`, spec [`2026-08-29-run-record.md`](specs/2026-08-29-run-record.md)); it is session-only and never persisted, for the same reason form values are not. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
+**Selection is the whole navigation model**: `EntitySelection | null`, where `null` means home — and since 2026-08-29 it is also **addressable**, living in the query string as one of `tool`/`resource`/`prompt` beside `server` (spec [`2026-08-29-addressable-selection.md`](specs/2026-08-29-addressable-selection.md)). `App` owns every History call: `pushState` for a user-initiated selection, `replaceState` for anything the app decided, plus a `popstate` listener that reads the URL back without writing to it, so the two can never chase each other. `src/ui/selectionUrl.ts` is the pure counterpart — what the strings mean, and whether a snapshot still contains them. All three kinds select; the workspace renders whichever is selected. Selecting a zero-argument tool is also its run — that rule lives in `DeckView.select`, the one place the click contract is expressed. Run and read state deliberately live in Contexts *beside* the stage rather than in `StageProps`, so the contract stays display-only; command mode (spec [`2026-08-29-command-mode.md`](specs/2026-08-29-command-mode.md)) added two more for the same reason — `ModeContext` and `rawView`, each lifted because a command is a *second* route to a setting and two owners of one setting desync. Run state is a **capped per-tool history** rather than one result (`src/ui/run/runHistory.ts`, spec [`2026-08-29-run-record.md`](specs/2026-08-29-run-record.md)); it is session-only and never persisted, for the same reason form values are not. Form values live in `DeckView`, keyed by subject, so a part-filled form survives switching subject; they are session-only and never persisted, because arguments can carry anything the user typed.
 
 The app has **no overlay surfaces and no tooltips** in the connected view. Light/dark mode is a root `data-mode` attribute re-valuing tokens (`src/ui/mode.ts`); Dune wins via a `:not()` guard, untouched. The chrome band is the multi-server seam (TODO-16): a second connection renders a second band plus column/workspace pair tiled alongside.
 
@@ -72,9 +72,14 @@ src/
       browseTree.ts        buildBrowseTree — resource URIs → thresholded folder tree (chain-collapse, scheme handling)
       DeckView.tsx         Default stage: browse column + workspace; owns the click contract and per-subject form values
       BrowseColumn.tsx     Left index: home, segmented Tools/Resources/Prompts, folder tree, power-on
-                           cascade; owns the app's key model (highlight, /, arrows, Enter, Escape)
+                           cascade; owns the app's key model (highlight, /, arrows, Enter, Escape),
+                           and renders the command list in place of the entities while `>` is live
       keynav.ts            Pure: flatten the visible rows, move the highlight, map a keystroke to an
                            action, name the folders above a leaf
+      commands.ts          Pure: the command list, which of them apply now, ranked matching, and the
+                           dispatch table (handlers injected, so it tests with spies)
+      rawView.tsx          Shared "show raw" value + epoch, so a command can speak for every block
+                           while a block's own button still speaks for itself
       Workspace.tsx        Permanent work surface; routes the selected subject to one of the four views,
                            and hosts the result outline in the content column's margin
       Outline.tsx          Sticky "on this page" list: scroll-spy, click-to-jump, stands down when
@@ -111,7 +116,9 @@ src/
                             images render as links rather than firing a remote request
     schema.ts               JSON Schema → schemaRows + friendlyType, under argValues and the views
     mode.ts                 Light/dark resolution: stored choice > system; data-mode stamping; live follow
+    ModeContext.tsx         One owner for the mode — the toggle and the command are two routes to it
     ModeToggle.tsx          Sun/moon toggle (header + landing) persisting explicit choices
+    Keycap.tsx              The flat keycap and the key legend (shortcut legibility)
     *.module.css            CSS modules for each ui/ component
     *.test.ts[x]            Colocated tests for each ui/ module
   dune/
