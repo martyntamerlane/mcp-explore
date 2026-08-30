@@ -83,12 +83,33 @@ test("failure renders the diagnostic panel with role=alert", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent(/unsupported scheme/i)
 })
 
-test("autoConnect connects to initialUrl on mount", async () => {
+test("autoConnect connects on mount to a server this device already knows", async () => {
+  saveRecent({ url: "https://auto.example/mcp" }, 1)
   const { fn, calls } = demoBackedConnectUrl()
   const onConnected = vi.fn()
   renderConnect(<ConnectScreen onConnected={onConnected} initialUrl="https://auto.example/mcp" autoConnect connectUrlFn={fn} />)
   await vi.waitFor(() => expect(onConnected).toHaveBeenCalledOnce())
   expect(calls[0].url).toBe("https://auto.example/mcp")
+})
+
+test("a link to an unknown server fills the box and waits for a click (ISSUE-12)", async () => {
+  // A link can name any host. Connecting on arrival let one make this page
+  // fetch from a host the visitor never chose and render what came back.
+  const { fn, calls } = demoBackedConnectUrl()
+  const onConnected = vi.fn()
+  renderConnect(
+    <ConnectScreen onConnected={onConnected} initialUrl="https://stranger.example/mcp" autoConnect connectUrlFn={fn} />,
+  )
+
+  expect(await screen.findByText(/haven't connected to before/i)).toBeInTheDocument()
+  expect(calls).toHaveLength(0)
+  expect(onConnected).not.toHaveBeenCalled()
+  // The address is filled in, so consenting is one press.
+  expect(screen.getByLabelText(/server url/i)).toHaveValue("https://stranger.example/mcp")
+
+  await userEvent.click(screen.getByRole("button", { name: /^connect$/i }))
+  await vi.waitFor(() => expect(calls).toHaveLength(1))
+  expect(calls[0].url).toBe("https://stranger.example/mcp")
 })
 
 test("autoConnect reuses headers remembered for that same server", async () => {
@@ -106,12 +127,17 @@ test("autoConnect reuses headers remembered for that same server", async () => {
   await vi.waitFor(() => expect(loadRecents()[0].headers).toEqual({ Authorization: "Bearer saved" }))
 })
 
-test("autoConnect for a different server does not borrow another's headers", async () => {
+test("a link to a different server never borrows another's headers", async () => {
+  // The saved token belongs to other.example. A link naming anything else must
+  // not carry it — the exact-URL match is what stops a crafted link harvesting
+  // a token, and it holds through the consent gate too.
   saveRecent({ url: "https://other.example/mcp", headers: { Authorization: "Bearer saved" } }, 1)
   const { fn, calls } = demoBackedConnectUrl()
   renderConnect(
     <ConnectScreen onConnected={vi.fn()} initialUrl="https://auto.example/mcp" autoConnect connectUrlFn={fn} />,
   )
+  await screen.findByText(/haven't connected to before/i)
+  await userEvent.click(screen.getByRole("button", { name: /^connect$/i }))
   await vi.waitFor(() => expect(calls).toHaveLength(1))
   expect(calls[0].headers).toEqual({})
 })

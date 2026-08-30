@@ -2,9 +2,20 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { connectDemo } from "./mcp/connect"
 import type { Connection } from "./mcp/types"
+import { saveRecent } from "./ui/recents"
 import App from "./App"
 
+beforeEach(() => localStorage.clear())
 afterEach(() => window.history.replaceState(null, "", "/"))
+
+/**
+ * A `?server=` link connects on arrival only for a server this device has used
+ * before; an unknown one fills the box and waits for a click (ISSUE-12). The
+ * deep-link tests below are about what a link's *selection* does once connected,
+ * so they start from that established relationship rather than re-testing the
+ * gate — which `ConnectScreen.test.tsx` covers directly.
+ */
+const alreadyUsed = (url: string) => saveRecent({ url }, 1)
 
 test("full flow: demo → chrome band + workspace → tool subject → disconnect", async () => {
   render(<App />)
@@ -37,7 +48,8 @@ test("the filter in the chrome band narrows the browse column", async () => {
   expect(screen.getByRole("button", { name: "tool create_issue" })).toHaveAttribute("data-receded")
 })
 
-test("?server= auto-connects via connectUrlFn and never carries headers", async () => {
+test("?server= connects on arrival for a known server, and never carries headers", async () => {
+  alreadyUsed("https://q.example/mcp")
   window.history.replaceState(null, "", "/?server=" + encodeURIComponent("https://q.example/mcp"))
   const calls: string[] = []
   const fake = async (url: string): Promise<Connection> => {
@@ -59,6 +71,7 @@ test("connecting by URL writes ?server= to the address bar", async () => {
 })
 
 test("disconnecting after a ?server= auto-connect does not reconnect", async () => {
+  alreadyUsed("https://q.example/mcp")
   window.history.replaceState(null, "", "/?server=" + encodeURIComponent("https://q.example/mcp"))
   const calls: string[] = []
   const fake = async (url: string): Promise<Connection> => {
@@ -73,6 +86,7 @@ test("disconnecting after a ?server= auto-connect does not reconnect", async () 
 })
 
 test("connecting via the demo clears a stale ?server= from the address bar", async () => {
+  alreadyUsed("https://fails.example/mcp")
   window.history.replaceState(null, "", "/?server=" + encodeURIComponent("https://fails.example/mcp"))
   const failing = async (): Promise<Connection> => {
     throw new Error("boom")
@@ -129,6 +143,9 @@ test("a deep link opens its subject for someone who has never used the app", asy
   )
   const fake = async (): Promise<Connection> => connectDemo()
   render(<App connectUrlFn={fake} />)
+  // A stranger's server waits for the press (ISSUE-12); the selection in the
+  // link must survive that extra step rather than being spent by it.
+  await userEvent.click(await screen.findByRole("button", { name: /^connect$/i }))
   const workspace = await screen.findByRole("region", { name: "Workspace" })
   expect(within(workspace).getByRole("heading", { name: "create_issue" })).toBeInTheDocument()
   const row = screen.getByRole("button", { name: "tool create_issue" })
@@ -141,6 +158,7 @@ test("a deep link opens its subject for someone who has never used the app", asy
 })
 
 test("a resource deep link survives the percent-encoding of its URI", async () => {
+  alreadyUsed("https://q.example/mcp")
   window.history.replaceState(
     null,
     "",
@@ -153,6 +171,7 @@ test("a resource deep link survives the percent-encoding of its URI", async () =
 })
 
 test("a link to a subject this server does not expose opens the server, not an error", async () => {
+  alreadyUsed("https://q.example/mcp")
   window.history.replaceState(
     null,
     "",
@@ -167,6 +186,7 @@ test("a link to a subject this server does not expose opens the server, not an e
 })
 
 test("a selection is not inherited by a different server", async () => {
+  alreadyUsed("https://fails.example/mcp")
   window.history.replaceState(
     null,
     "",
@@ -184,6 +204,7 @@ test("a selection is not inherited by a different server", async () => {
 })
 
 test("a resource deep link opens the column on the list its subject lives in", async () => {
+  alreadyUsed("https://q.example/mcp")
   window.history.replaceState(
     null,
     "",
@@ -199,6 +220,7 @@ test("a resource deep link opens the column on the list its subject lives in", a
 })
 
 test("a deep link to a foldered resource unfolds the folders that hide its row", async () => {
+  alreadyUsed("https://q.example/mcp")
   window.history.replaceState(
     null,
     "",

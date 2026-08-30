@@ -21,6 +21,17 @@
   max-width: var(--measure-read);
 }
 
+/* The two blocks that are not running text. They keep the shared edge whenever
+   --measure-block is the reading measure, which is every case except a result
+   with no outline beside it; there they take the freed width instead of
+   scrolling a table sideways or wrapping code inside 780px. Running text is
+   deliberately not in this list — full width measures 209 characters a line at
+   1920 and 263 at 2560 (2026-08-30 wide-block pass). */
+.md > .tableWrap,
+.md > .pre {
+  max-width: var(--measure-block);
+}
+
 .md > *:first-child {
   margin-top: 0;
 }

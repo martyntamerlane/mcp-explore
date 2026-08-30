@@ -10,7 +10,13 @@
   position: sticky;
   top: 0;
   align-self: start;
-  flex: 0 0 var(--outline-width);
+  /* Shrinkable, with a floor. At 1440 — the width this was originally tuned for
+     — 780 of measure plus a 280 column does not quite fit, and the column giving
+     up those pixels is right where the measure giving them up would be wrong.
+     So it opens at 280 on a screen with room and closes to 200 on one without,
+     and `.content` stops shrinking above the same breakpoint. */
+  flex: 0 1 var(--outline-width);
+  min-width: 200px;
   /* The scroller starts below the chrome band, so the sticky column's room is
      the viewport minus that band and the workspace's own top padding. */
   max-height: calc(100vh - var(--chrome-height) - var(--sp-6));

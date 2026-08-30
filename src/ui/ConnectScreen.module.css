@@ -113,6 +113,11 @@
 /* The Connect door lost its sub-line (2026-08-30) — the form now sits directly
    under the title and carries the air the sub used to provide. */
 .form { display: flex; gap: var(--sp-2); margin-top: var(--sp-4); }
+
+/* A `?server=` link naming an unknown server (ISSUE-12). Quiet body copy in the
+   existing fine/ink-3 role rather than a panel — it explains why the form is
+   sitting filled-in and idle, and nothing more. */
+.linkNotice { font-size: var(--fs-fine); color: var(--ink-3); margin: var(--sp-2) 0 0; }
 .url {
   flex: 1;
   min-width: 0;

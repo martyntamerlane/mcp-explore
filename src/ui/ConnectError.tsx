@@ -22,12 +22,28 @@ Access-Control-Allow-Headers: Content-Type, Accept, Authorization,
 Access-Control-Expose-Headers: Mcp-Session-Id`
 
 /**
+ * POSIX single-quoting. Inside single quotes a shell expands nothing at all —
+ * no `$(…)`, no backticks, no `;` or `|` — and the one character that cannot
+ * appear there, `'`, is closed, escaped and reopened.
+ */
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", `'\\''`)}'`
+}
+
+/**
  * The handshake, as a command the operator can paste. It proves their server
  * works and that the browser is the only thing refusing.
  *
  * It deliberately carries a placeholder rather than any header the visitor
  * typed: a bearer token rendered as selectable text is one screenshot away from
  * a bug report.
+ *
+ * The URL is normalised and quoted before it goes anywhere near a command line
+ * (ISSUE-11). It arrives as the raw string that was typed — or that a `?server=`
+ * link supplied — and `new URL()` accepts plenty a shell would act on:
+ * `https://host/$(command)` is a valid URL whose `$(…)` runs when pasted, inside
+ * double quotes as readily as outside them. `href` percent-encodes some of that
+ * and the single quotes neutralise the rest; neither alone is enough.
  */
 export function initializeCurl(url: string): string {
   const body = JSON.stringify({
@@ -36,7 +52,14 @@ export function initializeCurl(url: string): string {
     method: "initialize",
     params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "mcp-explore", version: "0.1.0" } },
   })
-  return `curl -i -X POST "${url}" \\
+  // A URL too malformed to parse still gets quoted — it just isn't normalised.
+  let target: string
+  try {
+    target = new URL(url).href
+  } catch {
+    target = url
+  }
+  return `curl -i -X POST ${shellQuote(target)} \\
   -H "Content-Type: application/json" \\
   -H "Accept: application/json, text/event-stream" \\
   -d '${body}'`
