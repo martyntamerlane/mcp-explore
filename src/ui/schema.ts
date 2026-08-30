@@ -59,6 +59,18 @@ export function friendlyType(raw: string): string {
   }
 }
 
+/**
+ * An `enum` member need not be a string — JSON Schema allows any value, and a
+ * server is free to list objects. `String(value)` rendered those as the literal
+ * text `[object Object]`, which is neither the value nor a usable label
+ * (TODO-12). `JSON.stringify` returns `undefined` for `undefined` and for
+ * functions, so `String` remains the floor.
+ */
+function enumLabel(value: unknown): string {
+  if (typeof value === "string") return value
+  return JSON.stringify(value) ?? String(value)
+}
+
 // Schemas come from an untrusted server: treat as unknown, narrow defensively.
 export function schemaRows(schema: unknown): SchemaRow[] {
   if (typeof schema !== "object" || schema === null) return []
@@ -74,7 +86,7 @@ export function schemaRows(schema: unknown): SchemaRow[] {
       type: typeName(p),
       required: required.has(name),
       description: typeof p.description === "string" ? p.description : undefined,
-      enumValues: Array.isArray(p.enum) ? p.enum.map(String) : undefined,
+      enumValues: Array.isArray(p.enum) ? p.enum.map(enumLabel) : undefined,
       defaultValue: p.default !== undefined ? JSON.stringify(p.default) : undefined,
     }
   })

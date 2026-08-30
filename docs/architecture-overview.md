@@ -55,15 +55,18 @@ src/
   vite-env.d.ts       Vite environment types
   mcp/
     types.ts          ServerSnapshot / Connection / TransportKind
-    connect.ts        snapshotClient, connectDemo, connectUrl (streamable→SSE fallback)
+    connect.ts        snapshotClient, connectDemo, connectUrl (streamable→SSE fallback); attempts carry a connect/snapshot phase
     connect.test.ts   Tests for connect module
+    diagnose.ts       Pure classifier: a connect failure -> one Diagnosis verdict
+    diagnose.test.ts  Tests for diagnose
+    probe.ts          One no-cors reachability request; splits CORS from unreachable
     demo/
       demoServer.ts   Built-in in-page McpServer (demo-issue-tracker), test fixture
       demoServer.test.ts  Tests for demoServer
   ui/
     ConnectScreen.tsx      Two-door landing: connect door (URL/headers/examples/recents), offline-demo door
-    ConnectError.tsx       Connect-failure diagnostics (CORS hints, per-transport detail)
-    examples.ts            The four verified public MCP servers offered as one-click examples
+    ConnectError.tsx       Renders one Diagnosis verdict; CORS headers + curl handshake only when earned
+    examples.ts            The five verified public MCP servers offered as one-click examples
     taglines.ts            The five hero lines; one picked at random per page load
     recents.ts             localStorage recent-servers list (opt-in header persistence)
     stage.ts               StageProps / EntitySelection — the display-variant contract (null selection = home)

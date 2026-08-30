@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { connectDemo as realConnectDemo, connectUrl as realConnectUrl } from "../mcp/connect"
+import { diagnose, wantsProbe, type Diagnosis } from "../mcp/diagnose"
+import { probeReachable as realProbeReachable } from "../mcp/probe"
 import type { Connection } from "../mcp/types"
 import ConnectError from "./ConnectError"
 import Prism from "./deck/Prism"
@@ -15,6 +17,8 @@ export interface ConnectScreenProps {
   autoConnect?: boolean
   connectUrlFn?: typeof realConnectUrl
   connectDemoFn?: typeof realConnectDemo
+  /** Injectable so tests never let the reachability probe touch the network. */
+  probeFn?: typeof realProbeReachable
 }
 
 interface HeaderRow { name: string; value: string }
@@ -25,6 +29,7 @@ export default function ConnectScreen({
   autoConnect,
   connectUrlFn = realConnectUrl,
   connectDemoFn = realConnectDemo,
+  probeFn = realProbeReachable,
 }: ConnectScreenProps) {
   const [url, setUrl] = useState(initialUrl ?? "")
   const [showHeaders, setShowHeaders] = useState(false)
@@ -32,6 +37,13 @@ export default function ConnectScreen({
   const [remember, setRemember] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<unknown>(null)
+  // The verdict, and the URL it is about — the input may have moved on since.
+  const [diagnosis, setDiagnosis] = useState<Diagnosis | null>(null)
+  const [failedUrl, setFailedUrl] = useState("")
+  // Set when a 401 verdict seeds an Authorization row, so focus can follow it
+  // into a field that does not exist until the disclosure has opened.
+  const [seedingAuth, setSeedingAuth] = useState(false)
+  const headersRef = useRef<HTMLDivElement>(null)
   const [recents, setRecents] = useState<RecentServer[]>(() => loadRecents())
   // Chosen once per mount, not per render — the headline must not change under
   // the reader mid-visit.
@@ -44,21 +56,75 @@ export default function ConnectScreen({
   async function connectTo(target: string, headers: Record<string, string>, persist: Record<string, string> | undefined) {
     setBusy(true)
     setError(null)
+    setDiagnosis(null)
+    setFailedUrl(target)
+    // Held rather than returned from the catch, because the probe below must
+    // run after the form has been re-enabled — a `return` there would skip it.
+    let failure: { error: unknown } | null = null
     try {
       const conn = await connectUrlFn(target, headers)
       setRecents(saveRecent({ url: target, headers: persist }))
       onConnected(conn, { url: target })
     } catch (err) {
-      setError(err)
+      failure = { error: err }
     } finally {
       setBusy(false)
     }
+    if (failure === null) return
+
+    setError(failure.error)
+    const env = { pageUrl: window.location.href, online: navigator.onLine }
+    const verdict = diagnose(target, failure.error, env)
+    if (!wantsProbe(verdict)) {
+      setDiagnosis(verdict)
+      return
+    }
+    // Nothing readable came back. One `no-cors` request settles whether the
+    // host answered at all, which is the difference between naming CORS as a
+    // fact and hedging (spec §4).
+    setDiagnosis({ kind: "probing" })
+    const probe = await probeFn(target)
+    setDiagnosis(diagnose(target, failure.error, { ...env, probe }))
   }
+
+  /**
+   * The 401 verdict's action. It opens the disclosure and seeds the row; it
+   * never submits — the visitor still has to paste the token and press Connect.
+   */
+  function addAuthHeader() {
+    setShowHeaders(true)
+    setRows((current) => {
+      if (current.some((r) => r.name.trim().toLowerCase() === "authorization")) return current
+      const seeded = { name: "Authorization", value: "Bearer " }
+      const blank = current.findIndex((r) => r.name.trim() === "" && r.value.trim() === "")
+      return blank === -1 ? [...current, seeded] : current.map((r, i) => (i === blank ? seeded : r))
+    })
+    setSeedingAuth(true)
+  }
+
+  useEffect(() => {
+    if (!seedingAuth || !showHeaders) return
+    setSeedingAuth(false)
+    const names = headersRef.current?.querySelectorAll<HTMLInputElement>('input[aria-label^="Header name"]')
+    const values = headersRef.current?.querySelectorAll<HTMLInputElement>('input[aria-label^="Header value"]')
+    if (!names || !values) return
+    const seeded = [...names].findIndex((el) => el.value.toLowerCase() === "authorization")
+    values[seeded === -1 ? values.length - 1 : seeded]?.focus()
+  }, [seedingAuth, showHeaders])
 
   useEffect(() => {
     if (autoConnect && initialUrl && !autoRan.current) {
       autoRan.current = true
-      void connectTo(initialUrl, {}, undefined)
+      // A `?server=` link is the same server the visitor may have saved headers
+      // for; connecting anonymously made every shared link fail on an auth'd
+      // server that works from the recents list (TODO-12). The rows are seeded
+      // too, so a failure leaves something to correct rather than an empty box.
+      const remembered = loadRecents().find((r) => r.url === initialUrl)?.headers
+      if (remembered) {
+        setRows(Object.entries(remembered).map(([name, value]) => ({ name, value })))
+        setRemember(true)
+      }
+      void connectTo(initialUrl, remembered ?? {}, remembered)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -66,10 +132,14 @@ export default function ConnectScreen({
   async function handleDemo() {
     setBusy(true)
     setError(null)
+    setDiagnosis(null)
     try {
       onConnected(await connectDemoFn(), {})
     } catch (err) {
+      // The in-page server touches no network, so there is nothing to diagnose:
+      // whatever it says is the whole story.
       setError(err)
+      setDiagnosis({ kind: "other", message: err instanceof Error ? err.message : String(err) })
     } finally {
       setBusy(false)
     }
@@ -119,7 +189,7 @@ export default function ConnectScreen({
           </button>
 
           {showHeaders && (
-            <div className={styles.headers}>
+            <div className={styles.headers} ref={headersRef}>
               {rows.map((row, i) => (
                 <div key={i} className={styles.headerRow}>
                   <input
@@ -192,7 +262,19 @@ export default function ConnectScreen({
         </section>
       </div>
 
-      {error !== null && <ConnectError error={error} />}
+      {diagnosis !== null && (
+        <ConnectError
+          error={error}
+          diagnosis={diagnosis}
+          url={failedUrl}
+          onAddAuthHeader={addAuthHeader}
+          onUseHttps={(secure) => {
+            setUrl(secure)
+            const h = headersOf(rows)
+            void connectTo(secure, h, remember ? h : undefined)
+          }}
+        />
+      )}
     </main>
   )
 }

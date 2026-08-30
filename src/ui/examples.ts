@@ -21,4 +21,8 @@ export const EXAMPLE_SERVERS: ExampleServer[] = [
   { name: "TripGo", url: "https://tripgo-mcp-server.skedgo-account.workers.dev/mcp", note: "plan a public-transport journey" },
   { name: "Exa", url: "https://mcp.exa.ai/mcp", note: "search the web" },
   { name: "Hugging Face", url: "https://huggingface.co/mcp", note: "models, datasets and spaces" },
+  // Added 2026-08-30: verified anonymous `microsoft_docs_search` returning real
+  // content, and the substitute that made declining the CORS proxy cost nothing
+  // (spec 2026-08-30 §8). Declares resources and prompts but lists neither.
+  { name: "Microsoft Learn", url: "https://learn.microsoft.com/api/mcp", note: "search Microsoft and Azure docs" },
 ]
