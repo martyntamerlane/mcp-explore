@@ -10,12 +10,61 @@
   text-align: left;
 }
 .headline { margin: 0 0 var(--sp-3); color: var(--ink); }
-.attempts { list-style: none; margin: 0 0 var(--sp-4); padding: 0; display: grid; gap: var(--sp-2); }
-.kind { color: var(--ink-2); margin-right: var(--sp-3); }
-.msg { color: var(--ink-3); font-family: var(--mono); font-size: var(--fs-fine); }
 .hint { color: var(--ink-2); font-size: var(--fs-body); }
+.hint p { margin: 0 0 var(--sp-3); }
+.hint p:last-child { margin-bottom: 0; }
 .small { color: var(--ink-3); font-size: var(--fs-fine); }
+
+/* The one control the verdict offers, when it knows the answer with certainty:
+   the same weight as the door's own secondary buttons, never the accent — this
+   is a way out of an error, not a call to action. */
+.action {
+  margin-top: var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--fs-fine);
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.action:hover { border-color: color-mix(in srgb, var(--ink) 40%, transparent); }
+
+.remedy { margin-top: var(--sp-4); }
+.snippet { margin: 0 0 var(--sp-3); }
+.snippetHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-1);
+}
+.snippetLabel {
+  color: var(--ink-3);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.copy {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.copy:hover { color: var(--ink); }
+
 .code {
+  margin: 0;
   font-family: var(--mono);
   font-size: var(--fs-fine);
   padding: var(--sp-3);
@@ -23,4 +72,6 @@
   background: var(--code-bg);
   overflow-x: auto;
 }
+.details { margin-top: var(--sp-4); }
 .details summary { color: var(--ink-3); cursor: pointer; font-size: var(--fs-fine); }
+.details .code { margin-top: var(--sp-2); }

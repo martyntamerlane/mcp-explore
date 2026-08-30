@@ -70,3 +70,10 @@ test("a malformed union never throws and stays 'any'", () => {
     expect(schemaRows({ type: "object", properties: { x: bad } })[0].type).toBe("any")
   }
 })
+
+test("non-string enum members render as JSON, not [object Object]", () => {
+  const rows = schemaRows({
+    properties: { mode: { enum: ["fast", 3, true, null, { a: 1 }, ["x"]] } },
+  })
+  expect(rows[0].enumValues).toEqual(["fast", "3", "true", "null", '{"a":1}', '["x"]'])
+})

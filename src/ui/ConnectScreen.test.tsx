@@ -1,7 +1,7 @@
 import type { ReactElement } from "react"
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { connectDemo } from "../mcp/connect"
+import { ConnectFailure, connectDemo } from "../mcp/connect"
 import type { Connection } from "../mcp/types"
 import ConnectScreen from "./ConnectScreen"
 import { EXAMPLE_SERVERS } from "./examples"
@@ -91,6 +91,31 @@ test("autoConnect connects to initialUrl on mount", async () => {
   expect(calls[0].url).toBe("https://auto.example/mcp")
 })
 
+test("autoConnect reuses headers remembered for that same server", async () => {
+  // A `?server=` link is the same server the visitor may have saved headers
+  // for; connecting anonymously made every shared link fail on an auth'd
+  // server that works from the recents list (TODO-12).
+  saveRecent({ url: "https://auto.example/mcp", headers: { Authorization: "Bearer saved" } }, 1)
+  const { fn, calls } = demoBackedConnectUrl()
+  renderConnect(
+    <ConnectScreen onConnected={vi.fn()} initialUrl="https://auto.example/mcp" autoConnect connectUrlFn={fn} />,
+  )
+  await vi.waitFor(() => expect(calls).toHaveLength(1))
+  expect(calls[0].headers).toEqual({ Authorization: "Bearer saved" })
+  // And they survive the round trip rather than being dropped on re-save.
+  await vi.waitFor(() => expect(loadRecents()[0].headers).toEqual({ Authorization: "Bearer saved" }))
+})
+
+test("autoConnect for a different server does not borrow another's headers", async () => {
+  saveRecent({ url: "https://other.example/mcp", headers: { Authorization: "Bearer saved" } }, 1)
+  const { fn, calls } = demoBackedConnectUrl()
+  renderConnect(
+    <ConnectScreen onConnected={vi.fn()} initialUrl="https://auto.example/mcp" autoConnect connectUrlFn={fn} />,
+  )
+  await vi.waitFor(() => expect(calls).toHaveLength(1))
+  expect(calls[0].headers).toEqual({})
+})
+
 test("recent buttons disable while a connect is in flight", async () => {
   saveRecent({ url: "https://old.example/mcp" }, 1)
   saveRecent({ url: "https://old2.example/mcp" }, 2)
@@ -115,6 +140,70 @@ test("the hero line is one of the taglines, and holds still across re-renders", 
   expect(TAGLINES).toContain(first)
   rerender(<ModeProvider><ConnectScreen onConnected={vi.fn()} /></ModeProvider>)
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(first!)
+})
+
+const sdkError = (code: number, message: string) => Object.assign(new Error(message), { code })
+const failingWith = (...errors: unknown[]) => async (): Promise<Connection> => {
+  throw new ConnectFailure(
+    errors.map((error, i) => ({
+      kind: i === 0 ? ("streamable-http" as const) : ("sse" as const),
+      phase: "connect" as const,
+      error,
+    })),
+  )
+}
+
+async function connectAndFail(props: Partial<Parameters<typeof ConnectScreen>[0]>) {
+  renderConnect(<ConnectScreen onConnected={vi.fn()} probeFn={async () => "silent"} {...props} />)
+  await userEvent.type(screen.getByLabelText(/server url/i), "https://api.example/mcp")
+  await userEvent.click(screen.getByRole("button", { name: /^connect$/i }))
+  return screen.findByRole("alert")
+}
+
+test("a 401 is reported as credentials, not as a CORS problem", async () => {
+  const alert = await connectAndFail({ connectUrlFn: failingWith(sdkError(401, "unauthorized")) })
+  expect(alert).toHaveTextContent(/requires credentials/i)
+  expect(alert).not.toHaveTextContent(/Access-Control-Allow-Origin/)
+})
+
+test("the 401 action opens the headers box with an Authorization row seeded", async () => {
+  await connectAndFail({ connectUrlFn: failingWith(sdkError(401, "unauthorized")) })
+  expect(screen.queryByLabelText(/header name/i)).not.toBeInTheDocument()
+  await userEvent.click(screen.getByRole("button", { name: /add an authorization header/i }))
+  expect(await screen.findByLabelText(/header name 1/i)).toHaveValue("Authorization")
+  expect(screen.getByLabelText(/header value 1/i)).toHaveValue("Bearer ")
+})
+
+test("a 404 says the host was reached rather than lecturing about CORS", async () => {
+  const alert = await connectAndFail({ connectUrlFn: failingWith(sdkError(404, "not found")) })
+  expect(alert).toHaveTextContent(/nothing MCP at this path/i)
+  expect(alert).not.toHaveTextContent(/Access-Control-Allow-Origin/)
+})
+
+test("a probe that answers turns the opaque failure into a stated CORS verdict", async () => {
+  const alert = await connectAndFail({
+    connectUrlFn: failingWith(new TypeError("Failed to fetch"), new TypeError("Failed to fetch")),
+    probeFn: async () => "answered",
+  })
+  await vi.waitFor(() => expect(alert).toHaveTextContent(/doesn't allow browsers to read its responses/i))
+  expect(alert).toHaveTextContent(/Access-Control-Expose-Headers: Mcp-Session-Id/)
+  // The handshake command must never carry a real token (spec §6).
+  expect(alert).toHaveTextContent(/curl -i -X POST/)
+  expect(alert).not.toHaveTextContent(/Bearer [^Y]/)
+})
+
+test("a probe that stays silent never mentions CORS at all", async () => {
+  const alert = await connectAndFail({
+    connectUrlFn: failingWith(new TypeError("Failed to fetch")),
+    probeFn: async () => "silent",
+  })
+  await vi.waitFor(() => expect(alert).toHaveTextContent(/Couldn't reach api\.example at all/i))
+  expect(alert).not.toHaveTextContent(/Access-Control/)
+})
+
+test("raw per-transport messages survive in Technical details", async () => {
+  const alert = await connectAndFail({ connectUrlFn: failingWith(sdkError(500, "boom")) })
+  expect(alert).toHaveTextContent(/Streamable HTTP: boom/)
 })
 
 test("an example server connects to its own URL", async () => {

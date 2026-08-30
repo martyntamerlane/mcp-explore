@@ -1,5 +1,28 @@
 # Handover: CORS Proxy + Public MCP Server Support for mcp-explore
 
+> **Status 2026-08-30 — Deliverable 1 (the Cloudflare Worker) was declined; parts
+> of Deliverable 2 are superseded or already shipped.** Read
+> [`docs/specs/2026-08-30-connection-diagnostics.md`](../specs/2026-08-30-connection-diagnostics.md)
+> for the decision and the measurements behind it, and [TODO-7](../../TODO.md) for
+> the standing entry.
+>
+> What changed, briefly:
+> - **No proxy.** Measured with browser-shaped requests: three of the five hosts
+>   in the allowlist below (DeepWiki, Hugging Face, Microsoft Learn) already send
+>   full CORS headers. Of the two that don't, Shopify needs a shop domain the
+>   visitor must already know. The whole yield was one server — AWS Knowledge —
+>   and Microsoft Learn substitutes for it with no infrastructure. The
+>   zero-backend rule in CLAUDE.md stands unamended.
+> - **Deliverable 2 item 5 (preset servers) shipped 2026-08-30**, before this
+>   handover was read, with a higher bar than "it connects": a real anonymous
+>   `tools/call` must succeed. See `src/ui/examples.ts`.
+> - **Items 2–4 and 6 (fallback, UI states, session handling, error surfacing)**
+>   are replaced by the connection-diagnostics work: the app now classifies why a
+>   connect failed rather than routing around it, and states a CORS verdict as
+>   fact only when a `no-cors` probe has established the host answered at all.
+> - The `Access-Control-Expose-Headers: Mcp-Session-Id` point in this document is
+>   correct and load-bearing, and is carried into the panel's advice verbatim.
+
 ## Context
 
 **mcp-explore** is a personal browser-based MCP (Model Context Protocol) server visualizer hosted on GitHub Pages at `https://martyntamerlane.github.io/mcp-explore`. It connects to remote MCP servers over Streamable HTTP / SSE from the browser and visualizes their tools, resources, and prompts. It is used as a portfolio piece, so polish and observable behavior matter.

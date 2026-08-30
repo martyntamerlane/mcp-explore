@@ -47,9 +47,11 @@ export default function ArgsForm({ specs, values, onChange, errors, idPrefix }: 
                 >
                   unset
                 </button>
-                {(spec.enumValues ?? []).map((option) => (
+                {/* Keyed by index, not by label: two enum members can stringify
+                    to the same text, and a duplicate key drops a chip. */}
+                {(spec.enumValues ?? []).map((option, i) => (
                   <button
-                    key={option}
+                    key={i}
                     type="button"
                     className={styles.option}
                     aria-pressed={value === option}

@@ -41,3 +41,26 @@ test("saveRecent tolerates storage write failures and still returns the computed
     setItemSpy.mockRestore()
   }
 })
+
+test("a tampered entry keeps its usable parts and drops the rest", () => {
+  // localStorage is user-editable, so stored entries are untrusted input.
+  localStorage.setItem(
+    "mcp-explore:recents",
+    JSON.stringify([
+      { url: "https://a.example/mcp", headers: { Good: "yes", Bad: 42, Worse: { nested: true } }, lastUsed: 5 },
+      { url: "https://b.example/mcp", headers: ["not", "an", "object"], lastUsed: "not a number" },
+      { url: "", lastUsed: 1 },
+      { lastUsed: 1 },
+      "not an object",
+      null,
+    ]),
+  )
+  const recents = loadRecents()
+  expect(recents.map((r) => r.url)).toEqual(["https://a.example/mcp", "https://b.example/mcp"])
+  // Only the string-valued header survives — the entry itself is still usable.
+  expect(recents[0].headers).toEqual({ Good: "yes" })
+  expect(recents[0].lastUsed).toBe(5)
+  // An array is not a headers object, and a non-numeric lastUsed falls back to 0.
+  expect(recents[1].headers).toBeUndefined()
+  expect(recents[1].lastUsed).toBe(0)
+})

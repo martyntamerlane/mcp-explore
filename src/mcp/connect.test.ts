@@ -4,13 +4,24 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js"
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js"
 import { ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js"
 import { createDemoServer, DEMO_SERVER_NAME } from "./demo/demoServer"
-import { ConnectFailure, connectDemo, connectUrl, type TransportFactories } from "./connect"
+import { ConnectFailure, connectDemo, connectUrl, snapshotClient, type TransportFactories } from "./connect"
 
 // A factory whose transport is backed by a live demo server — lets us test
 // connectUrl's transport selection without any network.
 function demoBackedTransport(): Transport {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   void createDemoServer().connect(serverTransport)
+  return clientTransport
+}
+
+/** Handshakes cleanly, then throws on the first list call. */
+function brokenListingTransport(): Transport {
+  const server = new Server({ name: "broken", version: "0.0.1" }, { capabilities: { tools: {} } })
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    throw new Error("listing exploded")
+  })
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+  void server.connect(serverTransport)
   return clientTransport
 }
 
@@ -68,6 +79,41 @@ test("connectUrl throws ConnectFailure with both attempts when everything fails"
   expect(err).toBeInstanceOf(ConnectFailure)
   expect(err.attempts.map((a: { kind: string }) => a.kind)).toEqual(["streamable-http", "sse"])
   expect(String(err.attempts[0].error)).toMatch(/streamable boom/)
+  expect(String(err.attempts[1].error)).toMatch(/sse boom/)
+  // Neither transport got past the handshake, so both are "connect" — the
+  // diagnostics panel uses this to tell a CORS story from a listing one.
+  expect(err.attempts.map((a: { phase: string }) => a.phase)).toEqual(["connect", "connect"])
+})
+
+test("a failure after the handshake is tagged snapshot, not connect", async () => {
+  // Connecting succeeds; the first list call throws. Reported as a listing
+  // failure rather than an unreachable server (TODO-9).
+  const factories: TransportFactories = {
+    streamable: () => brokenListingTransport(),
+    sse: () => brokenListingTransport(),
+  }
+  const err = await connectUrl("https://example.com/mcp", {}, factories).catch((e) => e)
+  expect(err).toBeInstanceOf(ConnectFailure)
+  expect(err.attempts.map((a: { phase: string }) => a.phase)).toEqual(["snapshot", "snapshot"])
+})
+
+test("listAll stops when a server repeats a cursor instead of looping forever", async () => {
+  let calls = 0
+  const page = async () => {
+    calls++
+    return { tools: [{ name: `t${calls}` }], nextCursor: "same-cursor-every-time" }
+  }
+  const client = {
+    getServerCapabilities: () => ({ tools: {} }),
+    getServerVersion: () => ({ name: "loop", version: "1" }),
+    getInstructions: () => undefined,
+    listTools: page,
+  }
+  const snapshot = await snapshotClient(client as never)
+  // Two calls: the first returns the cursor, the second is made with it and
+  // returns the same one again, which is where it stops.
+  expect(calls).toBe(2)
+  expect(snapshot.tools).toHaveLength(2)
 })
 
 test("snapshot skips list calls for capabilities the server lacks", async () => {

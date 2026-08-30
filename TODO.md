@@ -42,22 +42,14 @@ A switchable master-detail (sidebar + detail pane) view over the same data, for 
 
 For servers that don't send CORS headers. Requires serious SSRF hardening (private-IP blocking, DNS-rebinding defense), infrastructure, cost exposure, and a token-custody trust story — which is why v1 is browser-direct only with a CORS diagnostic panel instead. Revisit only if CORS-blocked servers turn out to be a major share of real usage.
 
+2026-08-30: **designed, costed and declined** — still open, but now with a measurement behind it. A Cloudflare Worker proxy was specified in `docs/external-sources/HANDOVER-mcp-explore-cors-proxy.md`; browser-shaped probes of its five candidate hosts found three (DeepWiki, Hugging Face, Microsoft Learn) already send full CORS headers and need nothing. Of the two that don't, Shopify storefronts require a shop domain the visitor must already know — a poor one-click demo — leaving **one** server, AWS Knowledge, as the whole yield, and Microsoft Learn substitutes for it directly. A hardcoded allowlist would also not serve the case this entry exists for (a visitor's *own* server, ISSUE-1): the fallback would fire and then 403. Making it general instead means running an open relay whose `Origin` check is one `curl -H` away from useless, sharing a 100k/day free cap with the demos it exists to serve. The effort went into the failure path instead — ISSUE-9 and `docs/specs/2026-08-30-connection-diagnostics.md`. Revisit if a real user's own server, not a demo, turns out to need it.
+
 ### TODO-8: Code-split the MCP SDK bundle
 
 **Complexity**: S
 
 `npm run build` warns the main chunk exceeds 500 kB because `@modelcontextprotocol/sdk` is bundled eagerly. Split it (dynamic import at the connect boundary or Vite `manualChunks`) when the real UI lands and load behaviour starts mattering. From final review of the 2026-08-24 scaffold branch.
 
-### TODO-9: Connection-layer hardening
-
-**Complexity**: S
-
-Deferred Minors from the 2026-08-24 scaffold branch final review, best done when their consumers appear (graph UI / CORS diagnostics plan):
-- Cap `listAll` pagination (`MAX_PAGES` + repeated-cursor detection) — a malicious server returning the same cursor forever hangs the tab (`src/mcp/connect.ts` cursor loop).
-- Tag `ConnectFailure.attempts` with a `phase: "connect" | "snapshot"` field so the diagnostics panel can distinguish transport failures from mid-listing application errors.
-- ~~Allowlist `http:`/`https:` schemes in `connectUrl` before shareable `?server=` URLs and clickable recent-servers exist.~~ done 2026-08-25
-- Wrap `connectDemo`'s `close()` in try/finally so a client-close failure can't leak the server side.
-- Assert `attempts[1].error` text in the both-transports-fail test.
 
 ### TODO-11: Playwright E2E tier (Tier 3)
 
@@ -75,7 +67,7 @@ Decision on 2026-08-24: repo went public with **no license** (source-visible, al
 
 **Complexity**: S
 
-Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; ~~dedupe/suffix duplicate tool/prompt names and resource URIs~~ done 2026-08-26 in `buildDeckModel` (exact duplicates dropped, first wins); render non-string enum members via JSON.stringify and key chips by index; ~~Escape closes the detail panel~~ done 2026-08-27 (Esc closes the console drawer, disarm takes precedence — spec `2026-08-27-console-drawer-dark-mode.md`); ~~focus moves into/restores from the drawer on open/close~~ resolved 2026-08-29 by deleting the drawer — the workspace is permanent, selection does not move focus, and the region announces its subject via `aria-live`; ~~disarm an armed tool button on focus leaving its card (blur)~~ obsolete 2026-08-29 — arming is gone; aria-live announcements (run states are `aria-live`/`role=alert` since 2026-08-26; selection announcements still open); preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`.
+Deferred non-blocking items from the 2026-08-25 UI v1 final review: ~~cumulative (not per-step) drag threshold for pan-release deselect; pan factor accounting for letterboxing (use min of width/height ratios)~~ obsolete 2026-08-25 — the flow view has no pan/zoom; ~~dedupe/suffix duplicate tool/prompt names and resource URIs~~ done 2026-08-26 in `buildDeckModel` (exact duplicates dropped, first wins); ~~render non-string enum members via JSON.stringify and key chips by index~~ done 2026-08-30; ~~Escape closes the detail panel~~ done 2026-08-27 (Esc closes the console drawer, disarm takes precedence — spec `2026-08-27-console-drawer-dark-mode.md`); ~~focus moves into/restores from the drawer on open/close~~ resolved 2026-08-29 by deleting the drawer — the workspace is permanent, selection does not move focus, and the region announces its subject via `aria-live`; ~~disarm an armed tool button on focus leaving its card (blur)~~ obsolete 2026-08-29 — arming is gone; aria-live announcements (run states are `aria-live`/`role=alert` since 2026-08-26; selection announcements still open); ~~preserve remembered headers on `?server=` auto-connect and validate `headers`/`lastUsed` shapes in `loadRecents`~~ done 2026-08-30. **Only the selection aria-live announcement is left open.**
 
 ### TODO-21: Structured editing for nested schema shapes
 
@@ -125,6 +117,17 @@ Not implemented, and degrading to plain text today: reference links (`[a][b]` wi
 ---
 
 ## Completed
+
+### TODO-9: Connection-layer hardening
+
+**Complexity**: S — **Completed 2026-08-30**
+
+Deferred Minors from the 2026-08-24 scaffold branch final review, held until their consumers appeared. The consumer turned out to be the connection-diagnostics work ([spec](docs/specs/2026-08-30-connection-diagnostics.md)), and all four landed with it:
+- `listAll` is bounded by `MAX_PAGES` (100) **and** repeated-cursor detection — an untrusted server returning the same cursor forever, or a fresh one forever, no longer hangs the tab. Stopping early keeps the pages already fetched: a partial list beats an empty one.
+- `ConnectFailure.attempts` carry `phase: "connect" | "snapshot"`, and the panel uses it: an attempt that reached the snapshot had already completed the handshake, so the transport *and* the browser's cross-origin checks are proven fine. That failure now reads "connected, then failed while listing what the server offers" and never triggers the CORS probe.
+- ~~Allowlist `http:`/`https:` schemes in `connectUrl`~~ done 2026-08-25.
+- `connectDemo`'s `close()` is `try`/`finally`, so a client-close failure can't leak the server side.
+- The both-transports-fail test asserts `attempts[1].error` and both phases.
 
 ### TODO-30: Tool legibility — three zones in the workspace
 
