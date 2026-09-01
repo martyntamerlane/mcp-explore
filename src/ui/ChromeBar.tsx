@@ -2,6 +2,7 @@ import { useState, type RefObject } from "react"
 import type { ServerSnapshot, TransportKind } from "../mcp/types"
 import Prism from "./deck/Prism"
 import { Keycap } from "./Keycap"
+import HowItWorks from "./HowItWorks"
 import ModeToggle from "./ModeToggle"
 import styles from "./ChromeBar.module.css"
 
@@ -69,6 +70,7 @@ export default function ChromeBar({
             </span>
           )}
         </div>
+        <HowItWorks />
         <ModeToggle />
         <button type="button" className={styles.disconnect} onClick={onDisconnect}>
           Disconnect

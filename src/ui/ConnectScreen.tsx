@@ -4,6 +4,7 @@ import { diagnose, wantsProbe, type Diagnosis } from "../mcp/diagnose"
 import { probeReachable as realProbeReachable } from "../mcp/probe"
 import type { Connection } from "../mcp/types"
 import ConnectError from "./ConnectError"
+import HowItWorks from "./HowItWorks"
 import Prism from "./deck/Prism"
 import { EXAMPLE_SERVERS } from "./examples"
 import ModeToggle from "./ModeToggle"
@@ -168,6 +169,7 @@ export default function ConnectScreen({
   return (
     <main className={styles.hero}>
       <div className={styles.modeCorner}>
+        <HowItWorks />
         <ModeToggle />
       </div>
       <p className={styles.kicker}>MCP EXPLORE</p>
