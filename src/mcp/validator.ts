@@ -14,6 +14,13 @@ import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/sdk/validatio
  * `CfWorkerJsonSchemaValidator` interprets the schema instead of generating code
  * — the SDK ships it for edge runtimes that forbid `eval`, and a browser page
  * that renders untrusted servers wants the same property for the same reason.
+ *
+ * **The name is a coincidence — this has nothing to do with TODO-7's declined
+ * CORS proxy.** `@cfworker/json-schema` is a dependency-free library written by
+ * the Cloudflare Workers team *for* runtimes that ban code generation; it runs
+ * in the visitor's browser and makes no network calls of any kind (checked: no
+ * `fetch`, no Cloudflare API, no URLs in the shipped code). Nothing here adds a
+ * backend, and the zero-backend decision is untouched.
  * With it, `script-src` needs no `'unsafe-eval'`.
  *
  * Note what this does *not* do: AJV is still in the bundle, because the SDK's
